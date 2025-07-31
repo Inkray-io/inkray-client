@@ -1,0 +1,45 @@
+# .github/workflows/deploy-site.yml
+name: Deploy Next.js static site to Walrus
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Check out your repository
+      - uses: actions/checkout@v4
+
+      # Set up Node.js (choose the Node version used by your Next.js project)
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20" # or 18/16 depending on your app
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Build and export static site
+      - name: Build Next.js static site
+        run: |
+          npm run build
+          npm run export
+        # This writes the static files to the `out` directory
+
+      # Deploy to Walrus Sites
+      - name: Deploy Walrus Site
+        uses: MystenLabs/walrus-sites/.github/actions/deploy@3567838a78f974a98d09252ee10f8a237a7a9834
+        with:
+          # Deploy to testnet; omit or set to 'mainnet' for mainnet
+          SUI_NETWORK: "testnet"
+          SUI_ADDRESS: ${{ vars.SUI_ADDRESS }}
+          SUI_KEYSTORE: ${{ secrets.SUI_KEYSTORE }}
+          DIST: "out" # directory containing your static files
+          EPOCHS: "5" # number of epochs to keep the site alive (optional)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # allows auto‑pull‑requests
