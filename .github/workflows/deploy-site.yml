@@ -36,7 +36,8 @@ jobs:
         uses: MystenLabs/walrus-sites/.github/actions/deploy@3567838a78f974a98d09252ee10f8a237a7a9834
         with:
           # Deploy to testnet; omit or set to 'mainnet' for mainnet
-          SUI_NETWORK: "testnet"
+          SUI_NETWORK: testnet
+          WALRUS_CONFIG: ${{ vars.WALRUS_TESTNET_CONFIG }}
           SUI_ADDRESS: ${{ vars.SUI_ADDRESS }}
           SUI_KEYSTORE: ${{ secrets.SUI_KEYSTORE }}
           DIST: "out" # directory containing your static files
