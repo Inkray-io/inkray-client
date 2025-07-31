@@ -29,7 +29,6 @@ jobs:
       - name: Build Next.js static site
         run: |
           npm run build
-          npm run export
         # This writes the static files to the `out` directory
 
       # Deploy to Walrus Sites
