@@ -40,5 +40,6 @@ jobs:
           SUI_ADDRESS: ${{ vars.SUI_ADDRESS }}
           SUI_KEYSTORE: ${{ secrets.SUI_KEYSTORE }}
           DIST: "out" # directory containing your static files
+          WS_RESOURCES: "./ws-resources.json"
           EPOCHS: "1" # number of epochs to keep the site alive (optional)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # allows auto‑pull‑requests
