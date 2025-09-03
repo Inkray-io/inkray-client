@@ -36,10 +36,10 @@ jobs:
         uses: MystenLabs/walrus-sites/.github/actions/deploy@38f873cf838bb91a095ae2cd0de61addbd359d86
         with:
           # Deploy to testnet; omit or set to 'mainnet' for mainnet
-          SUI_NETWORK: testnet
+          SUI_NETWORK: mainnet
           SUI_ADDRESS: ${{ vars.SUI_ADDRESS }}
           SUI_KEYSTORE: ${{ secrets.SUI_KEYSTORE }}
           DIST: "out" # directory containing your static files
           WS_RESOURCES: "./ws-resources.json"
-          EPOCHS: "1" # number of epochs to keep the site alive (optional)
+          EPOCHS: "12" # number of epochs to keep the site alive (optional)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # allows auto‑pull‑requests
