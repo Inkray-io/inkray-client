@@ -2,6 +2,7 @@
 
 import { HiMagnifyingGlass, HiBell, HiCog6Tooth } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
+import { ConnectButton } from "@mysten/dapp-kit"
 import { 
   Sheet, 
   SheetContent, 
@@ -10,6 +11,8 @@ import {
   SheetTrigger,
   SheetClose 
 } from "@/components/ui/sheet"
+import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { getDisplayName } from "@/utils/address"
 
 interface MobileMenuProps {
   children: React.ReactNode
@@ -17,6 +20,8 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ children, currentPage = "feed" }: MobileMenuProps) {
+  const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
+  
   // Note: currentPage can be used for future active state management
   const topics = [
     { name: "Protocols", color: "bg-purple-400" },
@@ -30,6 +35,8 @@ export function MobileMenu({ children, currentPage = "feed" }: MobileMenuProps) 
     { name: "Events", color: "bg-red-500" }
   ]
 
+  const { primary, secondary } = getDisplayName(suiNSName, address || '')
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -41,36 +48,68 @@ export function MobileMenu({ children, currentPage = "feed" }: MobileMenuProps) 
         </SheetHeader>
         
         <div className="flex flex-col h-full">
-          {/* Profile Section */}
+          {/* Wallet/Profile Section */}
           <div className="py-6 border-b border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="size-12 rounded-full bg-gray-300 overflow-hidden">
-                <img 
-                  src="/placeholder-user.jpg" 
-                  alt="User avatar" 
-                  className="size-full object-cover"
-                />
+            {isConnected ? (
+              <>
+                {/* Connected User Profile */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-12 rounded-full bg-gray-300 overflow-hidden">
+                    <img 
+                      src="/placeholder-user.jpg" 
+                      alt="User avatar" 
+                      className="size-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-black">
+                      {suiNSLoading ? 'Loading...' : primary}
+                    </div>
+                    {secondary && !suiNSLoading && (
+                      <div className="text-sm text-gray-600">{secondary}</div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Mobile Actions for Connected Users */}
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 gap-2">
+                    <HiMagnifyingGlass className="size-4" />
+                    Search
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 gap-2">
+                    <HiBell className="size-4" />
+                    Notifications
+                  </Button>
+                  <Button variant="outline" size="icon" className="size-9">
+                    <HiCog6Tooth className="size-4" />
+                  </Button>
+                </div>
+                
+                {/* Disconnect Button */}
+                <div className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => disconnect()}
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Disconnect Wallet
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* Disconnected State - Show Connect Button */
+              <div className="text-center">
+                <div className="mb-4">
+                  <h3 className="font-semibold text-black mb-2">Connect your wallet</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Connect your wallet to access all features
+                  </p>
+                </div>
+                <ConnectButton />
               </div>
-              <div>
-                <div className="font-semibold text-black">Your Name</div>
-                <div className="text-sm text-gray-600">@username</div>
-              </div>
-            </div>
-            
-            {/* Mobile Actions */}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 gap-2">
-                <HiMagnifyingGlass className="size-4" />
-                Search
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 gap-2">
-                <HiBell className="size-4" />
-                Notifications
-              </Button>
-              <Button variant="outline" size="icon" className="size-9">
-                <HiCog6Tooth className="size-4" />
-              </Button>
-            </div>
+            )}
           </div>
 
           {/* Navigation */}
