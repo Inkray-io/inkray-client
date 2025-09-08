@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { ROUTES } from "@/constants/routes"
 
 interface AppSidebarProps {
   currentPage?: string
@@ -26,14 +27,14 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       label: "Popular", 
       icon: "👑", 
       active: currentPage === "popular",
-      href: "/feed?filter=popular" 
+      href: ROUTES.FEED_POPULAR
     },
     { 
       id: "fresh", 
       label: "Fresh", 
       icon: "⚡", 
       active: currentPage === "fresh",
-      href: "/feed?filter=fresh",
+      href: ROUTES.FEED_FRESH,
       hasNotification: true 
     },
     { 
@@ -41,7 +42,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       label: "My feed", 
       icon: "🖱️", 
       active: currentPage === "my-feed",
-      href: "/feed?filter=my-feed" 
+      href: ROUTES.FEED_MY_FEED
     }
   ]
 
@@ -50,19 +51,19 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       id: "about", 
       label: "About the project", 
       icon: "ℹ️", 
-      href: "/about" 
+      href: ROUTES.ABOUT
     },
     { 
       id: "rules", 
       label: "Rules", 
       icon: "📋", 
-      href: "/rules" 
+      href: ROUTES.RULES
     },
     { 
       id: "advertising", 
       label: "Advertising", 
       icon: "⭐", 
-      href: "/advertising" 
+      href: ROUTES.ADVERTISING
     }
   ]
 

@@ -1,12 +1,27 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ShineBorder } from "@/components/ui/shine-border"
+import { ConnectButton } from "@mysten/dapp-kit"
 import { HiGlobeAlt, HiFolderOpen, HiCurrencyDollar, HiLink } from "react-icons/hi2"
 import { motion } from "framer-motion"
-import { RiQuillPenAiFill } from "react-icons/ri";
+import { RiQuillPenAiFill } from "react-icons/ri"
+import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { ROUTES } from "@/constants/routes"
 
 export default function InkrayLanding() {
+  const router = useRouter()
+  const { isConnected } = useWalletConnection()
+
+  // Redirect to feed if user is authenticated
+  useEffect(() => {
+    if (isConnected) {
+      router.push(ROUTES.FEED)
+    }
+  }, [isConnected, router])
+
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -60,8 +75,11 @@ export default function InkrayLanding() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <img src="/logo.svg" alt="Inkray" />
+          <div className="flex items-center gap-4">
+            <ConnectButton />
+          </div>
         </div>
       </motion.header>
 
@@ -77,10 +95,10 @@ export default function InkrayLanding() {
               <p>Inkray combines the simplicity of modern blogging with the power of blockchain ownership. Publish effortlessly, own permanently.</p>
             </div>
             <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg" asChild>
-              <a href="https://x.com/inkray_io" target="_blank" rel="noopener noreferrer">Follow us on X</a>
+              <a href={ROUTES.EXTERNAL.TWITTER} target="_blank" rel="noopener noreferrer">Follow us on X</a>
             </Button>
 
-            <div className="mt-12 flex items-center">Supported by <a href="https://www.walrus.xyz/" target="_blank"><img src="/hero_section/walrus.svg" alt="Walrus" className="ml-2 h-8" /></a></div>
+            <div className="mt-12 flex items-center">Supported by <a href={ROUTES.EXTERNAL.WALRUS} target="_blank"><img src="/hero_section/walrus.svg" alt="Walrus" className="ml-2 h-8" /></a></div>
           </motion.div>
 
           <motion.div className="relative" {...slideInRight}>
@@ -295,7 +313,7 @@ export default function InkrayLanding() {
               <p className="text-xl mb-8 opacity-90 text-white">A platform that enhances, not controls.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button variant="secondary" className="bg-white text-primary hover:bg-gray-100 px-8 py-3 rounded-lg" asChild>
-                  <a href="https://x.com/inkray_io" target="_blank" rel="noopener noreferrer">Follow Us</a>
+                  <a href={ROUTES.EXTERNAL.TWITTER} target="_blank" rel="noopener noreferrer">Follow Us</a>
                 </Button>
                 {/* <Button
                   variant="outline"

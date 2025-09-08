@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { HiDotsHorizontal } from "react-icons/hi"
 import { Button } from "@/components/ui/button"
+import { ROUTES } from "@/constants/routes"
 
 interface FeedPostProps {
   author: {
@@ -41,7 +42,7 @@ export function FeedPost({
     .replace(/^-|-$/g, '')
   
   const handleArticleClick = () => {
-    router.push(`/article?id=${articleId}`)
+    router.push(ROUTES.ARTICLE_WITH_ID(articleId))
   }
   
   return (
