@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiUser } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { useAuth } from "@/contexts/AuthContext"
 import { getDisplayName, copyToClipboard } from "@/utils/address"
+import Link from "next/link"
 
 interface UserProfileProps {
   className?: string
@@ -12,12 +14,14 @@ interface UserProfileProps {
 
 export function UserProfile({ className = "" }: UserProfileProps) {
   const { address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
+  const { account, isAuthenticated, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [copying, setCopying] = useState(false)
   
-  if (!address) return null
+  if (!address || !isAuthenticated) return null
   
   const { primary, secondary } = getDisplayName(suiNSName, address)
+  const displayName = account?.username || suiNSName || primary
   
   const handleCopyAddress = async () => {
     if (!address || copying) return
@@ -34,7 +38,8 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   }
   
   const handleDisconnect = () => {
-    disconnect()
+    logout() // Clear auth state
+    disconnect() // Disconnect wallet
     setIsOpen(false)
   }
   
@@ -55,11 +60,11 @@ export function UserProfile({ className = "" }: UserProfileProps) {
         
         <div className="flex-1 text-left min-w-0">
           <div className="font-medium text-black text-sm truncate">
-            {suiNSLoading ? 'Loading...' : primary}
+            {suiNSLoading ? 'Loading...' : displayName}
           </div>
-          {secondary && !suiNSLoading && (
+          {(account?.username || suiNSName) && !suiNSLoading && (
             <div className="text-xs text-gray-500 truncate">
-              {secondary}
+              {account?.username ? primary : secondary}
             </div>
           )}
         </div>
@@ -79,14 +84,30 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
             <div className="p-4 border-b border-gray-100">
               <div className="font-medium text-black text-sm mb-1">
-                {suiNSName || 'Connected Wallet'}
+                {displayName}
               </div>
+              {account?.username && (
+                <div className="text-xs text-gray-600 mb-2">
+                  @{account.username}
+                </div>
+              )}
               <div className="text-xs text-gray-500 font-mono break-all">
                 {address}
               </div>
             </div>
             
             <div className="p-2">
+              <Link href="/profile" onClick={() => setIsOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-sm"
+                >
+                  <HiUser className="size-4" />
+                  Edit Profile
+                </Button>
+              </Link>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -105,7 +126,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                 className="w-full justify-start gap-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <HiArrowRightOnRectangle className="size-4" />
-                Disconnect
+                Sign Out
               </Button>
             </div>
           </div>

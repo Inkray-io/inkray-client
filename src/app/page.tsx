@@ -9,18 +9,27 @@ import { HiGlobeAlt, HiFolderOpen, HiCurrencyDollar, HiLink } from "react-icons/
 import { motion } from "framer-motion"
 import { RiQuillPenAiFill } from "react-icons/ri"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { useAuth } from "@/contexts/AuthContext"
 import { ROUTES } from "@/constants/routes"
 
 export default function InkrayLanding() {
   const router = useRouter()
   const { isConnected } = useWalletConnection()
+  const { isAuthenticated } = useAuth()
 
   // Redirect to feed if user is authenticated
   useEffect(() => {
-    if (isConnected) {
-      router.push(ROUTES.FEED)
+    if (isAuthenticated) {
+      router.push('/feed')
     }
-  }, [isConnected, router])
+  }, [isAuthenticated, router])
+
+  // Redirect to auth page after wallet connects
+  useEffect(() => {
+    if (isConnected && !isAuthenticated) {
+      router.push('/auth')
+    }
+  }, [isConnected, isAuthenticated, router])
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
@@ -78,7 +87,7 @@ export default function InkrayLanding() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <img src="/logo.svg" alt="Inkray" />
           <div className="flex items-center gap-4">
-            <ConnectButton />
+            {!isAuthenticated && <ConnectButton />}
           </div>
         </div>
       </motion.header>
