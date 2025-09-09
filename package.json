@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@milkdown/crepe": "^7.15.5",
+    "@milkdown/plugin-listener": "^7.15.5",
     "@mysten/dapp-kit": "^0.17.7",
     "@mysten/sui": "^1.37.6",
     "@radix-ui/react-accordion": "^1.2.12",

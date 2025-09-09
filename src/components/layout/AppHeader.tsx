@@ -6,6 +6,8 @@ import { ConnectButton } from "@mysten/dapp-kit"
 import { MobileMenu } from "./MobileMenu"
 import { UserProfile } from "@/components/wallet/UserProfile"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { ROUTES } from "@/constants/routes"
+import Link from "next/link"
 
 interface AppHeaderProps {
   currentPage?: string
@@ -62,10 +64,12 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
         
         {/* Create Button - Only visible when wallet is connected */}
         {isConnected && (
-          <Button className="bg-primary hover:bg-primary/90 text-white gap-2 text-sm lg:text-base px-3 lg:px-4">
-            <HiPlus className="size-4 lg:size-5" />
-            <span className="hidden sm:inline">Create</span>
-          </Button>
+          <Link href={ROUTES.CREATE}>
+            <Button className="bg-primary hover:bg-primary/90 text-white gap-2 text-sm lg:text-base px-3 lg:px-4">
+              <HiPlus className="size-4 lg:size-5" />
+              <span className="hidden sm:inline">Create</span>
+            </Button>
+          </Link>
         )}
       </div>
     </header>
