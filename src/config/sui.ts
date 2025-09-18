@@ -1,7 +1,7 @@
 import { getFullnodeUrl } from '@mysten/sui/client'
 import { createNetworkConfig } from '@mysten/dapp-kit'
 
-const network = (process.env.NEXT_PUBLIC_SUI_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet') || 'testnet'
+const network = (process.env.NEXT_PUBLIC_NETWORK as 'mainnet' | 'testnet' | 'devnet' | 'localnet') || 'testnet'
 
 // Create network configuration
 const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetworkConfig({
@@ -24,7 +24,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetwork
     }
   },
   mainnet: { 
-    url: process.env.NEXT_PUBLIC_SUI_RPC_URL || getFullnodeUrl('mainnet'),
+    url: getFullnodeUrl('mainnet'),
     variables: {
       myMovePackageId: '0x...',
     }

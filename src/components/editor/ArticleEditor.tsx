@@ -42,7 +42,6 @@ export function ArticleEditor({
         const crepe = new Crepe({
           root: editorRef.current!,
           defaultValue: initialValueRef.current,
-          placeholder,
         })
         
         // Configure the listener before creating the editor

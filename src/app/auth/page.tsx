@@ -1,19 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { authAPI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { useSignPersonalMessage, ConnectButton } from "@mysten/dapp-kit";
 
 export default function AuthPage() {
   const router = useRouter();
   const { login, isAuthenticated } = useAuth();
-  const { connect, disconnect, isConnected, address } = useWalletConnection();
+  const { disconnect, isConnected, address } = useWalletConnection();
   const { toast } = useToast();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
   
@@ -28,34 +28,46 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Initialize nonce when component mounts
-  useEffect(() => {
-    initializeNonce();
-  }, []);
-
-  // Handle wallet connection state
-  useEffect(() => {
-    if (isConnected && address && authData) {
-      setStep('sign');
-    } else if (!isConnected) {
-      setStep('connect');
-    }
-  }, [isConnected, address, authData]);
-
-  const initializeNonce = async () => {
+  const initializeNonce = useCallback(async () => {
     try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 Initializing authentication...');
+      }
       setIsLoading(true);
       const response = await authAPI.initAuth();
+      
+      // Access the nested data structure correctly
+      const responseData = response.data.data || response.data;
+      
+      if (!responseData) {
+        throw new Error('No data received from auth initialization');
+      }
+      
+      if (!responseData.nonce) {
+        throw new Error('No nonce received from auth initialization');
+      }
+      
+      if (!responseData.message) {
+        throw new Error('No message received from auth initialization');
+      }
+      
       // Extract timestamp from the message (it's embedded in the message)
-      const timestampMatch = response.data.message.match(/Timestamp: (.+)\n/);
+      const timestampMatch = responseData.message.match(/Timestamp: (.+)\n/);
       const timestamp = timestampMatch ? timestampMatch[1] : new Date().toISOString();
       
-      setAuthData({
-        nonce: response.data.nonce,
-        message: response.data.message,
+      const authDataObj = {
+        nonce: responseData.nonce,
+        message: responseData.message,
         timestamp,
-      });
+      };
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Auth data initialized successfully');
+      }
+      
+      setAuthData(authDataObj);
     } catch (error) {
+      console.error('❌ Failed to initialize auth:', error);
       toast({
         title: "Error",
         description: "Failed to initialize authentication. Please try again.",
@@ -64,15 +76,84 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const handleConnect = () => {
-    if (!authData) return;
-    setIsLoading(true);
-    connect();
-  };
+  // Initialize nonce when component mounts
+  useEffect(() => {
+    initializeNonce();
+  }, [initializeNonce]);
 
-  const handleSign = () => {
+  // Debug logging for authentication state (development only)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔧 Auth Debug State:', {
+        isConnected,
+        address,
+        authData: !!authData,
+        authDataDetails: authData ? { nonce: authData.nonce, hasMessage: !!authData.message } : null,
+        currentStep: step,
+        isLoading
+      });
+    }
+  }, [isConnected, address, authData, step, isLoading]);
+
+  // Handle wallet connection state and smart re-authentication
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Checking transition conditions:', { isConnected, address: !!address, authData: !!authData });
+    }
+    
+    if (isConnected && address && authData) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ All conditions met, transitioning to sign step');
+      }
+      setStep('sign');
+      setIsLoading(false); // Clear loading state once connected
+    } else if (!isConnected) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ Wallet not connected, staying on connect step');
+      }
+      setStep('connect');
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ Partial conditions met:', {
+          isConnected,
+          hasAddress: !!address,
+          hasAuthData: !!authData
+        });
+      }
+    }
+  }, [isConnected, address, authData]);
+
+  // Smart re-authentication: If wallet is connected and we have auth data,
+  // but user ended up on auth page (likely due to expired token), auto-sign
+  useEffect(() => {
+    const shouldAutoSign = isConnected && address && authData && step === 'sign' && !isLoading;
+    
+    if (shouldAutoSign) {
+      const hasRecentlyFailed = sessionStorage.getItem('auth_retry_failed');
+      
+      if (!hasRecentlyFailed) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Auto-attempting re-authentication for connected wallet');
+        }
+        
+        // Add a small delay to prevent immediate re-signing
+        const timer = setTimeout(() => {
+          handleSign();
+        }, 1500);
+        
+        return () => clearTimeout(timer);
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ Skipping auto-sign due to recent failure');
+        }
+      }
+    }
+  }, [isConnected, address, authData, step, isLoading]);
+
+
+  const handleSign = useCallback(() => {
     if (!authData || !address) return;
     
     setIsLoading(true);
@@ -87,11 +168,19 @@ export default function AuthPage() {
         message: new TextEncoder().encode(authData.message),
       },
       {
-        onSuccess: (result) => {
-          authenticateWithSignature(result.signature);
+        onSuccess: async (result) => {
+          await authenticateWithSignature(result.signature);
         },
         onError: (error) => {
           console.error('Signing failed:', error);
+          
+          // Mark that auto-retry failed to prevent infinite loops
+          sessionStorage.setItem('auth_retry_failed', 'true');
+          // Clear the flag after 30 seconds
+          setTimeout(() => {
+            sessionStorage.removeItem('auth_retry_failed');
+          }, 30000);
+          
           setIsLoading(false);
           setStep('sign');
           toast({
@@ -102,9 +191,9 @@ export default function AuthPage() {
         },
       }
     );
-  };
+  }, [authData, address, signPersonalMessage, toast]);
 
-  const authenticateWithSignature = async (signature: string) => {
+  const authenticateWithSignature = useCallback(async (signature: string) => {
     if (!authData || !address) return;
 
     try {
@@ -124,23 +213,64 @@ export default function AuthPage() {
       
       const response = await authAPI.authenticate(authPayload);
 
-      login(response.data.accessToken, response.data.account);
+      // Access the nested data structure correctly (same as we did for auth/init)
+      const responseData = response.data.data || response.data;
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Authentication API response:', {
+          success: !!response.data,
+          hasAccessToken: !!responseData?.accessToken,
+          hasAccount: !!responseData?.account,
+          accountId: responseData?.account?.id,
+          tokenLength: responseData?.accessToken?.length,
+          fullResponse: response.data,
+          extractedData: responseData
+        });
+      }
+
+      // Verify we have the required data
+      if (!responseData?.accessToken) {
+        throw new Error('No access token received from authentication API');
+      }
+      
+      if (!responseData?.account) {
+        throw new Error('No account data received from authentication API');
+      }
+
+      // Clear any retry failure flags on successful auth
+      sessionStorage.removeItem('auth_retry_failed');
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎯 Calling login function with verified data...');
+      }
+      
+      login(responseData.accessToken, responseData.account);
       toast({
         title: "Success",
         description: "Successfully authenticated!",
       });
       router.push('/feed');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Authentication failed:', error);
+      
+      // Mark that auth failed to prevent auto-retry loops
+      sessionStorage.setItem('auth_retry_failed', 'true');
+      setTimeout(() => {
+        sessionStorage.removeItem('auth_retry_failed');
+      }, 30000);
+      
       setIsLoading(false);
       setStep('sign');
+      
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      
       toast({
         title: "Authentication Failed",
-        description: error.response?.data?.message || "Please try again.",
+        description: errorMessage || "Please try signing the message again.",
         variant: "destructive",
       });
     }
-  };
+  }, [authData, address, login, toast, router]);
 
   const handleDisconnect = () => {
     disconnect();
@@ -178,17 +308,10 @@ export default function AuthPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Connect your Sui wallet to continue
               </p>
-              <Button
-                onClick={handleConnect}
-                disabled={isLoading || !authData}
+              <ConnectButton
+                connectText="Connect Wallet"
                 className="w-full"
-                size="lg"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Connect Wallet
-              </Button>
+              />
             </div>
           )}
 
@@ -203,9 +326,23 @@ export default function AuthPage() {
                 </p>
               </div>
               
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Sign the message to prove wallet ownership
-              </p>
+              {(() => {
+                const shouldAutoSign = isConnected && address && authData && !isLoading && !sessionStorage.getItem('auth_retry_failed');
+                return shouldAutoSign ? (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      🔄 Attempting automatic re-authentication...
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      You can also sign manually if needed
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Sign the message to prove wallet ownership
+                  </p>
+                );
+              })()}
 
               {/* Show the message being signed */}
               {authData?.message && (

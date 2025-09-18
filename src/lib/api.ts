@@ -1,7 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { CONFIG } from './config';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = CONFIG.API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -59,4 +60,49 @@ export const authAPI = {
 export const usersAPI = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data: { username?: string }) => api.patch('/users/profile', data),
+};
+
+export const feedAPI = {
+  getArticles: (params: {
+    limit?: number;
+    cursor?: string;
+    author?: string;
+    publicationId?: string;
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get('/feed/articles', { params }),
+  
+  getTrending: (params: {
+    limit?: number;
+    timeframe?: 'day' | 'week' | 'month';
+  }) => api.get('/feed/trending', { params }),
+  
+  getByPublication: (publicationId: string, params: {
+    limit?: number;
+    cursor?: string;
+  }) => api.get('/feed/by-publication', { params: { ...params, publicationId } }),
+  
+  getStats: () => api.get('/feed/stats'),
+};
+
+export const eventsAPI = {
+  getArticleCreatedEvents: (params: {
+    articleId?: string;
+    publicationId?: string;
+    author?: string;
+    slug?: string;
+    cursor?: string;
+    limit?: number;
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get('/events/article-created', { params }),
+  
+  getPublicationCreatedEvents: (params: {
+    publication?: string;
+    owner?: string;
+    cursor?: string;
+    limit?: number;
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get('/events/publication-created', { params }),
 };

@@ -22,6 +22,10 @@ interface FeedPostProps {
     comments: number
     views: number
   }
+  // Optional slug for navigation - if not provided, will generate from title
+  slug?: string
+  // Click handler to allow custom navigation
+  onClick?: () => void
 }
 
 export function FeedPost({ 
@@ -30,19 +34,27 @@ export function FeedPost({
   description, 
   image, 
   hasReadMore = false,
-  engagement
+  engagement,
+  slug,
+  onClick
 }: FeedPostProps) {
   const router = useRouter()
   
-  // Create a simple ID from the title for navigation
-  const articleId = title.toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-  
   const handleArticleClick = () => {
-    router.push(ROUTES.ARTICLE_WITH_ID(articleId))
+    if (onClick) {
+      onClick()
+    } else if (slug) {
+      // Use the real slug if provided
+      router.push(ROUTES.ARTICLE_WITH_ID(slug))
+    } else {
+      // Fallback: generate ID from title
+      const articleId = title.toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+      router.push(ROUTES.ARTICLE_WITH_ID(articleId))
+    }
   }
   
   return (
