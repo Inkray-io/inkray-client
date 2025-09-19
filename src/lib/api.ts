@@ -106,3 +106,26 @@ export const eventsAPI = {
     toDate?: string;
   }) => api.get('/events/publication-created', { params }),
 };
+
+export const articlesAPI = {
+  create: (data: {
+    title: string;
+    content: string;
+    publicationId: string;
+    authorAddress: string;
+    isGated?: boolean;
+    mediaFiles?: Array<{
+      content: string;
+      filename: string;
+      mimeType: string;
+      size?: number;
+    }>;
+    storageEpochs?: number;
+  }) => api.post('/articles/create', data),
+  
+  getContent: (quiltBlobId: string) => api.get(`/articles/content/${quiltBlobId}`),
+  
+  getRawContent: (quiltBlobId: string) => api.get(`/articles/raw/${quiltBlobId}`, {
+    responseType: 'arraybuffer'
+  }),
+};

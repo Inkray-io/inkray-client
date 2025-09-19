@@ -4,18 +4,20 @@ import { feedAPI } from '@/lib/api';
 export interface FeedArticle {
   id: string;
   articleId: string;
+  slug: string;
+  title: string;
+  author: string;
+  authorShortAddress: string;
   publicationId: string;
   vaultId: string;
-  author: string;
-  title: string;
-  slug: string;
   isEncrypted: boolean;
-  bodyBlobId: string;
-  assetBlobIds: string[];
+  quiltBlobId?: string | null;
+  quiltObjectId?: string | null;
   createdAt: string;
   transactionHash: string;
-  timeAgo?: string;
-  authorShortAddress?: string;
+  timeAgo: string;
+  tags?: string[];
+  summary?: string;
 }
 
 export interface FeedArticlesState {
@@ -144,10 +146,10 @@ export const useFeedArticles = () => {
     return {
       id: article.id,
       author: {
-        name: article.authorShortAddress || `Author (${article.author.slice(0, 6)}...${article.author.slice(-4)})`,
+        name: article.authorShortAddress,
         avatar: "/placeholder-user.jpg",
         address: article.author,
-        date: article.timeAgo || new Date(article.createdAt).toLocaleDateString(),
+        date: article.timeAgo,
         readTime: "2 min", // TODO: Calculate from content
         mintedBy: 0, // TODO: Add this metric from backend
       },
@@ -160,8 +162,8 @@ export const useFeedArticles = () => {
         views: 0,
       },
       transactionHash: article.transactionHash,
-      bodyBlobId: article.bodyBlobId,
-      assetBlobIds: article.assetBlobIds,
+      quiltBlobId: article.quiltBlobId,
+      quiltObjectId: article.quiltObjectId,
       isEncrypted: article.isEncrypted,
     };
   }, []);

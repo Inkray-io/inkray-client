@@ -128,7 +128,7 @@ export default function CreateArticlePage() {
     try {
       clearError()
 
-      const result = await createAndPublishArticle(title.trim(), content.trim(), false) // false = free article
+      const result = await createAndPublishArticle(title.trim(), content.trim(), [], false) // [] = no media files, false = free article
 
       // Clear draft on successful publish
       localStorage.removeItem('inkray-article-draft')

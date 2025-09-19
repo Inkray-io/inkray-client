@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { createSealClient } from '@/lib/seal-client';
-import { createWalrusClient } from '@/lib/walrus-client';
-import { eventsAPI } from '@/lib/api';
+import { eventsAPI, articlesAPI } from '@/lib/api';
+import { loadArticleContent } from '@/lib/article-utils';
 import type { UserCredentials } from '@/lib/seal-client';
 
 export interface ArticleMetadata {
@@ -11,7 +11,7 @@ export interface ArticleMetadata {
   slug: string;
   author: string;
   publicationId: string;
-  blobId: string;
+  quiltBlobId: string;
   contentId: string;
   isEncrypted: boolean;
   createdAt: string;
@@ -64,33 +64,9 @@ export const useArticleDecryption = (articleSlug: string | null) => {
         if (articles.length > 0) {
           const article = articles[0];
 
-          // If blobId is missing from backend, query the Article object on-chain
-          const blobId = article.blobId;
+          // Get quilt blob ID from backend data
+          const quiltBlobId = article.quiltId || article.blobId; // Support both new and legacy fields
           const contentId = article.contentId;
-
-          if (!blobId && article.id) {
-            console.log('Missing blobId in backend data, querying on-chain...');
-
-            const objectIdToQuery = article.articleId || article.id;
-
-            try {
-              const articleObject = await suiClient.getObject({
-                id: objectIdToQuery,
-                options: { showContent: true },
-              });
-
-              if (articleObject.data?.content && 'fields' in articleObject.data.content) {
-                const fields = articleObject.data.content.fields as Record<string, unknown>;
-
-                if (fields.body_id) {
-                  console.log('Found body_id in Article:', fields.body_id);
-                  // TODO: Query vault to get actual blob ID from body_id
-                }
-              }
-            } catch (error) {
-              console.error('Failed to query Article object:', error);
-            }
-          }
 
           return {
             id: article.id,
@@ -98,7 +74,7 @@ export const useArticleDecryption = (articleSlug: string | null) => {
             slug: article.slug,
             author: article.author,
             publicationId: article.publicationId,
-            blobId: blobId,
+            quiltBlobId: quiltBlobId,
             contentId: contentId,
             isEncrypted: article.isEncrypted,
             createdAt: article.createdAt,
@@ -132,18 +108,15 @@ export const useArticleDecryption = (articleSlug: string | null) => {
       setState(prev => ({ ...prev, isDownloading: true }));
 
       try {
-        // 1. Download content from Walrus
-        console.log('Downloading article content from Walrus:', metadata.blobId);
-
-        const walrusClient = createWalrusClient(suiClient, currentAccount);
-        // Download content from Walrus - no fallback, throw error if it fails
-        const rawContent = await walrusClient.downloadBlob(metadata.blobId);
-        console.log(`Downloaded ${rawContent.length} bytes from Walrus`);
-
-        setState(prev => ({ ...prev, isDownloading: false, isDecrypting: true }));
-        // 2. Decrypt if encrypted
         if (metadata.isEncrypted) {
-          console.log('Decrypting encrypted content...');
+          // For encrypted articles, we need to download raw binary data directly from backend
+          console.log('Loading encrypted article content:', metadata.quiltBlobId);
+          
+          // Call backend to get raw encrypted bytes (JWT token added automatically by interceptor)
+          const response = await articlesAPI.getRawContent(metadata.quiltBlobId);
+          
+          const rawContent = new Uint8Array(response.data);
+          console.log(`Downloaded ${rawContent.length} bytes of encrypted content`);
 
           // Wallet is guaranteed to be connected at this point due to check above
           if (!currentAccount) {
@@ -176,40 +149,15 @@ export const useArticleDecryption = (articleSlug: string | null) => {
             throw new Error('Failed to decrypt article content. You may not have permission to read this article.');
           }
         } else {
-          // For free articles, return content as-is
-          const content = new TextDecoder().decode(rawContent);
+          // For free articles, use the backend API which can decode the Quilt and return markdown
+          console.log('Loading free article content via backend API:', metadata.quiltBlobId);
+
+          setState(prev => ({ ...prev, isDownloading: false }));
+
+          const articleContent = await loadArticleContent(metadata.quiltBlobId);
           console.log('Free article content loaded');
           
-          // Check if content appears to be binary and try decryption if needed
-          const isBinary = content.includes('\x00') || content.includes('\uFFFD');
-          if (isBinary && currentAccount) {
-            console.log('Content appears encrypted, attempting decryption...');
-            
-            try {
-              const sealClient = createSealClient(suiClient, currentAccount);
-              
-              const credentials = await buildDecryptionCredentials(
-                currentAccount.address,
-                metadata.publicationId
-              );
-
-              const decryptedContent = await sealClient.decryptContent({
-                encryptedData: rawContent,
-                contentId: metadata.contentId || new TextEncoder().encode(`fallback_${metadata.id}`),
-                credentials,
-                packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '',
-                requestingClient: suiClient,
-              });
-
-              const decryptedText = new TextDecoder().decode(decryptedContent);
-              console.log('Successfully decrypted content');
-              return decryptedText;
-            } catch (decryptionError) {
-              console.log('Decryption failed:', decryptionError);
-            }
-          }
-          
-          return content;
+          return articleContent.markdown;
         }
       } catch (error) {
         console.error('Download/decryption failed:', error);

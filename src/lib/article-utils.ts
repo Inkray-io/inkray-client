@@ -1,8 +1,9 @@
 import React from 'react';
-import { createWalrusClient } from './walrus-client';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import type { SuiClient } from '@mysten/sui/client';
 import type { WalletAccount } from '@mysten/wallet-standard';
+import axios from 'axios';
+import { articlesAPI } from './api';
 
 // For now, we'll use simple markdown parsing without external dependencies
 // TODO: Add marked and DOMPurify when needed
@@ -27,73 +28,45 @@ export interface ArticleLoadError {
 const articleCache = new Map<string, ArticleContent>();
 
 /**
- * Download and parse article content from Walrus blob ID
+ * Download and parse article content from backend API using quilt blob ID
  */
-export async function loadArticleContent(bodyBlobId: string): Promise<ArticleContent> {
+export async function loadArticleContent(quiltBlobId: string): Promise<ArticleContent> {
   // Check cache first
-  if (articleCache.has(bodyBlobId)) {
-    const cached = articleCache.get(bodyBlobId)!;
-    console.log(`📄 Article content loaded from cache: ${bodyBlobId}`);
+  if (articleCache.has(quiltBlobId)) {
+    const cached = articleCache.get(quiltBlobId)!;
+    console.log(`📄 Article content loaded from cache: ${quiltBlobId}`);
     return cached;
   }
 
   try {
-    console.log(`📥 Loading article content from Walrus: ${bodyBlobId}`);
+    console.log(`📥 Loading article content from backend: ${quiltBlobId}`);
 
-    // Since we can't use hooks here, we'll need to initialize clients
-    // This is a limitation - in practice, this should be called from a React component
-    // that can access the hooks, or we need to pass the clients as parameters
+    // Call backend API to get article content (JWT token added automatically by interceptor)
+    const response = await articlesAPI.getContent(quiltBlobId);
 
-    // For now, we'll create a minimal client setup
-    // This will need to be refactored to accept client parameters
+    console.log('📋 API response structure:', {
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      hasNestedData: !!response.data?.data,
+      nestedDataKeys: response.data?.data ? Object.keys(response.data.data) : [],
+      contentType: typeof response.data?.data?.content,
+      fullResponse: response.data
+    });
 
-    throw new Error('loadArticleContent needs to be refactored to accept SuiClient and WalletAccount parameters');
+    // Backend returns { success: true, data: { content: "...", mediaFiles: [] } }
+    // So we need response.data.data.content
+    if (!response.data?.data || !response.data.data.content) {
+      throw new Error('No content returned from server');
+    }
 
-  } catch (error) {
-    console.error('❌ Failed to load article content:', error);
-
-    const articleError: ArticleLoadError = {
-      code: 'WALRUS_ERROR',
-      message: `Failed to load article content: ${error instanceof Error ? error.message : String(error)}`,
-      originalError: error,
-    };
-
-    throw articleError;
-  }
-}
-
-/**
- * Load article content with client dependencies injected
- */
-export async function loadArticleContentWithClients(
-  bodyBlobId: string,
-  suiClient: SuiClient,
-  account: WalletAccount | null
-): Promise<ArticleContent> {
-  // Check cache first
-  if (articleCache.has(bodyBlobId)) {
-    const cached = articleCache.get(bodyBlobId)!;
-    console.log(`📄 Article content loaded from cache: ${bodyBlobId}`);
-    return cached;
-  }
-
-  try {
-    console.log(`📥 Loading article content from Walrus: ${bodyBlobId}`);
-
-    // Create Walrus client
-    const walrusClient = createWalrusClient(suiClient, account);
-
-    // Download blob content
-    const contentBytes = await walrusClient.downloadBlob(bodyBlobId);
-    const markdown = new TextDecoder().decode(contentBytes);
-
-    console.log(`✅ Downloaded article content: ${contentBytes.length} bytes`);
+    const markdown = response.data.data.content;
+    console.log(`✅ Downloaded article content: ${markdown.length} characters`);
 
     // Parse content
     const content = await parseArticleMarkdown(markdown);
 
     // Cache the result
-    articleCache.set(bodyBlobId, content);
+    articleCache.set(quiltBlobId, content);
 
     return content;
 
@@ -103,16 +76,21 @@ export async function loadArticleContentWithClients(
     let errorCode: ArticleLoadError['code'] = 'WALRUS_ERROR';
     let message = 'Unknown error occurred';
 
-    if (error instanceof Error) {
-      if (error.message.includes('not found') || error.message.includes('404')) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
         errorCode = 'BLOB_NOT_FOUND';
-        message = `Article content not found. The blob ID "${bodyBlobId}" may be invalid or the content may have expired.`;
-      } else if (error.message.includes('network') || error.message.includes('timeout')) {
+        message = `Article content not found. The quilt ID "${quiltBlobId}" may be invalid or the content may have expired.`;
+      } else if (error.response?.status === 401) {
         errorCode = 'NETWORK_ERROR';
-        message = 'Network error occurred while loading article. Please check your connection and try again.';
+        message = 'Authentication expired. Please log in again.';
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorCode = 'NETWORK_ERROR';
+        message = 'Network timeout occurred while loading article. Please try again.';
       } else {
-        message = `Failed to load article content: ${error.message}`;
+        message = error.response?.data?.message || error.message || 'Failed to load article content';
       }
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
     const articleError: ArticleLoadError = {
@@ -123,6 +101,19 @@ export async function loadArticleContentWithClients(
 
     throw articleError;
   }
+}
+
+/**
+ * Load article content with client dependencies injected (deprecated)
+ * @deprecated Use loadArticleContent instead, which uses the backend API
+ */
+export async function loadArticleContentWithClients(
+  quiltBlobId: string,
+  suiClient: SuiClient,
+  account: WalletAccount | null
+): Promise<ArticleContent> {
+  console.warn('loadArticleContentWithClients is deprecated. Use loadArticleContent instead.');
+  return loadArticleContent(quiltBlobId);
 }
 
 /**
@@ -264,7 +255,7 @@ export function getCacheStats(): { size: number; entries: string[] } {
 /**
  * Hook for loading article content in React components
  */
-export function useArticleContent(bodyBlobId?: string) {
+export function useArticleContent(quiltBlobId?: string) {
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [content, setContent] = React.useState<ArticleContent | null>(null);
@@ -272,38 +263,30 @@ export function useArticleContent(bodyBlobId?: string) {
   const [error, setError] = React.useState<ArticleLoadError | null>(null);
 
   const loadContent = React.useCallback(async (blobId: string) => {
-    if (!suiClient) {
-      setError({
-        code: 'NETWORK_ERROR',
-        message: 'Sui client not available. Please check your connection.',
-      });
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const content = await loadArticleContentWithClients(blobId, suiClient, currentAccount);
+      const content = await loadArticleContent(blobId);
       setContent(content);
     } catch (err) {
       setError(err as ArticleLoadError);
     } finally {
       setIsLoading(false);
     }
-  }, [suiClient, currentAccount]);
+  }, []);
 
   React.useEffect(() => {
-    if (bodyBlobId) {
-      loadContent(bodyBlobId);
+    if (quiltBlobId) {
+      loadContent(quiltBlobId);
     }
-  }, [bodyBlobId, loadContent]);
+  }, [quiltBlobId, loadContent]);
 
   return {
     content,
     isLoading,
     error,
-    reload: bodyBlobId ? () => loadContent(bodyBlobId) : null,
+    reload: quiltBlobId ? () => loadContent(quiltBlobId) : null,
     clearError: () => setError(null),
   };
 }

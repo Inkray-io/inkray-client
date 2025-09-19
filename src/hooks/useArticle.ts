@@ -56,13 +56,13 @@ export const useArticle = (articleSlug: string | null) => {
     }
 
     console.log(`📥 Loading content for article: ${article.title}`);
-    console.log(`📥 Blob ID: ${article.bodyBlobId}`);
+    console.log(`📥 Blob ID: ${article.quiltBlobId}`);
 
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
 
       const articleContent = await loadArticleContentWithClients(
-        article.bodyBlobId,
+        article.quiltBlobId,
         suiClient,
         currentAccount
       );
@@ -101,7 +101,7 @@ export const useArticle = (articleSlug: string | null) => {
       setState(prev => ({ ...prev, article }));
 
       // 2. Load article content from Walrus
-      if (article.bodyBlobId) {
+      if (article.quiltBlobId) {
         try {
           const content = await loadArticleContent(article);
           setState(prev => ({ ...prev, content }));
@@ -114,7 +114,7 @@ export const useArticle = (articleSlug: string | null) => {
           }));
         }
       } else {
-        console.warn('Article has no bodyBlobId, cannot load content');
+        console.warn('Article has no quiltBlobId, cannot load content');
         setState(prev => ({ 
           ...prev, 
           error: 'Article content not available (no blob ID)' 
@@ -173,7 +173,7 @@ export const useArticle = (articleSlug: string | null) => {
    * Reload content only
    */
   const reloadContent = useCallback(async () => {
-    if (state.article && state.article.bodyBlobId) {
+    if (state.article && state.article.quiltBlobId) {
       try {
         const content = await loadArticleContent(state.article);
         setState(prev => ({ ...prev, content, error: null }));
@@ -198,6 +198,6 @@ export const useArticle = (articleSlug: string | null) => {
     // Computed properties
     hasContent: !!state.content,
     hasArticle: !!state.article,
-    canLoadContent: !!state.article?.bodyBlobId,
+    canLoadContent: !!state.article?.quiltBlobId,
   };
 };
