@@ -61,6 +61,10 @@ export const useArticle = (articleSlug: string | null) => {
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
 
+      if (!article.quiltBlobId) {
+        throw new Error('Article has no quilt blob ID');
+      }
+
       const articleContent = await loadArticleContentWithClients(
         article.quiltBlobId,
         suiClient,

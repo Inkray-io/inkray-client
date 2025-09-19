@@ -19,7 +19,7 @@ interface MobileMenuProps {
   currentPage?: string
 }
 
-export function MobileMenu({ children, currentPage = "feed" }: MobileMenuProps) {
+export function MobileMenu({ children, currentPage: _currentPage = "feed" }: MobileMenuProps) {
   const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
   
   // Note: currentPage can be used for future active state management

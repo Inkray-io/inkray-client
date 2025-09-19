@@ -67,15 +67,18 @@ export const useArticleContent = () => {
       
       let errorMessage = 'Failed to fetch article content';
       
-      if (error.response) {
-        if (error.response.status === 404) {
-          errorMessage = 'Article content not found';
-        } else if (error.response.status === 401) {
-          errorMessage = 'Authentication required to view this content';
-        } else if (error.response.status === 403) {
-          errorMessage = 'You do not have permission to view this content';
-        } else {
-          errorMessage = error.response.data?.message || 'Failed to fetch content';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        if (axiosError.response) {
+          if (axiosError.response.status === 404) {
+            errorMessage = 'Article content not found';
+          } else if (axiosError.response.status === 401) {
+            errorMessage = 'Authentication required to view this content';
+          } else if (axiosError.response.status === 403) {
+            errorMessage = 'You do not have permission to view this content';
+          } else {
+            errorMessage = axiosError.response.data?.message || 'Failed to fetch content';
+          }
         }
       } else if (error instanceof Error) {
         errorMessage = error.message;
@@ -116,15 +119,18 @@ export const useArticleContent = () => {
       
       let errorMessage = 'Failed to fetch raw article content';
       
-      if (error.response) {
-        if (error.response.status === 404) {
-          errorMessage = 'Article content not found';
-        } else if (error.response.status === 401) {
-          errorMessage = 'Authentication required to view this content';
-        } else if (error.response.status === 403) {
-          errorMessage = 'You do not have permission to view this content';
-        } else {
-          errorMessage = error.response.data?.message || 'Failed to fetch raw content';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        if (axiosError.response) {
+          if (axiosError.response.status === 404) {
+            errorMessage = 'Article content not found';
+          } else if (axiosError.response.status === 401) {
+            errorMessage = 'Authentication required to view this content';
+          } else if (axiosError.response.status === 403) {
+            errorMessage = 'You do not have permission to view this content';
+          } else {
+            errorMessage = axiosError.response.data?.message || 'Failed to fetch raw content';
+          }
         }
       } else if (error instanceof Error) {
         errorMessage = error.message;

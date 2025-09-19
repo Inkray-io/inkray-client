@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import type { SuiClient } from '@mysten/sui/client';
 import type { WalletAccount } from '@mysten/wallet-standard';
 import axios from 'axios';
@@ -109,8 +108,8 @@ export async function loadArticleContent(quiltBlobId: string): Promise<ArticleCo
  */
 export async function loadArticleContentWithClients(
   quiltBlobId: string,
-  suiClient: SuiClient,
-  account: WalletAccount | null
+  _suiClient: SuiClient,
+  _account: WalletAccount | null
 ): Promise<ArticleContent> {
   console.warn('loadArticleContentWithClients is deprecated. Use loadArticleContent instead.');
   return loadArticleContent(quiltBlobId);
@@ -256,8 +255,6 @@ export function getCacheStats(): { size: number; entries: string[] } {
  * Hook for loading article content in React components
  */
 export function useArticleContent(quiltBlobId?: string) {
-  const suiClient = useSuiClient();
-  const currentAccount = useCurrentAccount();
   const [content, setContent] = React.useState<ArticleContent | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<ArticleLoadError | null>(null);

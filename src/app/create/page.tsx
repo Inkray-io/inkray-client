@@ -51,9 +51,6 @@ export default function CreateArticlePage() {
   const {
     createAndPublishArticle,
     isProcessing,
-    isEncrypting,
-    isUploading,
-    isPublishing,
     uploadProgress,
     error,
     clearError
@@ -208,9 +205,7 @@ export default function CreateArticlePage() {
                     {isProcessing ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        {isEncrypting ? 'Encrypting...' :
-                          isUploading ? `Uploading... ${uploadProgress}%` :
-                            isPublishing ? 'Publishing...' : 'Processing...'}
+                        {uploadProgress > 0 ? `Uploading... ${uploadProgress}%` : 'Processing...'}
                       </>
                     ) : (
                       <>

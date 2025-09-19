@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
+import { validateArticleCreation } from '@/lib/validation';
 
 export interface ArticleCreationState {
   isProcessing: boolean;
@@ -85,6 +86,19 @@ export const useArticleCreation = () => {
           throw new Error('No publication found. Please create a publication first.');
         }
 
+        // 2. Validate input data before sending to backend
+        const validation = validateArticleCreation({
+          title,
+          content,
+          publicationId: publication.publicationId,
+          authorAddress: currentAccount.address,
+          mediaFiles: [], // Files converted to base64, validation happens before conversion
+        });
+        
+        if (!validation.isValid) {
+          throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+        }
+
         console.log('Creating article via backend API:', {
           title,
           contentLength: content.length,
@@ -131,17 +145,18 @@ export const useArticleCreation = () => {
         
         let errorMessage = 'Failed to create article';
         
-        if (error.response) {
-          if (error.response?.status === 401) {
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status?: number; data?: { message?: string } }; code?: string; message?: string };
+          if (axiosError.response?.status === 401) {
             errorMessage = 'Authentication expired. Please log in again.';
-          } else if (error.response?.status === 400) {
-            errorMessage = error.response.data?.message || 'Invalid article data';
-          } else if (error.response?.status === 500) {
+          } else if (axiosError.response?.status === 400) {
+            errorMessage = axiosError.response.data?.message || 'Invalid article data';
+          } else if (axiosError.response?.status === 500) {
             errorMessage = 'Server error. Please try again later.';
-          } else if (error.code === 'ECONNABORTED') {
+          } else if (axiosError.code === 'ECONNABORTED') {
             errorMessage = 'Upload timeout. Please try again with smaller files.';
           } else {
-            errorMessage = error.response?.data?.message || error.message || errorMessage;
+            errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
           }
         } else if (error instanceof Error) {
           errorMessage = error.message;
