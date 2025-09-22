@@ -13,6 +13,7 @@ export interface FeedArticle {
   isEncrypted: boolean;
   quiltBlobId?: string | null;
   quiltObjectId?: string | null;
+  contentSealId?: string | null;
   createdAt: string;
   transactionHash: string;
   timeAgo: string;

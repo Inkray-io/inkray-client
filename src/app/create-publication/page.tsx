@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { setCachedPublication } from "@/lib/cache-manager";
 
 export default function CreatePublicationPage() {
   const router = useRouter();
@@ -76,14 +77,13 @@ export default function CreatePublicationPage() {
         description: `Publication "${publicationName}" created successfully!`,
       });
 
-      // Store publication info in localStorage for later use
-      localStorage.setItem('inkray-user-publication', JSON.stringify({
+      // Store publication info with package ID validation
+      setCachedPublication({
         publicationId: result.publicationId,
         vaultId: result.vaultId,
         ownerCapId: result.ownerCapId,
         name: publicationName,
-        createdAt: new Date().toISOString(),
-      }));
+      });
 
       // Redirect to article creation
       setTimeout(() => router.push('/create'), 1500);

@@ -68,7 +68,7 @@ export function ArticleEditor({
         
         setIsLoading(false)
       } catch (error) {
-        console.error('Failed to initialize Milkdown editor:', error)
+        // Failed to initialize Milkdown editor - continue without it
         setIsLoading(false)
       }
     }

@@ -6,6 +6,7 @@ import '@mysten/dapp-kit/dist/index.css'
 
 import { WalletProviders } from '@/components/providers/WalletProviders'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { CacheProvider } from '@/components/providers/CacheProvider'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
@@ -67,12 +68,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <WalletProviders>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </WalletProviders>
+        <CacheProvider>
+          <WalletProviders>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </WalletProviders>
+        </CacheProvider>
       </body>
     </html>
   )

@@ -134,6 +134,8 @@ export const articlesAPI = {
     };
   }) => api.post('/articles/create', data),
   
+  getBySlug: (slug: string) => api.get(`/articles/${slug}`),
+  
   getContent: (quiltBlobId: string) => api.get(`/articles/content/${quiltBlobId}`),
   
   getRawContent: (quiltBlobId: string) => api.get(`/articles/raw/${quiltBlobId}`, {

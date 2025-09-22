@@ -1,5 +1,5 @@
-import { bcs } from '@mysten/bcs';
-import { createHash } from 'crypto';
+import { bcs } from '@mysten/sui/bcs';
+import { toHex } from '@mysten/sui/utils';
 
 /**
  * BCS Identity Generation for Seal Content-Identity Based Encryption
@@ -16,8 +16,7 @@ export const ID_VERSION_V1 = 1;        // u16
 const IdV1Layout = bcs.struct('IdV1', {
   tag: bcs.u8(),
   version: bcs.u16(),
-  publication: bcs.fixedArray(32, bcs.u8()),  // 32-byte Sui address
-  article: bcs.fixedArray(32, bcs.u8()),      // 32-byte Sui address
+  publication: bcs.Address,  // Sui address
   nonce: bcs.u64(),
 });
 
@@ -27,8 +26,7 @@ const IdV1Layout = bcs.struct('IdV1', {
 export interface IdV1 {
   tag: number;        // 0 for article content
   version: number;    // 1 for V1
-  publication: number[]; // 32-byte publication address as byte array
-  article: number[];     // 32-byte article address as byte array  
+  publication: string; // Publication address
   nonce: bigint;        // timestamp for uniqueness
 }
 
@@ -46,7 +44,7 @@ export function addressToBytes(address: string): number[] {
   if (!isValidSuiAddress(address)) {
     throw new Error(`Invalid Sui address format: ${address}. Expected format: 0x followed by 64 hex characters.`);
   }
-  
+
   // Remove 0x prefix and convert to bytes
   const hexString = address.slice(2);
   const bytes: number[] = [];
@@ -63,29 +61,10 @@ export function bytesToAddress(bytes: number[]): string {
   if (bytes.length !== 32) {
     throw new Error(`Invalid byte array length: ${bytes.length}. Expected 32 bytes for Sui address.`);
   }
-  
-  return '0x' + bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  return '0x' + toHex(new Uint8Array(bytes));
 }
 
-/**
- * Generate deterministic article address from inputs
- * Uses SHA-256 hash to create reproducible addresses
- */
-export function generateDeterministicArticleAddress(
-  publicationId: string,
-  title: string,
-  timestamp: number
-): string {
-  // Create deterministic hash from inputs
-  const hash = createHash('sha256')
-    .update(publicationId)
-    .update(title)
-    .update(timestamp.toString())
-    .digest();
-    
-  // Return as proper Sui address format (32 bytes = 64 hex chars)
-  return '0x' + hash.toString('hex');
-}
 
 /**
  * Generate a proper BCS-encoded IdV1 content ID for articles
@@ -103,36 +82,25 @@ export function generateArticleContentId(
     throw new Error(`Invalid Sui address format for publication: ${publicationId}`);
   }
 
+  // Use title hash for deterministic nonce
+  const titleHash = articleTitle.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
   const timestamp = Date.now();
-  
-  // Generate deterministic article address
-  const articleAddress = generateDeterministicArticleAddress(
-    publicationId,
-    articleTitle,
-    timestamp
-  );
-
-  console.log(`🆔 Generating content ID:`);
-  console.log(`  Publication ID: ${publicationId}`);
-  console.log(`  Article Title: ${articleTitle}`);
-  console.log(`  Generated Article Address: ${articleAddress}`);
-  console.log(`  Timestamp: ${timestamp}`);
+  const nonce = BigInt(timestamp + Math.abs(titleHash));
 
   // Create IdV1 struct
   const idV1: IdV1 = {
-    tag: TAG_ARTICLE_CONTENT,     // 0
-    version: ID_VERSION_V1,       // 1
-    publication: addressToBytes(publicationId),
-    article: addressToBytes(articleAddress),
-    nonce: BigInt(timestamp)
+    tag: TAG_ARTICLE_CONTENT,
+    version: ID_VERSION_V1,
+    publication: publicationId,
+    nonce
   };
 
   // BCS encode to bytes
   const encodedBytes = IdV1Layout.serialize(idV1).toBytes();
-  
-  console.log(`  Generated BCS-encoded IdV1: ${encodedBytes.length} bytes`);
-  console.log(`  Content ID (hex): 0x${Array.from(encodedBytes).map(b => b.toString(16).padStart(2, '0')).join('')}`);
-  
+
   return encodedBytes;
 }
 
@@ -165,21 +133,20 @@ export function generateMediaContentId(
 export function parseContentId(encodedId: Uint8Array): IdV1 {
   try {
     const parsed = IdV1Layout.parse(encodedId);
-    
+
     // Validate parsed data
     if (parsed.tag !== TAG_ARTICLE_CONTENT) {
       throw new Error(`Invalid tag: ${parsed.tag}. Expected ${TAG_ARTICLE_CONTENT}.`);
     }
-    
+
     if (parsed.version !== ID_VERSION_V1) {
       throw new Error(`Invalid version: ${parsed.version}. Expected ${ID_VERSION_V1}.`);
     }
-    
+
     return {
       tag: parsed.tag,
       version: parsed.version,
-      publication: Array.from(parsed.publication),
-      article: Array.from(parsed.article),
+      publication: parsed.publication,
       nonce: BigInt(parsed.nonce)
     };
   } catch (error) {
@@ -188,21 +155,19 @@ export function parseContentId(encodedId: Uint8Array): IdV1 {
 }
 
 /**
- * Extract publication and article addresses from content ID
+ * Extract publication and timestamp from content ID
  * 
  * @param encodedId - BCS-encoded IdV1 as Uint8Array
- * @returns Object with publication and article addresses
+ * @returns Object with publication and timestamp
  */
 export function extractAddressesFromContentId(encodedId: Uint8Array): {
   publicationId: string;
-  articleId: string;
   timestamp: number;
 } {
   const parsed = parseContentId(encodedId);
-  
+
   return {
-    publicationId: bytesToAddress(parsed.publication),
-    articleId: bytesToAddress(parsed.article),
+    publicationId: parsed.publication,
     timestamp: Number(parsed.nonce)
   };
 }
@@ -229,7 +194,7 @@ export function isValidContentId(encodedId: Uint8Array): boolean {
  * @returns Hex string representation
  */
 export function contentIdToHex(encodedId: Uint8Array): string {
-  return '0x' + Array.from(encodedId).map(b => b.toString(16).padStart(2, '0')).join('');
+  return '0x' + toHex(encodedId);
 }
 
 /**
@@ -240,15 +205,15 @@ export function contentIdToHex(encodedId: Uint8Array): string {
  */
 export function hexToContentId(hexString: string): Uint8Array {
   const hex = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
-  
+
   if (hex.length % 2 !== 0) {
     throw new Error('Invalid hex string: odd length');
   }
-  
+
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
   }
-  
+
   return bytes;
 }

@@ -53,8 +53,8 @@ export function RequirePublication({
             router.push(redirectTo)
           }, 1500)
         }
-      } catch (error) {
-        console.error('Failed to check publication:', error)
+      } catch {
+        // Failed to check publication - treat as no publication
         setHasPublication(false)
       } finally {
         setIsLoading(false)

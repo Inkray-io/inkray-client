@@ -99,13 +99,21 @@ function ArticlePageContent() {
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 <div className="space-y-2">
                   <p className="font-medium">
-                    {isLoadingContent ? 'Loading content from Walrus...' :
+                    {isLoadingContent && article?.contentSealId ? 'Decrypting content with Seal...' :
+                     isLoadingContent ? 'Loading content from Walrus...' :
                      'Loading article...'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {isLoadingContent ? 'Fetching content from decentralized storage' :
+                    {isLoadingContent && article?.contentSealId ? 'Using Seal decryption for encrypted content' :
+                     isLoadingContent ? 'Fetching content from decentralized storage' :
                      'Please wait while we load your article'}
                   </p>
+                  {article?.contentSealId && isLoadingContent && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-3">
+                      <Lock className="h-4 w-4" />
+                      <span>Encrypted Content - Wallet Required</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -116,19 +124,33 @@ function ArticlePageContent() {
             <div className="bg-white rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                  <AlertCircle className="w-8 h-8 text-red-600" />
+                  {error.includes('Wallet connection required') ? (
+                    <Lock className="w-8 h-8 text-orange-600" />
+                  ) : (
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-xl font-bold text-gray-900">
-                    Failed to Load Article
+                    {error.includes('Wallet connection required') ? 'Wallet Required' :
+                     error.includes('Decryption') ? 'Decryption Failed' :
+                     'Failed to Load Article'}
                   </h2>
-                  <p className="text-red-700 max-w-md mx-auto">
+                  <p className={`max-w-md mx-auto ${
+                    error.includes('Wallet connection required') ? 'text-orange-700' : 'text-red-700'
+                  }`}>
                     {error}
                   </p>
+                  {article?.contentSealId && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-3">
+                      <Lock className="h-4 w-4" />
+                      <span>This article contains encrypted content</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3 justify-center">
                   <Button onClick={handleRetry} className="gap-2">
-                    <Loader2 className="h-4 w-4" />
+                    <RefreshCw className="h-4 w-4" />
                     Try Again
                   </Button>
                   <Button onClick={handleBack} variant="outline">
@@ -149,19 +171,19 @@ function ArticlePageContent() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>{article.authorShortAddress || `${article.author.slice(0, 6)}...${article.author.slice(-4)}`}</span>
+                      <span>{article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {article.timeAgo || new Date(article.createdAt).toLocaleDateString()}
+                        {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {article.isEncrypted ? (
                         <>
                           <Lock className="h-4 w-4 text-orange-600" />
-                          <span className="text-orange-600">Premium Content</span>
+                          <span className="text-orange-600">Premium Article</span>
                         </>
                       ) : (
                         <>
@@ -169,12 +191,17 @@ function ArticlePageContent() {
                           <span className="text-green-600">Free Article</span>
                         </>
                       )}
+                      {article.contentSealId && (
+                        <span className="text-xs text-blue-600 ml-2">
+                          🔒 Encrypted with Seal
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Article Title */}
                   <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                    {article.title}
+                    {article.title || 'Untitled Article'}
                   </h1>
 
                   {/* Article Stats */}
@@ -228,14 +255,39 @@ function ArticlePageContent() {
                   </div>
                 ) : canLoadContent ? (
                   <div className="text-center py-12 space-y-4">
-                    <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
+                    {article.contentSealId ? (
+                      <Lock className="h-12 w-12 text-blue-500 mx-auto" />
+                    ) : (
+                      <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
+                    )}
                     <div>
-                      <p className="font-medium">Content not loaded</p>
-                      <p className="text-muted-foreground text-sm">Click to load the article content</p>
+                      <p className="font-medium">
+                        {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {article.contentSealId ? 
+                          'Click to decrypt and load the article content using Seal' : 
+                          'Click to load the article content'
+                        }
+                      </p>
+                      {article.contentSealId && (
+                        <p className="text-xs text-blue-600 mt-2">
+                          Wallet connection required for decryption
+                        </p>
+                      )}
                     </div>
                     <Button onClick={reloadContent} className="gap-2">
-                      <RefreshCw className="h-4 w-4" />
-                      Load Content
+                      {article.contentSealId ? (
+                        <>
+                          <Lock className="h-4 w-4" />
+                          Decrypt Content
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4" />
+                          Load Content
+                        </>
+                      )}
                     </Button>
                   </div>
                 ) : (
@@ -254,7 +306,7 @@ function ArticlePageContent() {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     <p>Published on Sui blockchain</p>
-                    <p>Transaction: {article.transactionHash}</p>
+                    <p>Transaction: {article.transactionHash || 'Unknown'}</p>
                   </div>
                   
                   <div className="flex gap-3">
@@ -264,7 +316,7 @@ function ArticlePageContent() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => window.open(`https://suiexplorer.com/txblock/${article.transactionHash}?network=testnet`, '_blank')}
+                      onClick={() => article.transactionHash && window.open(`https://suiexplorer.com/txblock/${article.transactionHash}?network=testnet`, '_blank')}
                       className="gap-2"
                     >
                       <ExternalLink className="h-4 w-4" />

@@ -2,9 +2,8 @@ import { useState, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { validateArticleCreation } from '@/lib/validation';
-import { encryptArticleContent, encryptMediaFiles, EncryptedMediaFile } from '@/lib/seal-encryption';
-import { validateEncryptionRequirements, getEncryptionStatus } from '@/lib/seal-encryption';
-import { getSealClient } from '@/lib/seal-client';
+import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
+import { getCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
 
 export interface ArticleCreationState {
   isProcessing: boolean;
@@ -32,12 +31,8 @@ export interface ArticleUploadResult {
   storageEndEpoch: number;
 }
 
-interface PublicationInfo {
-  publicationId: string;
-  vaultId: string;
-  ownerCapId: string;
-  name: string;
-}
+// Use CachedPublicationData from cache manager for consistency
+type PublicationInfo = CachedPublicationData;
 
 /**
  * Hook for article creation using backend API
@@ -56,18 +51,16 @@ export const useArticleCreation = () => {
   const suiClient = useSuiClient();
 
   /**
-   * Get user's publication info from localStorage
+   * Get user's publication info with automatic cache validation
    */
   const getUserPublication = useCallback(async (): Promise<PublicationInfo | null> => {
-    // Try localStorage first
-    const stored = localStorage.getItem('inkray-user-publication');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (error) {
-        console.error('Failed to parse stored publication:', error);
-      }
+    // Use cache manager with automatic package ID validation
+    const cachedPublication = getCachedPublication();
+    
+    if (cachedPublication) {
+      return cachedPublication;
     }
+    
     return null;
   }, []);
 
@@ -102,7 +95,6 @@ export const useArticleCreation = () => {
         }
 
         // 2. Validate input data BEFORE encryption (validate plain text)
-        console.log('🔍 Validating plain text content before encryption...');
         const validation = validateArticleCreation({
           title,
           content, // Validate the original markdown content
@@ -114,38 +106,26 @@ export const useArticleCreation = () => {
         if (!validation.isValid) {
           throw new Error(`Content validation failed: ${validation.errors.join(', ')}`);
         }
-        
-        console.log('✅ Content validation passed for plain text');
 
-        // 3. Check Seal encryption requirements
-        console.log('🔐 Checking Seal encryption status...');
-        const encryptionStatus = getEncryptionStatus();
+        // 3. Initialize SealService and check encryption requirements
+        if (!currentAccount || !suiClient) {
+          throw new Error('Wallet connection required for encryption');
+        }
+
+        const sealService = createSealService(suiClient, currentAccount);
+        const encryptionStatus = sealService.getEncryptionStatus();
+        
         if (!encryptionStatus.isAvailable) {
           throw new Error(`Seal encryption not available: ${encryptionStatus.error || 'Unknown error'}`);
         }
 
         // Validate encryption requirements
-        validateEncryptionRequirements(publication.publicationId);
+        sealService.validateEncryptionRequirements(publication.publicationId);
 
         setState(prev => ({ ...prev, isEncrypting: true, encryptionProgress: 10 }));
 
-        // Initialize Seal client with current user context
-        if (!currentAccount) {
-          throw new Error('Wallet connection required for encryption');
-        }
-        
-        // Initialize the Seal client with the current SuiClient and account
-        const sealClient = getSealClient(suiClient, currentAccount);
-        console.log('🔧 Seal client initialized:', sealClient.getStatus());
-
-        console.log('🔒 Encrypting article content with Seal...');
-        console.log('  Article title:', title);
-        console.log('  Content length:', content.length);
-        console.log('  Media files count:', mediaFiles.length);
-        console.log('  Publication:', publication.name);
-
         // 4. Encrypt article content with Seal IBE
-        const encryptedContent = await encryptArticleContent(
+        const encryptedContent = await sealService.encryptArticleContent(
           content,
           publication.publicationId,
           title
@@ -156,26 +136,19 @@ export const useArticleCreation = () => {
         // 5. Encrypt media files if present
         let encryptedMediaFiles: EncryptedMediaFile[] = [];
         if (mediaFiles && mediaFiles.length > 0) {
-          console.log('🖼️ Encrypting media files with Seal...');
-          encryptedMediaFiles = await encryptMediaFiles(
+          encryptedMediaFiles = await sealService.encryptMediaFiles(
             mediaFiles,
             publication.publicationId
           );
         }
 
         setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
-
-        console.log('✅ Encryption completed successfully');
-        console.log('  Content encrypted size:', encryptedContent.encryptedSize, 'bytes');
-        console.log('  Content ID:', encryptedContent.contentIdHex.substring(0, 20) + '...');
-        console.log('  Encrypted media files:', encryptedMediaFiles.length);
-
         // 6. Prepare request data with encrypted content
         // Convert encrypted content to base64 for API transmission
         const encryptedContentBase64 = btoa(
           Array.from(encryptedContent.encryptedData, byte => String.fromCharCode(byte)).join('')
         );
-        
+
         const requestData = {
           title,
           content: encryptedContentBase64, // Base64-encoded encrypted content
@@ -201,13 +174,11 @@ export const useArticleCreation = () => {
             validationPassed: true, // Frontend validation completed
           },
         };
-
         setState(prev => ({ ...prev, uploadProgress: 25 }));
 
         setState(prev => ({ ...prev, uploadProgress: 50 }));
 
         // 3. Call backend API (token is automatically added by api interceptor)
-        console.log('Calling backend API...');
         const response = await articlesAPI.create(requestData);
 
         setState(prev => ({ ...prev, uploadProgress: 90 }));
@@ -217,16 +188,10 @@ export const useArticleCreation = () => {
         }
 
         const result: ArticleUploadResult = response.data;
-
-        console.log('Article created successfully:', result);
-
         setState(prev => ({ ...prev, uploadProgress: 100 }));
 
         return result;
-
       } catch (error) {
-        console.error('Article creation failed:', error);
-        
         let errorMessage = 'Failed to create article';
         
         if (error && typeof error === 'object' && 'response' in error) {
@@ -248,7 +213,6 @@ export const useArticleCreation = () => {
 
         setState(prev => ({ ...prev, error: errorMessage }));
         throw new Error(errorMessage);
-
       } finally {
         setState(prev => ({
           ...prev,
@@ -279,7 +243,6 @@ export const useArticleCreation = () => {
           size: file.size,
         });
       } catch (error) {
-        console.error(`Failed to process file ${file.name}:`, error);
         throw new Error(`Failed to process file: ${file.name}`);
       }
     }
@@ -300,10 +263,16 @@ export const useArticleCreation = () => {
   const checkEncryptionAvailability = useCallback(async (): Promise<{
     isAvailable: boolean;
     error?: string;
-    status: ReturnType<typeof getEncryptionStatus>;
+    status: EncryptionStatus;
   }> => {
     try {
-      const status = getEncryptionStatus();
+      if (!currentAccount || !suiClient) {
+        throw new Error('Wallet not connected');
+      }
+
+      const sealService = createSealService(suiClient, currentAccount);
+      const status = sealService.getEncryptionStatus();
+      
       return {
         isAvailable: status.isAvailable,
         error: status.error,
@@ -321,7 +290,7 @@ export const useArticleCreation = () => {
         },
       };
     }
-  }, []);
+  }, [currentAccount, suiClient]);
 
   /**
    * Reset all state

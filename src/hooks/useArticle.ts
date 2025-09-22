@@ -1,10 +1,27 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { loadArticleContentWithClients } from '@/lib/article-utils';
-import { useFeedArticles, type FeedArticle } from './useFeedArticles';
+import { articlesAPI } from '@/lib/api';
+import { useContentDecryption } from './useContentDecryption';
+
+export interface Article {
+  articleId: string;
+  slug: string;
+  title: string;
+  author: string;
+  authorShortAddress: string;
+  publicationId: string;
+  vaultId: string;
+  isEncrypted: boolean;
+  quiltBlobId: string;
+  quiltObjectId: string;
+  contentSealId?: string;
+  createdAt: string;
+  transactionHash: string;
+  timeAgo: string;
+}
 
 export interface ArticleState {
-  article: FeedArticle | null;
+  article: Article | null;
   content: string | null;
   isLoading: boolean;
   isLoadingContent: boolean;
@@ -12,8 +29,8 @@ export interface ArticleState {
 }
 
 /**
- * Simplified hook for loading and displaying articles (Walrus-only flow)
- * This replaces the complex useArticleDecryption for our simplified implementation
+ * Simplified hook for loading and displaying articles using direct API calls
+ * Independent of feed data - fetches article metadata directly from backend
  */
 export const useArticle = (articleSlug: string | null) => {
   const [state, setState] = useState<ArticleState>({
@@ -26,37 +43,42 @@ export const useArticle = (articleSlug: string | null) => {
 
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const { getArticleBySlug, articles } = useFeedArticles();
+  const { decryptContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
 
   /**
-   * Load article metadata from feed
+   * Load article metadata directly from backend API
    */
-  const loadArticleMetadata = useCallback(async (slug: string): Promise<FeedArticle | null> => {
-    console.log(`📄 Loading article metadata for: ${slug}`);
+  const loadArticleMetadata = useCallback(async (slug: string): Promise<Article> => {
     
-    // Try to get from already loaded articles first
-    const cachedArticle = getArticleBySlug(slug);
-    if (cachedArticle) {
-      console.log(`✅ Found cached article: ${cachedArticle.title}`);
-      return cachedArticle;
+    try {
+      const response = await articlesAPI.getBySlug(slug);
+      
+      // Handle wrapped API response: { success: true, data: {...} }
+      if (!response.data || !response.data.success) {
+        throw new Error('API returned unsuccessful response');
+      }
+      
+      const article = response.data.data;
+      
+      if (!article) {
+        throw new Error('No article data in API response');
+      }
+      
+      
+      return article;
+    } catch (error) {
+      throw new Error(`Article with slug "${slug}" not found`);
     }
-
-    // If not cached, we need to search through the backend directly
-    // For now, we'll return null and rely on the feed loading
-    console.log(`❓ Article not found in cache, may need to load from backend`);
-    return null;
-  }, [getArticleBySlug]);
+  }, []);
 
   /**
-   * Load article content from Walrus
+   * Load article content (with decryption for encrypted content)
    */
-  const loadArticleContent = useCallback(async (article: FeedArticle): Promise<string> => {
+  const loadArticleContent = useCallback(async (article: Article): Promise<string> => {
     if (!suiClient) {
       throw new Error('Sui client not available');
     }
 
-    console.log(`📥 Loading content for article: ${article.title}`);
-    console.log(`📥 Blob ID: ${article.quiltBlobId}`);
 
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
@@ -65,22 +87,82 @@ export const useArticle = (articleSlug: string | null) => {
         throw new Error('Article has no quilt blob ID');
       }
 
-      const articleContent = await loadArticleContentWithClients(
-        article.quiltBlobId,
-        suiClient,
-        currentAccount
-      );
+      // All content is encrypted - check if we have a content seal ID
+      if (article.contentSealId) {
+        
+        // Wallet connection is required for signing the decryption transaction
+        if (!currentAccount) {
+          throw new Error('Wallet connection required to decrypt content');
+        }
 
-      console.log(`✅ Article content loaded: ${articleContent.wordCount} words`);
-      return articleContent.markdown;
+        // Download encrypted content from backend
+        const response = await articlesAPI.getRawContent(article.quiltBlobId);
+        
+        // Debug: Log response structure to understand the issue
+        
+        // Handle different response formats
+        let encryptedData: Uint8Array;
+        if (response.data instanceof ArrayBuffer) {
+          encryptedData = new Uint8Array(response.data);
+        } else if (response.data instanceof Uint8Array) {
+          encryptedData = response.data;
+        } else if (typeof response.data === 'string') {
+          // If it's base64 string, convert it
+          const binaryString = atob(response.data);
+          encryptedData = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            encryptedData[i] = binaryString.charCodeAt(i);
+          }
+        } else {
+          throw new Error(`Unexpected encrypted data format: ${typeof response.data}`);
+        }
+        
+
+        // Decrypt using the new decryption hook (pass contentSealId as hex string directly)
+        const decryptedContent = await decryptContent({
+          encryptedData,
+          contentId: article.contentSealId, // Pass as hex string directly from database
+          articleId: article.articleId,
+        });
+
+        
+        return decryptedContent;
+        
+      } else {
+        // Fallback: if no content seal ID, try to get parsed content from backend
+        
+        const response = await articlesAPI.getContent(article.quiltBlobId);
+        const content = response.data.content;
+
+        return content;
+      }
 
     } catch (error) {
-      console.error('❌ Failed to load article content:', error);
-      throw error;
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to load article content';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Wallet connection required')) {
+          errorMessage = 'Please connect your wallet to view this encrypted content';
+        } else if (error.message.includes('key server')) {
+          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('threshold')) {
+          errorMessage = 'Decryption service unavailable. Please try again later.';
+        } else if (error.message.includes('session')) {
+          errorMessage = 'Authentication failed. Please reconnect your wallet and try again.';
+        } else if (error.message.includes('approve_free')) {
+          errorMessage = 'Content access denied. This article may not support free access.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
     }
-  }, [suiClient, currentAccount]);
+  }, [suiClient, currentAccount, decryptContent]);
 
   /**
    * Load complete article (metadata + content)
@@ -95,30 +177,23 @@ export const useArticle = (articleSlug: string | null) => {
     }));
 
     try {
-      // 1. Load article metadata
+      // 1. Load article metadata from backend
       const article = await loadArticleMetadata(slug);
-      
-      if (!article) {
-        throw new Error(`Article with slug "${slug}" not found. Make sure the article exists and the feed has loaded.`);
-      }
-
       setState(prev => ({ ...prev, article }));
 
-      // 2. Load article content from Walrus
+      // 2. Load article content
       if (article.quiltBlobId) {
         try {
           const content = await loadArticleContent(article);
           setState(prev => ({ ...prev, content }));
         } catch (contentError) {
           // If content loading fails, still show the article metadata
-          console.error('Failed to load content but showing article metadata:', contentError);
           setState(prev => ({ 
             ...prev, 
             error: `Failed to load article content: ${contentError instanceof Error ? contentError.message : 'Unknown error'}` 
           }));
         }
       } else {
-        console.warn('Article has no quiltBlobId, cannot load content');
         setState(prev => ({ 
           ...prev, 
           error: 'Article content not available (no blob ID)' 
@@ -138,13 +213,7 @@ export const useArticle = (articleSlug: string | null) => {
    */
   useEffect(() => {
     if (articleSlug) {
-      // Wait for articles to load before trying to find the article
-      if (articles.length > 0) {
-        loadArticle(articleSlug);
-      } else {
-        // If no articles loaded yet, set loading state
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
-      }
+      loadArticle(articleSlug);
     } else {
       // Clear state when no slug
       setState({
@@ -155,14 +224,8 @@ export const useArticle = (articleSlug: string | null) => {
         error: null,
       });
     }
-  }, [articleSlug, articles.length, loadArticle]);
+  }, [articleSlug, loadArticle]);
 
-  /**
-   * Clear error
-   */
-  const clearError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
-  }, []);
 
   /**
    * Retry loading
@@ -191,11 +254,15 @@ export const useArticle = (articleSlug: string | null) => {
   return {
     // State
     ...state,
-    isProcessing: state.isLoading || state.isLoadingContent,
+    isProcessing: state.isLoading || state.isLoadingContent || isDecrypting,
+    error: state.error || decryptionError,
 
     // Actions
     loadArticle,
-    clearError,
+    clearError: () => {
+      setState(prev => ({ ...prev, error: null }));
+      clearDecryptionError();
+    },
     retry,
     reloadContent,
 

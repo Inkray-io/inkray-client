@@ -31,7 +31,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
       await copyToClipboard(address)
       // You could add a toast notification here
     } catch (error) {
-      console.error('Failed to copy address:', error)
+      // Failed to copy address - continue silently
     } finally {
       setTimeout(() => setCopying(false), 1000)
     }

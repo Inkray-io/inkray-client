@@ -5,10 +5,8 @@ import { Transaction } from '@mysten/sui/transactions';
 import { CONFIG } from './config';
 import { generateArticleContentId, generateMediaContentId } from './seal-identity';
 
-// Extended wallet account interface with signing capabilities
-interface SigningWalletAccount extends WalletAccount {
-  signPersonalMessage?: (message: Uint8Array) => Promise<{ signature: string }>;
-}
+// NOTE: This Seal client is deprecated for direct use in components.
+// Use useContentDecryption hook instead for proper React integration.
 
 // Types for simplified free access Seal client
 export interface SealClientConfig {
@@ -248,13 +246,12 @@ export class InkraySealClient {
       const sealClient = await this.getSealClient();
       const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
 
-      // Sign session key with user's wallet
-      if (this.config.account && 'signPersonalMessage' in this.config.account) {
-        const message = sessionKey.getPersonalMessage();
-        const signResult = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
-        sessionKey.setPersonalMessageSignature(signResult.signature);
-      }
+      // NOTE: Session key signing is now handled in React components using useSignPersonalMessage
+      // This method is deprecated in favor of the useContentDecryption hook
+      throw new Error('Direct signing from Seal client is deprecated. Use useContentDecryption hook instead.');
 
+      // The following code is unreachable and kept for reference only:
+      /*
       // Build Move transaction for free access approval
       const tx = new Transaction();
       tx.moveCall({
@@ -285,6 +282,7 @@ export class InkraySealClient {
       console.log(`  Decrypted size: ${decrypted.length} bytes`);
 
       return decrypted;
+      */
     } catch (error) {
       console.error('❌ Seal decryption failed:', error);
 

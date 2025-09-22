@@ -11,6 +11,7 @@ import { RequirePublication } from '@/components/auth/RequirePublication'
 import { useArticleCreation } from '@/hooks/useArticleCreation'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, AlertCircle } from 'lucide-react'
+import { getCachedDraft, setCachedDraft, clearDraftCache } from '@/lib/cache-manager'
 
 // Utility function to extract plain text from markdown
 function getPlainTextFromMarkdown(markdown: string): string {
@@ -58,6 +59,7 @@ export default function CreateArticlePage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [isGated, setIsGated] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -68,27 +70,27 @@ export default function CreateArticlePage() {
       const draft = {
         title,
         content,
-        lastModified: new Date().toISOString()
+        isGated
       }
 
-      localStorage.setItem('inkray-article-draft', JSON.stringify(draft))
+      setCachedDraft(draft)
       setLastSaved(new Date())
     }
-  }, [title, content])
+  }, [title, content, isGated])
 
   // Load saved draft on mount
   useEffect(() => {
     const loadDraft = () => {
       try {
-        const savedDraft = localStorage.getItem('inkray-article-draft')
-        if (savedDraft) {
-          const draft = JSON.parse(savedDraft)
+        const draft = getCachedDraft()
+        if (draft) {
           setTitle(draft.title || '')
           setContent(draft.content || '')
-          setLastSaved(new Date(draft.lastModified))
+          setIsGated(draft.isGated || false)
+          setLastSaved(new Date(draft.timestamp))
         }
-      } catch (error) {
-        console.error('Failed to load draft:', error)
+      } catch {
+        // Failed to load draft - continue without it
       }
     }
 
@@ -104,10 +106,10 @@ export default function CreateArticlePage() {
     const draft = {
       title,
       content,
-      lastModified: new Date().toISOString()
+      isGated
     }
 
-    localStorage.setItem('inkray-article-draft', JSON.stringify(draft))
+    setCachedDraft(draft)
     setLastSaved(new Date())
     setIsSaving(false)
   }
@@ -125,10 +127,10 @@ export default function CreateArticlePage() {
     try {
       clearError()
 
-      const result = await createAndPublishArticle(title.trim(), content.trim(), [], false) // [] = no media files, false = free article
+      const result = await createAndPublishArticle(title.trim(), content.trim(), [], isGated) // [] = no media files, use isGated state
 
       // Clear draft on successful publish
-      localStorage.removeItem('inkray-article-draft')
+      clearDraftCache()
 
       toast({
         title: "Article Published!",
@@ -151,9 +153,10 @@ export default function CreateArticlePage() {
 
   const clearDraft = () => {
     if (confirm('Are you sure you want to clear this draft?')) {
-      localStorage.removeItem('inkray-article-draft')
+      clearDraftCache()
       setTitle('')
       setContent('')
+      setIsGated(false)
       setLastSaved(null)
     }
   }
