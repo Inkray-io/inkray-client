@@ -20,15 +20,15 @@ const ConfigSchema = z.object({
     'NEXT_PUBLIC_PACKAGE_ID must be a valid Sui address (0x followed by 60-64 hex characters)'
   ),
   NETWORK: NetworkSchema,
-  
+
   // Walrus Configuration
   WALRUS_AGGREGATOR_URL: z.string().url('NEXT_PUBLIC_WALRUS_AGGREGATOR_URL must be a valid URL'),
   WALRUS_PUBLISHER_URL: z.string().url('NEXT_PUBLIC_WALRUS_PUBLISHER_URL must be a valid URL'),
-  
+
   // Seal Configuration
   SEAL_API_URL: z.string().url('NEXT_PUBLIC_SEAL_API_URL must be a valid URL'),
   SEAL_KEY_SERVER_IDS: z.string().optional(),
-  
+
   // Application Configuration
   API_URL: z.string().url('NEXT_PUBLIC_API_URL must be a valid URL'),
   APP_NAME: z.string().min(1, 'NEXT_PUBLIC_APP_NAME is required'),
@@ -58,7 +58,7 @@ const getDefaultConfig = (network: string) => {
       SEAL_API_URL: 'http://localhost:8082',
     },
   };
-  
+
   return defaults[network as keyof typeof defaults] || defaults.testnet;
 };
 
@@ -70,7 +70,7 @@ function loadAndValidateConfig() {
   try {
     const rawNetwork = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
     const defaults = getDefaultConfig(rawNetwork);
-    
+
     const rawConfig = {
       PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID || '',
       NETWORK: rawNetwork,
@@ -91,32 +91,32 @@ function loadAndValidateConfig() {
     }
 
     const validatedConfig = ConfigSchema.parse(rawConfig);
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.log('✅ Configuration validation successful');
     }
-    
+
     return validatedConfig;
   } catch (error) {
     // Enhanced error handling with more context
     console.error('❌ Configuration validation failed:', error);
-    
+
     if (error instanceof z.ZodError) {
       const errorMessages = error.issues.map(err => {
         const path = err.path.join('.');
         return `❌ ${path}: ${err.message}`;
       }).join('\n');
-      
-      const errorMsg = 
+
+      const errorMsg =
         `🔧 Configuration Error - Please check your environment variables:\n\n${errorMessages}\n\n` +
         `💡 Make sure you have copied .env.example to .env.local and filled in all required values.\n` +
         `📖 See .env.example for detailed configuration instructions.\n\n` +
         `🐛 If this error persists, check the browser console for more details.`;
-      
+
       console.error(errorMsg);
       throw new Error(errorMsg);
     }
-    
+
     console.error('Unknown configuration error:', error);
     throw error;
   }
@@ -136,7 +136,7 @@ try {
   if (process.env.NODE_ENV === 'development') {
     console.warn('⚠️ Using fallback configuration due to validation error');
     console.warn('⚠️ Some features may not work properly until configuration is fixed');
-    
+
     CONFIG = {
       PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID || '0x0000000000000000000000000000000000000000000000000000000000000000',
       NETWORK: (process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet') || 'testnet',
@@ -204,8 +204,8 @@ export const validateConfiguration = (): { valid: boolean; errors: string[] } =>
     return { valid: true, errors: [] };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { 
-        valid: false, 
+      return {
+        valid: false,
         errors: error.issues.map(err => `${err.path.join('.')}: ${err.message}`)
       };
     }
@@ -218,10 +218,10 @@ export const validateConfiguration = (): { valid: boolean; errors: string[] } =>
  */
 export const logConfigurationStatus = () => {
   if (!isDevelopment) return;
-  
+
   console.log('🔧 Inkray Configuration Status:');
   console.log('================================');
-  
+
   const info = getEnvironmentInfo();
   console.log(`📍 Network: ${info.network}`);
   console.log(`📦 Package ID: ${info.hasPackageId ? '✅ Set' : '❌ Missing'}`);
@@ -229,7 +229,7 @@ export const logConfigurationStatus = () => {
   console.log(`🚀 Walrus Publisher: ${info.walrusEndpoints.publisher}`);
   console.log(`🔐 Seal API: ${info.sealEndpoint}`);
   console.log(`🌐 Backend API: ${info.apiEndpoint}`);
-  
+
   const validation = validateConfiguration();
   if (!validation.valid) {
     console.log('❌ Configuration Issues:');
@@ -253,14 +253,14 @@ export const parseKeyServerIds = (): string[] => {
     console.warn('⚠️ No Seal key server IDs configured. Seal encryption will not work.');
     return [];
   }
-  
+
   const ids = CONFIG.SEAL_KEY_SERVER_IDS.split(',').map(id => id.trim());
   const validIds = ids.filter(id => /^0x[a-fA-F0-9]{64}$/.test(id));
-  
+
   if (validIds.length !== ids.length) {
     console.warn('⚠️ Some key server IDs are invalid and were filtered out');
   }
-  
+
   return validIds;
 };
 
@@ -274,8 +274,8 @@ export const getDefaultKeyServerIds = (network: string): string[] => {
   const defaults = {
     testnet: [
       // Placeholder IDs - replace with actual testnet key server IDs
-      '0x0000000000000000000000000000000000000000000000000000000000000001',
-      '0x0000000000000000000000000000000000000000000000000000000000000002',
+      '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',
+      '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8',
     ],
     mainnet: [
       // Placeholder IDs - replace with actual mainnet key server IDs  
@@ -293,7 +293,7 @@ export const getDefaultKeyServerIds = (network: string): string[] => {
       '0x0000000000000000000000000000000000000000000000000000000000000008',
     ],
   };
-  
+
   return defaults[network as keyof typeof defaults] || defaults.testnet;
 };
 
@@ -302,17 +302,17 @@ export const getDefaultKeyServerIds = (network: string): string[] => {
  */
 export const getKeyServerIds = (): string[] => {
   const configuredIds = parseKeyServerIds();
-  
+
   if (configuredIds.length > 0) {
     return configuredIds;
   }
-  
+
   // Fallback to defaults for development
   if (isDevelopment) {
     console.warn('⚠️ Using default key server IDs for development. Set NEXT_PUBLIC_SEAL_KEY_SERVER_IDS for production.');
     return getDefaultKeyServerIds(CONFIG.NETWORK);
   }
-  
+
   throw new Error(
     'Seal key server IDs not configured. Set NEXT_PUBLIC_SEAL_KEY_SERVER_IDS environment variable with comma-separated Sui object IDs.'
   );

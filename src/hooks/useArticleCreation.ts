@@ -1,12 +1,17 @@
 import { useState, useCallback } from 'react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { validateArticleCreation } from '@/lib/validation';
+import { encryptArticleContent, encryptMediaFiles, EncryptedMediaFile } from '@/lib/seal-encryption';
+import { validateEncryptionRequirements, getEncryptionStatus } from '@/lib/seal-encryption';
+import { getSealClient } from '@/lib/seal-client';
 
 export interface ArticleCreationState {
   isProcessing: boolean;
   uploadProgress: number;
+  encryptionProgress: number;
   error: string | null;
+  isEncrypting: boolean;
 }
 
 export interface MediaFile {
@@ -42,10 +47,13 @@ export const useArticleCreation = () => {
   const [state, setState] = useState<ArticleCreationState>({
     isProcessing: false,
     uploadProgress: 0,
+    encryptionProgress: 0,
     error: null,
+    isEncrypting: false,
   });
 
   const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
 
   /**
    * Get user's publication info from localStorage
@@ -77,7 +85,14 @@ export const useArticleCreation = () => {
         throw new Error('Wallet not connected');
       }
 
-      setState(prev => ({ ...prev, error: null, isProcessing: true, uploadProgress: 0 }));
+      setState(prev => ({ 
+        ...prev, 
+        error: null, 
+        isProcessing: true, 
+        uploadProgress: 0,
+        encryptionProgress: 0,
+        isEncrypting: false 
+      }));
 
       try {
         // 1. Get user's publication
@@ -86,36 +101,105 @@ export const useArticleCreation = () => {
           throw new Error('No publication found. Please create a publication first.');
         }
 
-        // 2. Validate input data before sending to backend
+        // 2. Validate input data BEFORE encryption (validate plain text)
+        console.log('🔍 Validating plain text content before encryption...');
         const validation = validateArticleCreation({
           title,
-          content,
+          content, // Validate the original markdown content
           publicationId: publication.publicationId,
           authorAddress: currentAccount.address,
           mediaFiles: [], // Files converted to base64, validation happens before conversion
         });
         
         if (!validation.isValid) {
-          throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+          throw new Error(`Content validation failed: ${validation.errors.join(', ')}`);
+        }
+        
+        console.log('✅ Content validation passed for plain text');
+
+        // 3. Check Seal encryption requirements
+        console.log('🔐 Checking Seal encryption status...');
+        const encryptionStatus = getEncryptionStatus();
+        if (!encryptionStatus.isAvailable) {
+          throw new Error(`Seal encryption not available: ${encryptionStatus.error || 'Unknown error'}`);
         }
 
-        console.log('Creating article via backend API:', {
-          title,
-          contentLength: content.length,
-          mediaFilesCount: mediaFiles.length,
-          publication: publication.name,
-          isGated,
-        });
+        // Validate encryption requirements
+        validateEncryptionRequirements(publication.publicationId);
 
-        // 2. Prepare request data - ensure mediaFiles is always an array
+        setState(prev => ({ ...prev, isEncrypting: true, encryptionProgress: 10 }));
+
+        // Initialize Seal client with current user context
+        if (!currentAccount) {
+          throw new Error('Wallet connection required for encryption');
+        }
+        
+        // Initialize the Seal client with the current SuiClient and account
+        const sealClient = getSealClient(suiClient, currentAccount);
+        console.log('🔧 Seal client initialized:', sealClient.getStatus());
+
+        console.log('🔒 Encrypting article content with Seal...');
+        console.log('  Article title:', title);
+        console.log('  Content length:', content.length);
+        console.log('  Media files count:', mediaFiles.length);
+        console.log('  Publication:', publication.name);
+
+        // 4. Encrypt article content with Seal IBE
+        const encryptedContent = await encryptArticleContent(
+          content,
+          publication.publicationId,
+          title
+        );
+
+        setState(prev => ({ ...prev, encryptionProgress: 50 }));
+
+        // 5. Encrypt media files if present
+        let encryptedMediaFiles: EncryptedMediaFile[] = [];
+        if (mediaFiles && mediaFiles.length > 0) {
+          console.log('🖼️ Encrypting media files with Seal...');
+          encryptedMediaFiles = await encryptMediaFiles(
+            mediaFiles,
+            publication.publicationId
+          );
+        }
+
+        setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
+
+        console.log('✅ Encryption completed successfully');
+        console.log('  Content encrypted size:', encryptedContent.encryptedSize, 'bytes');
+        console.log('  Content ID:', encryptedContent.contentIdHex.substring(0, 20) + '...');
+        console.log('  Encrypted media files:', encryptedMediaFiles.length);
+
+        // 6. Prepare request data with encrypted content
+        // Convert encrypted content to base64 for API transmission
+        const encryptedContentBase64 = btoa(
+          Array.from(encryptedContent.encryptedData, byte => String.fromCharCode(byte)).join('')
+        );
+        
         const requestData = {
           title,
-          content,
+          content: encryptedContentBase64, // Base64-encoded encrypted content
+          contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
           publicationId: publication.publicationId,
           authorAddress: currentAccount.address,
           isGated,
-          mediaFiles: Array.isArray(mediaFiles) ? mediaFiles : [],
+          mediaFiles: encryptedMediaFiles.map(file => ({
+            content: file.content, // Already base64 encoded encrypted content
+            filename: file.filename,
+            mimeType: file.mimeType,
+            contentId: file.contentIdHex, // Include content ID for each media file
+            size: file.size,
+          })),
           storageEpochs: 5,
+          // Encryption metadata for backend
+          isEncrypted: true, // Flag to indicate content is encrypted
+          encryptionMetadata: {
+            originalContentLength: content.length, // Original markdown length
+            encryptedContentLength: encryptedContent.encryptedSize, // Encrypted size
+            algorithm: 'seal-ibe', // Encryption method
+            contentType: 'markdown', // Original content type
+            validationPassed: true, // Frontend validation completed
+          },
         };
 
         setState(prev => ({ ...prev, uploadProgress: 25 }));
@@ -172,7 +256,7 @@ export const useArticleCreation = () => {
         }));
       }
     },
-    [currentAccount, getUserPublication]
+    [currentAccount, suiClient, getUserPublication]
   );
 
   /**
@@ -211,13 +295,44 @@ export const useArticleCreation = () => {
   }, []);
 
   /**
+   * Check if Seal encryption is available and ready
+   */
+  const checkEncryptionAvailability = useCallback(async (): Promise<{
+    isAvailable: boolean;
+    error?: string;
+    status: ReturnType<typeof getEncryptionStatus>;
+  }> => {
+    try {
+      const status = getEncryptionStatus();
+      return {
+        isAvailable: status.isAvailable,
+        error: status.error,
+        status,
+      };
+    } catch (error) {
+      return {
+        isAvailable: false,
+        error: error instanceof Error ? error.message : 'Unknown encryption error',
+        status: {
+          isAvailable: false,
+          network: 'unknown',
+          packageId: '',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
+    }
+  }, []);
+
+  /**
    * Reset all state
    */
   const reset = useCallback(() => {
     setState({
       isProcessing: false,
       uploadProgress: 0,
+      encryptionProgress: 0,
       error: null,
+      isEncrypting: false,
     });
   }, []);
 
@@ -229,6 +344,7 @@ export const useArticleCreation = () => {
     createAndPublishArticle,
     convertFilesToMediaFiles,
     getUserPublication,
+    checkEncryptionAvailability,
     clearError,
     reset,
   };

@@ -1,77 +1,45 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalletAccount } from '@mysten/wallet-standard';
-import { bcs } from '@mysten/bcs';
 import { SealClient, SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
-import { createHash } from 'crypto';
 import { CONFIG } from './config';
+import { generateArticleContentId, generateMediaContentId } from './seal-identity';
 
 // Extended wallet account interface with signing capabilities
 interface SigningWalletAccount extends WalletAccount {
   signPersonalMessage?: (message: Uint8Array) => Promise<{ signature: string }>;
 }
 
-// Types for client configurations
+// Types for simplified free access Seal client
 export interface SealClientConfig {
   suiClient: SuiClient;
   account?: WalletAccount | null;
   network: 'testnet' | 'mainnet' | 'devnet' | 'localnet';
   packageId: string;
-  keyServerUrl?: string;
 }
 
 export interface SealEncryptionOptions {
-  contentId: string | Uint8Array;
+  contentId: Uint8Array; // Always use BCS-encoded content ID
   packageId?: string;
   threshold?: number;
 }
 
-export interface UserCredentials {
-  publicationOwner?: {
-    ownerCapId: string;
-    publicationId: string;
-  };
-  contributor?: {
-    publicationId: string;
-    contentPolicyId?: string;
-  };
-  subscription?: {
-    id: string;
-    serviceId: string;
-  };
-  nft?: {
-    id: string;
-    articleId: string;
-  };
-  allowlist?: {
-    contentPolicyId: string;
-  };
-}
-
 export interface SealDecryptionRequest {
   encryptedData: Uint8Array;
-  contentId: string | Uint8Array;
-  credentials: UserCredentials;
+  contentId: Uint8Array; // Always use BCS-encoded content ID
+  articleId: string; // Article object ID for free access validation
   packageId?: string;
-  requestingClient?: unknown;
 }
 
-// IdV1 constants matching smart contract
-const TAG_ARTICLE_CONTENT = 0;  // u8
-const ID_VERSION_V1 = 1;        // u16
-
-// BCS layout for IdV1 struct
-const IdV1Layout = bcs.struct('IdV1', {
-  tag: bcs.u8(),
-  version: bcs.u16(),
-  publication: bcs.fixedArray(32, bcs.u8()),  // 32-byte Sui address
-  article: bcs.fixedArray(32, bcs.u8()),      // 32-byte Sui address
-  nonce: bcs.u64(),
-});
 
 /**
- * Real Seal client for content-identity based encryption
- * Adapted from contracts/scripts/src/utils/seal-client.ts
+ * Inkray Seal Client - Real IBE encryption for frontend
+ * 
+ * Implements content-identity based encryption where:
+ * - All content is encrypted with Seal before upload to Walrus
+ * - Uses "free access" policy for universal content access
+ * - Supports both markdown text and binary media files
+ * - Real threshold cryptography with production key servers
  */
 export class InkraySealClient {
   private config: SealClientConfig;
@@ -84,25 +52,83 @@ export class InkraySealClient {
 
   private async getSealClient(): Promise<SealClient> {
     if (!this.sealClient) {
-      // Import key server configuration
-      const { getKeyServerIds } = await import('./config');
-      const serverObjectIds = getKeyServerIds();
-
       try {
+        // Get key server IDs for the current network (manually configured)
+        const serverObjectIds = this.getKeyServerIds(this.config.network);
+
+        if (serverObjectIds.length === 0) {
+          throw new Error(`No key servers configured for network: ${this.config.network}`);
+        }
+
+        console.log(`🔑 Connecting to ${serverObjectIds.length} Seal key servers on ${this.config.network}`);
+
         this.sealClient = new SealClient({
           suiClient: this.config.suiClient,
           serverConfigs: serverObjectIds.map((id) => ({
             objectId: id,
             weight: 1,
           })),
-          verifyKeyServers: false, // Set to true for production
+          verifyKeyServers: false, // Disable for compatibility - enable when servers support it
         });
+
+        console.log('✅ Seal client connected to key servers');
       } catch (error) {
-        throw new Error(`Seal encryption failed: Could not initialize Seal client. Key servers may be unavailable. Error: ${error}`);
+        console.error('❌ Failed to initialize Seal client:', error);
+        throw new Error(`Seal encryption service unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
     return this.sealClient;
+  }
+
+  /**
+   * Get key server IDs for the specified network
+   * Manual configuration since getAllowlistedKeyServers is not available
+   */
+  private getKeyServerIds(network: string): string[] {
+    // Key server configurations for different networks
+    // These should be updated with actual production key server IDs
+    const keyServerConfigs: Record<string, string[]> = {
+      testnet: [
+        // Placeholder testnet key server IDs - replace with actual values
+        '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',
+        '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8',
+      ],
+      mainnet: [
+        // Placeholder mainnet key server IDs - replace with actual values
+        '0x0000000000000000000000000000000000000000000000000000000000000004',
+        '0x0000000000000000000000000000000000000000000000000000000000000005',
+        '0x0000000000000000000000000000000000000000000000000000000000000006',
+      ],
+      devnet: [
+        // Placeholder devnet key server IDs - replace with actual values
+        '0x0000000000000000000000000000000000000000000000000000000000000007',
+        '0x0000000000000000000000000000000000000000000000000000000000000008',
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+      ],
+      localnet: [
+        // Placeholder localnet key server IDs for development
+        '0x000000000000000000000000000000000000000000000000000000000000000a',
+        '0x000000000000000000000000000000000000000000000000000000000000000b',
+        '0x000000000000000000000000000000000000000000000000000000000000000c',
+      ]
+    };
+
+    const servers = keyServerConfigs[network] || keyServerConfigs.testnet;
+
+    // Check if configured from environment
+    if (CONFIG.SEAL_KEY_SERVER_IDS) {
+      const envServers = CONFIG.SEAL_KEY_SERVER_IDS.split(',').map(id => id.trim());
+      if (envServers.length > 0 && envServers[0] !== '') {
+        console.log(`🔧 Using key servers from environment: ${envServers.length} servers`);
+        return envServers;
+      }
+    }
+
+    console.log(`🔧 Using default key servers for ${network}: ${servers.length} servers`);
+    console.log(`⚠️  To use production key servers, set NEXT_PUBLIC_SEAL_KEY_SERVER_IDS environment variable`);
+
+    return servers;
   }
 
   private async getSessionKey(address: string, packageId: string): Promise<SessionKey> {
@@ -120,7 +146,12 @@ export class InkraySealClient {
   // === ENCRYPTION METHODS ===
 
   /**
-   * Encrypt content with content-specific identity
+   * Encrypt content using real Seal IBE with content-specific identity
+   * All content is encrypted for "free access" policy
+   * 
+   * @param data - Raw content bytes (text or binary)
+   * @param options - Encryption options with BCS-encoded content ID
+   * @returns Encrypted content as Uint8Array
    */
   async encryptContent(
     data: Uint8Array,
@@ -138,14 +169,15 @@ export class InkraySealClient {
 
       const sealClient = await this.getSealClient();
 
-      console.log(`  Content ID: ${options.contentId instanceof Uint8Array ? '[BCS bytes]' : options.contentId}`);
+      console.log(`  Content size: ${data.length} bytes`);
+      console.log(`  Content ID: [BCS-encoded IdV1: ${options.contentId.length} bytes]`);
       console.log(`  Package ID: ${packageId}`);
       console.log(`  Threshold: ${threshold} key servers`);
 
-      // Convert Uint8Array to hex string for Seal API
-      const idForSeal = options.contentId instanceof Uint8Array
-        ? '0x' + Array.from(options.contentId).map(b => b.toString(16).padStart(2, '0')).join('')
-        : options.contentId;
+      // Convert BCS-encoded content ID to hex string for Seal API
+      const idForSeal = '0x' + Array.from(options.contentId)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
 
       const { encryptedObject: encrypted } = await sealClient.encrypt({
         threshold,
@@ -165,386 +197,160 @@ export class InkraySealClient {
     }
   }
 
-  // === HELPER METHODS ===
-
   /**
-   * Validate Sui address format (exactly 32 bytes = 64 hex chars + 0x)
-   */
-  private isValidSuiAddress(address: string): boolean {
-    return /^0x[a-fA-F0-9]{64}$/.test(address);
-  }
-
-  /**
-   * Convert hex address string to byte array
-   */
-  private addressToBytes(address: string): number[] {
-    if (!this.isValidSuiAddress(address)) {
-      throw new Error(`Invalid Sui address format: ${address}`);
-    }
-
-    // Remove 0x prefix and convert to bytes
-    const hexString = address.slice(2);
-    const bytes: number[] = [];
-    for (let i = 0; i < hexString.length; i += 2) {
-      bytes.push(parseInt(hexString.slice(i, i + 2), 16));
-    }
-    return bytes;
-  }
-
-  /**
-   * Generate deterministic article address from inputs
-   */
-  private generateDeterministicArticleAddress(
-    publicationId: string,
-    title: string,
-    timestamp: number
-  ): string {
-    // Create deterministic hash from inputs
-    const hash = createHash('sha256')
-      .update(publicationId)
-      .update(title)
-      .update(timestamp.toString())
-      .digest();
-
-    // Return as proper Sui address format (32 bytes = 64 hex chars)
-    return '0x' + hash.toString('hex');
-  }
-
-  /**
-   * Generate a proper BCS-encoded IdV1 content ID for articles
+   * Generate BCS-encoded content ID for articles
+   * Delegates to the identity generation module
    */
   generateArticleContentId(
     publicationId: string,
     articleTitle: string
   ): Uint8Array {
-    // Validate publication ID format
-    if (!this.isValidSuiAddress(publicationId)) {
-      throw new Error(`Invalid Sui address format for publication: ${publicationId}`);
-    }
+    return generateArticleContentId(publicationId, articleTitle);
+  }
 
-    const timestamp = Date.now();
-
-    // Generate deterministic article address
-    const articleAddress = this.generateDeterministicArticleAddress(
-      publicationId,
-      articleTitle,
-      timestamp
-    );
-
-    // Create IdV1 struct
-    const idV1 = {
-      tag: TAG_ARTICLE_CONTENT,     // 0
-      version: ID_VERSION_V1,       // 1
-      publication: this.addressToBytes(publicationId),
-      article: this.addressToBytes(articleAddress),
-      nonce: BigInt(timestamp)
-    };
-
-    // BCS encode to bytes
-    const encodedBytes = IdV1Layout.serialize(idV1).toBytes();
-    
-    return encodedBytes;
+  /**
+   * Generate BCS-encoded content ID for media files
+   * Delegates to the identity generation module
+   */
+  generateMediaContentId(
+    filename: string,
+    mimeType: string,
+    publicationId: string
+  ): Uint8Array {
+    return generateMediaContentId(filename, mimeType, publicationId);
   }
 
   // === DECRYPTION METHODS ===
 
   /**
-   * Decrypt content by trying available user credentials
+   * Decrypt content using free access policy
+   * All encrypted content is accessible via this method
+   * 
+   * @param request - Decryption request with encrypted data and article ID
+   * @returns Decrypted content as Uint8Array
    */
-  async decryptContent(request: SealDecryptionRequest): Promise<Uint8Array> {
+  async decryptContentFree(request: SealDecryptionRequest): Promise<Uint8Array> {
     try {
-      console.log(`🔓 Attempting to decrypt content with Seal`);
+      console.log(`🔓 Decrypting content with free access policy...`);
+      console.log(`  Encrypted size: ${request.encryptedData.length} bytes`);
+      console.log(`  Article ID: ${request.articleId}`);
 
-      // Try each available credential type until one succeeds
-      const credentials = request.credentials;
       const packageId = request.packageId || this.config.packageId;
 
       if (!packageId) {
-        throw new Error('Seal decryption failed: Package ID not configured. Set NEXT_PUBLIC_PACKAGE_ID environment variable.');
+        throw new Error('Package ID not configured. Set NEXT_PUBLIC_PACKAGE_ID environment variable.');
       }
 
       if (!this.config.account) {
-        throw new Error('Seal decryption failed: Wallet account required for decryption. Please connect your wallet.');
+        throw new Error('Wallet account required for decryption. Please connect your wallet.');
       }
 
-      // Try publication owner access first (most direct)
-      if (credentials.publicationOwner) {
-        console.log('👑 Trying publication owner access...');
-        try {
-          return await this.tryDecryptWithPublicationOwner(
-            request.encryptedData,
-            request.contentId,
-            credentials.publicationOwner,
-            packageId
-          );
-        } catch (error: unknown) {
-          console.log(`  Publication owner access failed: ${(error as Error)?.message || error}`);
-        }
+      const sealClient = await this.getSealClient();
+      const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
+
+      // Sign session key with user's wallet
+      if (this.config.account && 'signPersonalMessage' in this.config.account) {
+        const message = sessionKey.getPersonalMessage();
+        const signResult = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
+        sessionKey.setPersonalMessageSignature(signResult.signature);
       }
 
-      // Try subscription access
-      if (credentials.subscription) {
-        console.log('🎫 Trying subscription access...');
-        try {
-          return await this.tryDecryptWithSubscription(
-            request.encryptedData,
-            request.contentId,
-            credentials.subscription,
-            packageId
-          );
-        } catch (error: unknown) {
-          console.log(`  Subscription access failed: ${(error as Error)?.message || error}`);
-        }
-      }
+      // Build Move transaction for free access approval
+      const tx = new Transaction();
+      tx.moveCall({
+        target: `${packageId}::policy::seal_approve_free`,
+        arguments: [
+          tx.pure.vector('u8', Array.from(request.contentId)),
+          tx.object(request.articleId), // Article object reference for validation
+        ]
+      });
 
-      // Try NFT access
-      if (credentials.nft) {
-        console.log('🎨 Trying NFT access...');
-        try {
-          return await this.tryDecryptWithNFT(
-            request.encryptedData,
-            request.contentId,
-            credentials.nft,
-            packageId
-          );
-        } catch (error: unknown) {
-          console.log(`  NFT access failed: ${(error as Error)?.message || error}`);
-        }
-      }
+      // Build transaction bytes for Seal
+      const txBytes = await tx.build({
+        client: this.config.suiClient,
+        onlyTransactionKind: true
+      });
 
-      // Try contributor access
-      if (credentials.contributor) {
-        console.log('✍️ Trying contributor access...');
-        try {
-          return await this.tryDecryptWithContributor(
-            request.encryptedData,
-            request.contentId,
-            credentials.contributor,
-            packageId
-          );
-        } catch (error: unknown) {
-          console.log(`  Contributor access failed: ${(error as Error)?.message || error}`);
-        }
-      }
+      console.log(`  Transaction built: ${txBytes.length} bytes`);
+      console.log(`  Requesting decryption from key servers...`);
 
-      // No valid credentials found
-      const availableCredentialTypes = Object.keys(credentials).join(', ');
-      throw new Error(`Seal decryption failed: No valid access method found for this content. Available credentials: ${availableCredentialTypes}. You may not have permission to read this encrypted article.`);
+      // Decrypt using real Seal protocol with threshold reconstruction
+      const decrypted = await sealClient.decrypt({
+        data: request.encryptedData,
+        sessionKey,
+        txBytes,
+      });
+
+      console.log(`✅ Content decrypted successfully`);
+      console.log(`  Decrypted size: ${decrypted.length} bytes`);
+
+      return decrypted;
     } catch (error) {
-      console.error(`❌ Seal decryption failed: ${error}`);
-      throw error;
-    }
-  }
+      console.error('❌ Seal decryption failed:', error);
 
-  // === INDIVIDUAL POLICY DECRYPTION METHODS ===
-
-  private async tryDecryptWithPublicationOwner(
-    encryptedData: Uint8Array,
-    contentId: string | Uint8Array,
-    publicationOwner: NonNullable<UserCredentials['publicationOwner']>,
-    packageId: string
-  ): Promise<Uint8Array> {
-    if (!this.config.account) {
-      throw new Error('Wallet account required for decryption');
-    }
-
-    const sealClient = await this.getSealClient();
-    const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
-
-    // Sign the session key message
-    if (this.config.account && 'signPersonalMessage' in this.config.account) {
-      const message = sessionKey.getPersonalMessage();
-      const signature = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
-      sessionKey.setPersonalMessageSignature(signature.signature);
-    }
-
-    const tx = new Transaction();
-
-    // Convert content ID to bytes correctly
-    let contentIdBytes: number[];
-    if (contentId instanceof Uint8Array) {
-      contentIdBytes = Array.from(contentId);
-    } else if (contentId.startsWith('0x')) {
-      const hexStr = contentId.substring(2);
-      contentIdBytes = [];
-      for (let i = 0; i < hexStr.length; i += 2) {
-        contentIdBytes.push(parseInt(hexStr.substr(i, 2), 16));
+      if (error instanceof Error) {
+        if (error.message.includes('key server')) {
+          throw new Error('Decryption service temporarily unavailable. Please try again later.');
+        }
+        if (error.message.includes('threshold')) {
+          throw new Error('Insufficient key servers available for decryption.');
+        }
+        if (error.message.includes('session')) {
+          throw new Error('Authentication failed. Please reconnect your wallet.');
+        }
+        if (error.message.includes('approve_free')) {
+          throw new Error('Access denied. Content may not support free access.');
+        }
       }
-    } else {
-      contentIdBytes = Array.from(new TextEncoder().encode(contentId));
+
+      throw new Error(`Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    tx.moveCall({
-      target: `${packageId}::policy::seal_approve_roles`,
-      arguments: [
-        tx.pure.vector('u8', contentIdBytes),
-        tx.object(publicationOwner.publicationId),
-      ]
-    });
-
-    const txBytes = await tx.build({
-      client: this.config.suiClient,
-      onlyTransactionKind: true
-    });
-    
-    const decrypted = await sealClient.decrypt({
-      data: encryptedData,
-      sessionKey,
-      txBytes,
-    });
-
-    console.log('✅ Decrypted with publication owner access');
-    return decrypted;
   }
 
-  private async tryDecryptWithSubscription(
-    encryptedData: Uint8Array,
-    contentId: string | Uint8Array,
-    subscription: NonNullable<UserCredentials['subscription']>,
-    packageId: string
-  ): Promise<Uint8Array> {
-    if (!this.config.account) {
-      throw new Error('Wallet account required for decryption');
-    }
-
-    const sealClient = await this.getSealClient();
-    const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
-
-    // Sign the session key message
-    if (this.config.account && 'signPersonalMessage' in this.config.account) {
-      const message = sessionKey.getPersonalMessage();
-      const signature = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
-      sessionKey.setPersonalMessageSignature(signature.signature);
-    }
-
-    const tx = new Transaction();
-    const contentIdBytes = contentId instanceof Uint8Array
-      ? Array.from(contentId)
-      : Array.from(new TextEncoder().encode(contentId));
-
-    tx.moveCall({
-      target: `${packageId}::platform_access::seal_approve`,
-      arguments: [
-        tx.pure.vector('u8', contentIdBytes),
-        tx.object(subscription.id),
-        tx.object(subscription.serviceId),
-        tx.object('0x6'), // Clock object
-      ]
-    });
-
-    const txBytes = await tx.build({
-      client: this.config.suiClient,
-      onlyTransactionKind: true
-    });
-
-    const decrypted = await sealClient.decrypt({
-      data: encryptedData,
-      sessionKey,
-      txBytes,
-    });
-
-    console.log('✅ Decrypted with subscription access');
-    return decrypted;
+  /**
+   * Get encryption status and capabilities
+   */
+  getStatus() {
+    return {
+      isInitialized: !!this.sealClient,
+      network: this.config.network,
+      packageId: this.config.packageId,
+      hasAccount: !!this.config.account,
+    };
   }
 
-  private async tryDecryptWithNFT(
-    encryptedData: Uint8Array,
-    contentId: string | Uint8Array,
-    nft: NonNullable<UserCredentials['nft']>,
-    packageId: string
-  ): Promise<Uint8Array> {
-    if (!this.config.account) {
-      throw new Error('Wallet account required for decryption');
-    }
-
-    const sealClient = await this.getSealClient();
-    const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
-
-    // Sign the session key message
-    if (this.config.account && 'signPersonalMessage' in this.config.account) {
-      const message = sessionKey.getPersonalMessage();
-      const signature = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
-      sessionKey.setPersonalMessageSignature(signature.signature);
-    }
-
-    const tx = new Transaction();
-    const contentIdBytes = contentId instanceof Uint8Array
-      ? Array.from(contentId)
-      : Array.from(new TextEncoder().encode(contentId));
-
-    tx.moveCall({
-      target: `${packageId}::article_nft::seal_approve`,
-      arguments: [
-        tx.pure.vector('u8', contentIdBytes),
-        tx.object(nft.id),
-        tx.object(nft.articleId),
-      ]
-    });
-
-    const txBytes = await tx.build({
-      client: this.config.suiClient,
-      onlyTransactionKind: true
-    });
-
-    const decrypted = await sealClient.decrypt({
-      data: encryptedData,
-      sessionKey,
-      txBytes,
-    });
-
-    console.log('✅ Decrypted with NFT access');
-    return decrypted;
-  }
-
-  private async tryDecryptWithContributor(
-    encryptedData: Uint8Array,
-    contentId: string | Uint8Array,
-    contributor: NonNullable<UserCredentials['contributor']>,
-    packageId: string
-  ): Promise<Uint8Array> {
-    if (!this.config.account) {
-      throw new Error('Wallet account required for decryption');
-    }
-
-    const sealClient = await this.getSealClient();
-    const sessionKey = await this.getSessionKey(this.config.account.address, packageId);
-
-    // Sign the session key message
-    if (this.config.account && 'signPersonalMessage' in this.config.account) {
-      const message = sessionKey.getPersonalMessage();
-      const signature = await (this.config.account as SigningWalletAccount).signPersonalMessage!(message);
-      sessionKey.setPersonalMessageSignature(signature.signature);
-    }
-
-    const tx = new Transaction();
-    const contentIdBytes = contentId instanceof Uint8Array
-      ? Array.from(contentId)
-      : Array.from(new TextEncoder().encode(contentId));
-
-    tx.moveCall({
-      target: `${packageId}::policy::seal_approve_roles`,
-      arguments: [
-        tx.pure.vector('u8', contentIdBytes),
-        tx.object(contributor.publicationId),
-      ]
-    });
-
-    const txBytes = await tx.build({
-      client: this.config.suiClient,
-      onlyTransactionKind: true
-    });
-
-    const decrypted = await sealClient.decrypt({
-      data: encryptedData,
-      sessionKey,
-      txBytes,
-    });
-
-    console.log('✅ Decrypted with contributor access');
-    return decrypted;
+  /**
+   * Reset client state (useful for network changes or account changes)
+   */
+  reset() {
+    this.sealClient = null;
+    this.sessionKey = null;
+    console.log('🔄 Seal client reset');
   }
 
 }
+
+// Utility functions for data conversion
+export function arrayBufferToBase64(buffer: Uint8Array): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export function base64ToArrayBuffer(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Singleton instance for application-wide use
+let sealClientInstance: InkraySealClient | null = null;
 
 /**
  * Create a configured Seal client instance
@@ -557,3 +363,32 @@ export const createSealClient = (suiClient: SuiClient, account?: WalletAccount |
     packageId: CONFIG.PACKAGE_ID,
   });
 };
+
+/**
+ * Get or create the global Seal client instance
+ * Updates account when called with different account
+ */
+export function getSealClient(suiClient?: SuiClient, account?: WalletAccount | null): InkraySealClient {
+  // If parameters are provided, always create/update the instance
+  if (suiClient && account !== undefined) {
+    sealClientInstance = createSealClient(suiClient, account);
+    return sealClientInstance;
+  }
+
+  // If no parameters provided, return existing instance or error
+  if (!sealClientInstance) {
+    throw new Error('Sui client required to initialize Seal client');
+  }
+
+  return sealClientInstance;
+}
+
+/**
+ * Reset the global Seal client (useful for testing or network changes)
+ */
+export function resetSealClient(): void {
+  if (sealClientInstance) {
+    sealClientInstance.reset();
+  }
+  sealClientInstance = null;
+}

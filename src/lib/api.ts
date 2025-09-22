@@ -119,8 +119,19 @@ export const articlesAPI = {
       filename: string;
       mimeType: string;
       size?: number;
+      contentId?: string; // For encrypted media files
     }>;
     storageEpochs?: number;
+    // Encryption support
+    isEncrypted?: boolean;
+    contentId?: string;
+    encryptionMetadata?: {
+      originalContentLength: number;
+      encryptedContentLength: number;
+      algorithm: string;
+      contentType: string;
+      validationPassed: boolean;
+    };
   }) => api.post('/articles/create', data),
   
   getContent: (quiltBlobId: string) => api.get(`/articles/content/${quiltBlobId}`),

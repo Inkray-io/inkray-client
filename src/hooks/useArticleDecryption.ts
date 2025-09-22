@@ -1,9 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createSealClient } from '@/lib/seal-client';
+import { getSealClient } from '@/lib/seal-client';
 import { eventsAPI, articlesAPI } from '@/lib/api';
 import { loadArticleContent } from '@/lib/article-utils';
-import type { UserCredentials } from '@/lib/seal-client';
+import { 
+  decryptArticleContentAsString, 
+  decryptMediaFiles, 
+  validateDecryptionRequirements,
+  getDecryptionStatus 
+} from '@/lib/seal-decryption';
+import { hexToContentId } from '@/lib/seal-identity';
 
 export interface ArticleMetadata {
   id: string;
@@ -29,7 +35,7 @@ export interface DecryptionState {
 
 /**
  * Hook for article decryption and reading
- * Adapted from contracts/scripts/src/workflows/decryption-test-flow.ts
+ * Uses Seal IBE with free access policy for all encrypted content
  */
 export const useArticleDecryption = (articleSlug: string | null) => {
   const [state, setState] = useState<DecryptionState>({
@@ -96,63 +102,52 @@ export const useArticleDecryption = (articleSlug: string | null) => {
   );
 
   /**
-   * Download and decrypt article content
+   * Download and decrypt article content using free access policy
    */
   const downloadAndDecryptArticle = useCallback(
     async (metadata: ArticleMetadata): Promise<string> => {
-      // Only require wallet connection for encrypted articles
-      if (metadata.isEncrypted && !currentAccount) {
-        throw new Error('Wallet connection required to read encrypted content');
-      }
-
       setState(prev => ({ ...prev, isDownloading: true }));
 
       try {
         if (metadata.isEncrypted) {
-          // For encrypted articles, we need to download raw binary data directly from backend
-          console.log('Loading encrypted article content:', metadata.quiltBlobId);
+          // All encrypted content uses free access policy - no complex credentials needed
+          console.log('🔓 Loading encrypted article content:', metadata.quiltBlobId);
+          console.log('  Content ID:', metadata.contentId);
+          console.log('  Article ID:', metadata.id);
           
+          // Wallet connection is required for signing the free access transaction
+          if (!currentAccount) {
+            throw new Error('Wallet connection required to decrypt content (needed for transaction signing)');
+          }
+
+          setState(prev => ({ ...prev, isDecrypting: true }));
+
+          // Initialize Seal client with current account
+          getSealClient(suiClient, currentAccount);
+
+          // Validate decryption requirements
+          const contentId = hexToContentId(metadata.contentId);
+          validateDecryptionRequirements(contentId, metadata.id);
+
           // Call backend to get raw encrypted bytes (JWT token added automatically by interceptor)
           const response = await articlesAPI.getRawContent(metadata.quiltBlobId);
+          const encryptedData = new Uint8Array(response.data);
           
-          const rawContent = new Uint8Array(response.data);
-          console.log(`Downloaded ${rawContent.length} bytes of encrypted content`);
+          console.log(`  Downloaded ${encryptedData.length} bytes of encrypted content`);
 
-          // Wallet is guaranteed to be connected at this point due to check above
-          if (!currentAccount) {
-            throw new Error('Wallet connection required for decryption');
-          }
-
-          const sealClient = createSealClient(suiClient, currentAccount);
-
-          // Build credentials for decryption - try multiple access methods
-          const credentials = await buildDecryptionCredentials(
-            currentAccount.address,
-            metadata.publicationId
+          // Decrypt using free access policy - all content is accessible via this method
+          const decryptedContent = await decryptArticleContentAsString(
+            encryptedData,
+            contentId,
+            metadata.id // Article ID for free access validation
           );
 
-          try {
-            // Use the new real Seal client with multi-credential decryption
-            const decryptedContent = await sealClient.decryptContent({
-              encryptedData: rawContent,
-              contentId: metadata.contentId, // This should be a BCS-encoded content ID or hex string
-              credentials,
-              packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '',
-              requestingClient: suiClient,
-            });
-
-            const content = new TextDecoder().decode(decryptedContent);
-            console.log('Content decrypted successfully with Seal');
-            return content;
-          } catch (error) {
-            console.error('Seal decryption failed:', error);
-            throw new Error('Failed to decrypt article content. You may not have permission to read this article.');
-          }
+          console.log('✅ Content decrypted successfully with Seal free access');
+          return decryptedContent;
+          
         } else {
-          // For free articles, use the backend API which can decode the Quilt and return markdown
+          // For non-encrypted articles (legacy), use the backend API
           console.log('Loading free article content via backend API:', metadata.quiltBlobId);
-
-          setState(prev => ({ ...prev, isDownloading: false }));
 
           const articleContent = await loadArticleContent(metadata.quiltBlobId);
           console.log('Free article content loaded');
@@ -160,8 +155,28 @@ export const useArticleDecryption = (articleSlug: string | null) => {
           return articleContent.markdown;
         }
       } catch (error) {
-        console.error('Download/decryption failed:', error);
-        throw error;
+        console.error('❌ Download/decryption failed:', error);
+        
+        // Provide user-friendly error messages
+        if (error instanceof Error) {
+          if (error.message.includes('Wallet connection required')) {
+            throw error; // Pass through wallet connection errors
+          }
+          if (error.message.includes('key server')) {
+            throw new Error('Decryption service temporarily unavailable. Please try again later.');
+          }
+          if (error.message.includes('threshold')) {
+            throw new Error('Decryption service unavailable. Insufficient key servers online.');
+          }
+          if (error.message.includes('session')) {
+            throw new Error('Authentication failed. Please reconnect your wallet and try again.');
+          }
+          if (error.message.includes('approve_free')) {
+            throw new Error('Content access denied. This article may not support free access.');
+          }
+        }
+        
+        throw new Error('Failed to load article content. Please try again later.');
       } finally {
         setState(prev => ({
           ...prev,
@@ -174,133 +189,34 @@ export const useArticleDecryption = (articleSlug: string | null) => {
   );
 
   /**
-   * Build decryption credentials for the current user
-   * Try multiple access methods in order of preference
+   * Check if decryption is available and ready
    */
-  const buildDecryptionCredentials = async (
-    userAddress: string,
-    publicationId: string
-  ): Promise<UserCredentials> => {
-    const credentials: UserCredentials = {};
-
+  const checkDecryptionAvailability = useCallback(async (): Promise<{
+    isAvailable: boolean;
+    error?: string;
+    status: ReturnType<typeof getDecryptionStatus>;
+  }> => {
     try {
-      // 1. Check if user owns the publication (highest priority)
-      const ownedObjects = await suiClient.getOwnedObjects({
-        owner: userAddress,
-        filter: {
-          StructType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::publication::PublicationOwnerCap`,
-        },
-        options: { showContent: true },
-      });
-
-      for (const obj of ownedObjects.data) {
-        if (obj.data?.content && 'fields' in obj.data.content) {
-          const fields = obj.data.content.fields as Record<string, unknown>;
-          if (fields.publication_id === publicationId) {
-            credentials.publicationOwner = {
-              ownerCapId: obj.data.objectId,
-              publicationId,
-            };
-            break; // Found owner access, this is preferred
-          }
-        }
-      }
-
-      // 2. Check for contributor access
-      if (!credentials.publicationOwner) {
-        try {
-          // Query publication object to check if user is a contributor
-          const publicationObj = await suiClient.getObject({
-            id: publicationId,
-            options: { showContent: true },
-          });
-
-          if (publicationObj.data?.content && 'fields' in publicationObj.data.content) {
-            const fields = publicationObj.data.content.fields as Record<string, unknown>;
-            const contributors = (fields.contributors as { fields?: { contents?: string[] } })?.fields?.contents || [];
-
-            // Check if current user is in contributors list
-            const isContributor = contributors.some((addr: string) => addr === userAddress);
-            if (isContributor) {
-              credentials.contributor = {
-                publicationId,
-                // contentPolicyId would be set if we had content policies
-              };
-            }
-          }
-        } catch (error) {
-          console.log('Could not check contributor status:', error);
-        }
-      }
-
-      // 3. Check for platform subscription (if no owner/contributor access)
-      if (!credentials.publicationOwner && !credentials.contributor) {
-        try {
-          // Look for active platform subscriptions
-          const subscriptions = await suiClient.getOwnedObjects({
-            owner: userAddress,
-            filter: {
-              StructType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::platform_access::PlatformSubscription`,
-            },
-            options: { showContent: true },
-          });
-
-          if (subscriptions.data.length > 0) {
-            const subscription = subscriptions.data[0];
-            if (subscription.data?.content && 'fields' in subscription.data.content) {
-              const fields = subscription.data.content.fields as Record<string, unknown>;
-              credentials.subscription = {
-                id: subscription.data.objectId,
-                serviceId: (fields.service_id as string) || '0x0', // Platform service ID
-              };
-            }
-          }
-        } catch (error) {
-          console.log('Could not check subscription status:', error);
-        }
-      }
-
-      // 4. Check for article NFT ownership
-      if (!credentials.publicationOwner && !credentials.contributor && !credentials.subscription) {
-        try {
-          // Look for article NFTs
-          const nfts = await suiClient.getOwnedObjects({
-            owner: userAddress,
-            filter: {
-              StructType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::article_nft::ArticleNFT`,
-            },
-            options: { showContent: true },
-          });
-
-          // Find NFT for this specific article (would need article ID)
-          if (nfts.data.length > 0) {
-            const nft = nfts.data[0];
-            if (nft.data?.content && 'fields' in nft.data.content) {
-              const fields = nft.data.content.fields as Record<string, unknown>;
-              credentials.nft = {
-                id: nft.data.objectId,
-                articleId: (fields.article_id as string) || publicationId, // Fallback
-              };
-            }
-          }
-        } catch (error) {
-          console.log('Could not check NFT ownership:', error);
-        }
-      }
-
-      console.log('Built decryption credentials:', {
-        hasOwner: !!credentials.publicationOwner,
-        hasContributor: !!credentials.contributor,
-        hasSubscription: !!credentials.subscription,
-        hasNFT: !!credentials.nft,
-      });
-
-      return credentials;
+      const status = getDecryptionStatus();
+      return {
+        isAvailable: status.isAvailable,
+        error: status.error,
+        status,
+      };
     } catch (error) {
-      console.error('Failed to build credentials:', error);
-      return {}; // Return empty credentials if all checks fail
+      return {
+        isAvailable: false,
+        error: error instanceof Error ? error.message : 'Unknown decryption error',
+        status: {
+          isAvailable: false,
+          network: 'unknown',
+          packageId: '',
+          hasAccount: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
     }
-  };
+  }, []);
 
   /**
    * Load article by slug
@@ -377,6 +293,7 @@ export const useArticleDecryption = (articleSlug: string | null) => {
 
     // Actions
     loadArticle,
+    checkDecryptionAvailability,
     clearError,
     retry,
   };
