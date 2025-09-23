@@ -1,4 +1,5 @@
 import { CONFIG } from './config';
+import type { ExportedSessionKey } from '@mysten/seal';
 
 /**
  * Cache Manager for Inkray Application
@@ -12,6 +13,7 @@ const CACHE_KEYS = {
   PUBLICATION: 'inkray-user-publication',
   ARTICLE_DRAFT: 'inkray-article-draft',
   PACKAGE_ID: 'inkray-package-id', // Track which package ID was used for cache
+  SESSION_KEY: 'inkray-session-key', // Cached Seal session key
 } as const;
 
 export interface CachedPublicationData {
@@ -29,6 +31,24 @@ export interface CachedDraftData {
   isGated: boolean;
   packageId: string; // Track which package ID this draft belongs to
   timestamp: number;
+}
+
+export interface CachedSessionKeyData {
+  exportedSessionKey: ExportedSessionKey;
+  packageId: string; // Track which package ID this session key belongs to
+  timestamp: number; // When it was cached
+}
+
+export interface SerializableSessionKeyData {
+  address: string;
+  packageId: string;
+  mvrName?: string;
+  creationTimeMs: number;
+  ttlMin: number;
+  personalMessageSignature?: string;
+  sessionKey: string;
+  cachePackageId: string; // Our cache validation package ID
+  timestamp: number; // When it was cached
 }
 
 /**
@@ -185,6 +205,129 @@ export function clearDraftCache(): void {
 }
 
 /**
+ * Get cached session key with validation using safe deserialization
+ */
+export function getCachedSessionKey(): CachedSessionKeyData | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEYS.SESSION_KEY);
+    if (!cached) {
+      console.log('🔍 No cached session key found');
+      return null;
+    }
+    
+    console.log('🔍 Found cached session key, validating...');
+    
+    const serializableData: SerializableSessionKeyData = JSON.parse(cached);
+    
+    // Validate cache against current package ID
+    if (serializableData.cachePackageId !== CONFIG.PACKAGE_ID) {
+      console.log(`📦 Removing invalid session key cache - package ID mismatch: ${serializableData.cachePackageId} != ${CONFIG.PACKAGE_ID}`);
+      localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
+      return null;
+    }
+    
+    // Check if session key has signature (required for usage)
+    if (!serializableData.personalMessageSignature) {
+      console.log('⚠️ Cached session key has no signature, removing...');
+      localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
+      return null;
+    }
+    
+    // Deserialize back to expected format
+    const exportedSessionKey = deserializeExportedSessionKey(serializableData);
+    
+    const result: CachedSessionKeyData = {
+      exportedSessionKey,
+      packageId: serializableData.cachePackageId,
+      timestamp: serializableData.timestamp,
+    };
+    
+    console.log('✅ Valid session key cache found and deserialized');
+    console.log('📝 Cache details:', {
+      address: exportedSessionKey.address,
+      packageId: exportedSessionKey.packageId,
+      hasSignature: !!exportedSessionKey.personalMessageSignature,
+      ttlMin: exportedSessionKey.ttlMin,
+      age: Date.now() - serializableData.timestamp
+    });
+    
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error reading session key cache:', error);
+    localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
+    return null;
+  }
+}
+
+/**
+ * Safely serialize ExportedSessionKey by extracting only serializable properties
+ */
+function serializeExportedSessionKey(exportedSessionKey: ExportedSessionKey): SerializableSessionKeyData {
+  return {
+    address: exportedSessionKey.address,
+    packageId: exportedSessionKey.packageId,
+    mvrName: exportedSessionKey.mvrName,
+    creationTimeMs: exportedSessionKey.creationTimeMs,
+    ttlMin: exportedSessionKey.ttlMin,
+    personalMessageSignature: exportedSessionKey.personalMessageSignature,
+    sessionKey: exportedSessionKey.sessionKey,
+    cachePackageId: CONFIG.PACKAGE_ID,
+    timestamp: Date.now(),
+  };
+}
+
+/**
+ * Deserialize session key data back to ExportedSessionKey format
+ */
+function deserializeExportedSessionKey(data: SerializableSessionKeyData): ExportedSessionKey {
+  return {
+    address: data.address,
+    packageId: data.packageId,
+    mvrName: data.mvrName,
+    creationTimeMs: data.creationTimeMs,
+    ttlMin: data.ttlMin,
+    personalMessageSignature: data.personalMessageSignature,
+    sessionKey: data.sessionKey,
+  };
+}
+
+/**
+ * Store session key in cache with current package ID using safe serialization
+ */
+export function setCachedSessionKey(exportedSessionKey: ExportedSessionKey): void {
+  try {
+    console.log('💾 Attempting to cache session key...');
+    
+    // Use safe serialization to avoid "not serializable" errors
+    const serializableData = serializeExportedSessionKey(exportedSessionKey);
+    
+    console.log('📝 Serialized session key data:', {
+      address: serializableData.address,
+      packageId: serializableData.packageId,
+      hasSignature: !!serializableData.personalMessageSignature,
+      ttlMin: serializableData.ttlMin,
+      timestamp: serializableData.timestamp
+    });
+    
+    localStorage.setItem(CACHE_KEYS.SESSION_KEY, JSON.stringify(serializableData));
+    console.log(`✅ Session key successfully cached with package ID: ${CONFIG.PACKAGE_ID}`);
+    
+  } catch (error) {
+    console.error('❌ Error storing session key cache:', error);
+    console.error('❌ Failed to serialize session key. Data:', exportedSessionKey);
+  }
+}
+
+/**
+ * Clear only the session key cache
+ */
+export function clearSessionKeyCache(): void {
+  localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
+  console.log('🧹 Session key cache cleared');
+}
+
+/**
  * Check if the current package ID has changed since last app usage
  * This can be used to detect contract redeployments
  */
@@ -233,6 +376,7 @@ export function initializeCacheManager(): void {
 export function getCacheStats(): {
   hasPublication: boolean;
   hasDraft: boolean;
+  hasSessionKey: boolean;
   packageId: string;
   cacheEntries: string[];
 } {
@@ -243,6 +387,7 @@ export function getCacheStats(): {
   return {
     hasPublication: !!getCachedPublication(),
     hasDraft: !!getCachedDraft(),
+    hasSessionKey: !!getCachedSessionKey(),
     packageId: CONFIG.PACKAGE_ID,
     cacheEntries,
   };

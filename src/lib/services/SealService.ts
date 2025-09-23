@@ -6,6 +6,7 @@ import { fromHex, toBase64 } from '@mysten/bcs';
 import { generateArticleContentId, generateMediaContentId, contentIdToHex } from '../seal-identity';
 import { getSealClient, type InkraySealClient } from '../seal-client';
 import { CONFIG } from '../config';
+import { getCachedSessionKey, setCachedSessionKey } from '../cache-manager';
 
 /**
  * Unified Seal Service for Content Encryption and Decryption
@@ -272,15 +273,55 @@ export class SealService {
   }
 
   /**
-   * Create session key for decryption
+   * Create or restore session key for decryption with caching
    */
-  private async createSessionKey(): Promise<SessionKey> {
+  private async createSessionKey(signMessage?: (message: Uint8Array) => Promise<string>): Promise<SessionKey> {
+    // Try to get cached session key first
+    const cachedSessionKeyData = getCachedSessionKey();
+
+    if (cachedSessionKeyData) {
+      console.log('🔑 Found cached session key, attempting to restore...');
+      try {
+        const restoredSessionKey = SessionKey.import(
+          cachedSessionKeyData.exportedSessionKey,
+          this.suiClient
+        );
+
+        // Check if the session key is still valid
+        if (!restoredSessionKey.isExpired()) {
+          console.log('✅ Restored valid session key from cache');
+          return restoredSessionKey;
+        } else {
+          console.log('⏰ Cached session key expired, creating new one');
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to restore session key from cache:', error);
+      }
+    }
+
+    console.log('🔑 Creating new session key with 1-month TTL...');
     const sessionKey = await SessionKey.create({
       address: this.currentAccount.address,
       packageId: CONFIG.PACKAGE_ID,
-      ttlMin: 10,
+      ttlMin: 30,
       suiClient: this.suiClient,
     });
+
+    // If we have a sign function, sign the message and cache the session key
+    if (signMessage) {
+      const message = sessionKey.getPersonalMessage();
+      const signature = await signMessage(message);
+      await sessionKey.setPersonalMessageSignature(signature);
+
+      // Export and cache the signed session key
+      try {
+        const exportedSessionKey = sessionKey.export();
+        setCachedSessionKey(exportedSessionKey);
+        console.log('✅ New session key created and cached');
+      } catch (error) {
+        console.warn('⚠️ Failed to cache session key:', error);
+      }
+    }
 
     return sessionKey;
   }
@@ -355,7 +396,7 @@ export class SealService {
           objectSize: params.encryptedData.length,
           objectPreview: Array.from(params.encryptedData.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
         });
-        
+
         if (encObj.id !== params.contentId) {
           console.warn('⚠️ Content ID mismatch detected!', {
             fromEncryptedObject: encObj.id,
@@ -435,38 +476,19 @@ export class SealService {
       });
       console.log('✅ Seal client initialized');
 
-      // Phase 5: Session Key Creation Logging
-      console.log('🔍 Step 5: Creating session key...');
+      // Phase 5: Session Key Creation/Restoration Logging
+      console.log('🔍 Step 5: Creating or restoring session key...');
       console.log('📝 Session key parameters:', {
         address: this.currentAccount.address,
         packageId: CONFIG.PACKAGE_ID,
-        ttlMin: 10,
+        ttlMin: 43200, // 1 month
         hasSuiClient: !!this.suiClient
       });
 
-      const sessionKey = await this.createSessionKey();
-      console.log('✅ Session key created');
+      const sessionKey = await this.createSessionKey(signMessage);
+      console.log('✅ Session key ready (created or restored from cache)');
 
-      // Phase 6: Message Signing Logging
-      console.log('🔍 Step 6: Signing session key message...');
-      const message = sessionKey.getPersonalMessage();
-      console.log('📝 Personal message to sign:', {
-        messageLength: message.length,
-        messageType: message.constructor.name,
-        messagePreview: Array.from(message.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
-      });
-
-      const signature = await signMessage(message);
-      console.log('📝 Signature result:', {
-        signatureLength: signature?.length || 0,
-        signatureType: typeof signature,
-        signaturePreview: signature?.substring(0, 20) + '...' || 'null'
-      });
-
-      sessionKey.setPersonalMessageSignature(signature);
-      console.log('✅ Session key signature set');
-
-      // Phase 7: Transaction Building Logging
+      // Phase 6: Transaction Building Logging
       console.log('🔍 Step 7: Building approval transaction...');
       console.log('📝 Transaction parameters:', {
         target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
@@ -479,7 +501,7 @@ export class SealService {
       console.log('✅ Transaction built');
 
       // Build transaction bytes for Seal
-      console.log('🔍 Step 8: Building transaction bytes...');
+      console.log('🔍 Step 7: Building transaction bytes...');
       const txBytes = await tx.build({
         client: this.suiClient,
         onlyTransactionKind: true
@@ -491,7 +513,7 @@ export class SealService {
       });
 
       // Dry run with enhanced logging
-      console.log('🔍 Step 9: Dry run transaction validation...');
+      console.log('🔍 Step 8: Dry run transaction validation...');
       try {
         const dryRunResult = await this.suiClient.dryRunTransactionBlock({
           transactionBlock: txBytes,
@@ -512,8 +534,8 @@ export class SealService {
         console.warn('⚠️  Dry run error (continuing anyway):', dryRunError);
       }
 
-      // Phase 8: Critical Seal SDK Decrypt Call Logging
-      console.log('🔍 Step 10: CALLING SEAL SDK DECRYPT - This is where the error likely occurs');
+      // Phase 7: Critical Seal SDK Decrypt Call Logging
+      console.log('🔍 Step 9: CALLING SEAL SDK DECRYPT - This is where the error likely occurs');
       console.log('📝 Seal decrypt parameters (CRITICAL):', {
         data: {
           type: params.encryptedData.constructor.name,
