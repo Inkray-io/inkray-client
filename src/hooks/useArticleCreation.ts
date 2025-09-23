@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { articlesAPI } from '@/lib/api';
+import { api } from '@/lib/api-client';
 import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
 import { getCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
@@ -8,6 +8,7 @@ import { toBase64 } from '@mysten/bcs';
 import { log } from '@/lib/utils/Logger';
 import { parseCreationError } from '@/lib/utils/errorHandling';
 import { ArticleCreationState, MediaFile, ArticleUploadResult } from '@/types/article';
+import { ApiError } from '@/types/api';
 
 // Use CachedPublicationData from cache manager for consistency
 type PublicationInfo = CachedPublicationData;
@@ -196,21 +197,24 @@ export const useArticleCreation = () => {
 
         setState(prev => ({ ...prev, uploadProgress: 50 }));
 
-        // 3. Call backend API (token is automatically added by api interceptor)
-        const response = await articlesAPI.create(requestData);
+        // 3. Call backend API with new type-safe client
+        const result: ArticleUploadResult = await api.articles.create(requestData);
 
         setState(prev => ({ ...prev, uploadProgress: 90 }));
-
-        if (!response.data || !response.data.data) {
-          throw new Error('No response data from server');
-        }
-
-        const result: ArticleUploadResult = response.data.data;
         setState(prev => ({ ...prev, uploadProgress: 100 }));
 
         return result;
       } catch (error) {
-        const errorMessage = parseCreationError(error);
+        let errorMessage: string;
+        
+        if (error instanceof ApiError) {
+          // Use the user-friendly message from ApiError
+          errorMessage = error.getUserMessage();
+        } else {
+          // Fallback to existing error parsing
+          errorMessage = parseCreationError(error);
+        }
+        
         setState(prev => ({ ...prev, error: errorMessage }));
         throw new Error(errorMessage);
       } finally {
