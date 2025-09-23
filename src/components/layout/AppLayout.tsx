@@ -25,10 +25,10 @@ export function AppLayout({
       <AppHeader />
 
       {/* Main Content */}
-      <div className={cn("px-4 sm:px-8 lg:px-[120px] xl:px-[160px] pb-[124px] max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto", className)}>
+      <div className={cn("px-4 sm:px-8 lg:px-[60px] xl:px-[80px] pb-[124px] max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto", className)}>
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-10">
           {/* Left Sidebar - Hidden on mobile, shown in mobile menu */}
-          <div className="hidden lg:block">
+          <div className="hidden lg:block flex-shrink-0">
             <AppSidebar currentPage={currentPage} />
           </div>
 
@@ -39,7 +39,7 @@ export function AppLayout({
 
           {/* Right Sidebar - Responsive */}
           {showRightSidebar && rightSidebar && (
-            <div className="w-full lg:w-[300px]">
+            <div className="w-full lg:w-[240px]">
               {rightSidebar}
             </div>
           )}

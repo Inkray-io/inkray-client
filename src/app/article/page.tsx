@@ -42,7 +42,6 @@ function ArticlePageContent() {
     reloadContent,
     canLoadContent,
     isWaitingForWallet,
-    isWalletReady,
     needsWalletForContent,
   } = useArticle(articleSlug);
 
@@ -80,8 +79,8 @@ function ArticlePageContent() {
 
   return (
     <RequireAuth redirectTo="/">
-      <AppLayout currentPage="feed">
-        <div className="max-w-4xl mx-auto py-6 space-y-6">
+      <AppLayout currentPage="feed" showRightSidebar={false}>
+        <div className="py-6 space-y-6">
           {/* Back Button */}
           <div className="flex items-center gap-4">
             <Button

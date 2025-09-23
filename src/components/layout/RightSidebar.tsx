@@ -10,7 +10,7 @@ interface RightSidebarProps {
 
 export function RightSidebar({ children, className }: RightSidebarProps) {
   return (
-    <div className={cn("space-y-5", className)}>
+    <div className={cn("space-y-3", className)}>
       {children}
     </div>
   )

@@ -121,21 +121,21 @@ export function PopularComments({ comments, onError }: PopularCommentsProps) {
   // Loading state
   if (state.isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-5">
-        <h3 className="font-medium text-black mb-4">Popular comments</h3>
-        <div className="space-y-4">
+      <div className="bg-white rounded-2xl p-4">
+        <h3 className="font-medium text-black mb-3 text-sm">Popular comments</h3>
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-full bg-gray-200"></div>
-                <div className="space-y-1">
-                  <div className="h-4 bg-gray-200 rounded w-24"></div>
-                  <div className="h-3 bg-gray-200 rounded w-16"></div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="size-7 rounded-full bg-gray-200"></div>
+                <div className="space-y-0.5">
+                  <div className="h-3 bg-gray-200 rounded w-20"></div>
+                  <div className="h-2 bg-gray-200 rounded w-12"></div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="space-y-1.5">
+                <div className="h-2.5 bg-gray-200 rounded w-full"></div>
+                <div className="h-2.5 bg-gray-200 rounded w-3/4"></div>
               </div>
             </div>
           ))}
@@ -147,14 +147,14 @@ export function PopularComments({ comments, onError }: PopularCommentsProps) {
   // Error state
   if (state.error) {
     return (
-      <div className="bg-white rounded-2xl p-5">
-        <h3 className="font-medium text-black mb-4">Popular comments</h3>
-        <div className="text-center py-8">
-          <div className="text-red-500 mb-2">⚠️</div>
-          <div className="text-sm text-gray-600">Failed to load comments</div>
+      <div className="bg-white rounded-2xl p-4">
+        <h3 className="font-medium text-black mb-3 text-sm">Popular comments</h3>
+        <div className="text-center py-6">
+          <div className="text-red-500 mb-1.5 text-sm">⚠️</div>
+          <div className="text-xs text-gray-600">Failed to load comments</div>
           <button 
             onClick={() => window.location.reload()} 
-            className="text-blue-500 text-sm mt-2 hover:underline"
+            className="text-blue-500 text-xs mt-1.5 hover:underline"
           >
             Try again
           </button>
@@ -164,31 +164,31 @@ export function PopularComments({ comments, onError }: PopularCommentsProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5">
-      <h3 className="font-medium text-black mb-4">Popular comments</h3>
+    <div className="bg-white rounded-2xl p-4">
+      <h3 className="font-medium text-black mb-3 text-sm">Popular comments</h3>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
         {state.displayComments.map((comment) => (
-          <div key={comment.id} className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-gray-200 overflow-hidden">
+          <div key={comment.id} className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="size-7 rounded-full bg-gray-200 overflow-hidden">
                 <img src={comment.author.avatar} alt={comment.author.name} className="size-full object-cover" />
               </div>
               <div>
-                <div className="font-semibold text-black">{comment.author.name}</div>
-                <div className="text-sm text-black/50">{comment.date}</div>
+                <div className="font-medium text-black text-sm">{comment.author.name}</div>
+                <div className="text-xs text-black/50">{comment.date}</div>
               </div>
             </div>
-            <div className="text-sm text-black leading-relaxed whitespace-pre-line">
+            <div className="text-xs text-black leading-relaxed whitespace-pre-line">
               {comment.content}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
+            <div className="flex items-center gap-1.5">
+              <div className="flex gap-0.5">
                 {comment.reactionTypes?.map((type, index) => (
-                  <div key={index} className={`size-4 rounded ${getReactionColor(type)}`} />
+                  <div key={index} className={`size-3 rounded ${getReactionColor(type)}`} />
                 ))}
               </div>
-              <span className="text-sm text-gray-600">{comment.reactions} reactions</span>
+              <span className="text-xs text-gray-600">{comment.reactions} reactions</span>
             </div>
           </div>
         ))}
