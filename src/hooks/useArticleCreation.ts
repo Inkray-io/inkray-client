@@ -4,6 +4,7 @@ import { articlesAPI } from '@/lib/api';
 import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
 import { getCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
+import { toBase64 } from '@mysten/bcs';
 
 export interface ArticleCreationState {
   isProcessing: boolean;
@@ -144,10 +145,8 @@ export const useArticleCreation = () => {
 
         setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
         // 6. Prepare request data with encrypted content
-        // Convert encrypted content to base64 for API transmission
-        const encryptedContentBase64 = btoa(
-          Array.from(encryptedContent.encryptedData, byte => String.fromCharCode(byte)).join('')
-        );
+        // Convert encrypted content to base64 for API transmission using Mysten's BCS utilities
+        const encryptedContentBase64 = toBase64(encryptedContent.encryptedData);
 
         const requestData = {
           title,
@@ -231,10 +230,10 @@ export const useArticleCreation = () => {
 
     for (const file of files) {
       try {
-        // Convert file to base64
+        // Convert file to base64 using Mysten's BCS utilities
         const buffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(buffer);
-        const base64 = btoa(String.fromCharCode(...uint8Array));
+        const base64 = toBase64(uint8Array);
 
         mediaFiles.push({
           content: base64,

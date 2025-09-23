@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
+import { fromBase64 } from '@mysten/bcs';
+import { EncryptedObject } from '@mysten/seal';
 
 export interface Article {
   articleId: string;
@@ -49,22 +51,22 @@ export const useArticle = (articleSlug: string | null) => {
    * Load article metadata directly from backend API
    */
   const loadArticleMetadata = useCallback(async (slug: string): Promise<Article> => {
-    
+
     try {
       const response = await articlesAPI.getBySlug(slug);
-      
+
       // Handle wrapped API response: { success: true, data: {...} }
       if (!response.data || !response.data.success) {
         throw new Error('API returned unsuccessful response');
       }
-      
+
       const article = response.data.data;
-      
+
       if (!article) {
         throw new Error('No article data in API response');
       }
-      
-      
+
+
       return article;
     } catch (error) {
       throw new Error(`Article with slug "${slug}" not found`);
@@ -74,7 +76,7 @@ export const useArticle = (articleSlug: string | null) => {
   /**
    * Load article content (with decryption for encrypted content)
    */
-  const loadArticleContent = useCallback(async (article: Article): Promise<string> => {
+  const loadArticleContent = useCallback(async (article: Article): Promise<string | null> => {
     if (!suiClient) {
       throw new Error('Sui client not available');
     }
@@ -89,7 +91,13 @@ export const useArticle = (articleSlug: string | null) => {
 
       // All content is encrypted - check if we have a content seal ID
       if (article.contentSealId) {
-        
+        console.log('🔓 Processing encrypted content with Seal ID:', {
+          articleId: article.articleId,
+          contentSealId: article.contentSealId.substring(0, 20) + '...',
+          quiltBlobId: article.quiltBlobId,
+          title: article.title
+        });
+
         // Wallet connection is required for signing the decryption transaction
         if (!currentAccount) {
           throw new Error('Wallet connection required to decrypt content');
@@ -97,26 +105,28 @@ export const useArticle = (articleSlug: string | null) => {
 
         // Download encrypted content from backend
         const response = await articlesAPI.getRawContent(article.quiltBlobId);
-        
+
         // Debug: Log response structure to understand the issue
-        
+
         // Handle different response formats
-        let encryptedData: Uint8Array;
-        if (response.data instanceof ArrayBuffer) {
-          encryptedData = new Uint8Array(response.data);
-        } else if (response.data instanceof Uint8Array) {
-          encryptedData = response.data;
-        } else if (typeof response.data === 'string') {
-          // If it's base64 string, convert it
-          const binaryString = atob(response.data);
-          encryptedData = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            encryptedData[i] = binaryString.charCodeAt(i);
+        const encryptedData = new Uint8Array(response.data);
+
+        // Validate that the encrypted data is a valid BCS-encoded EncryptedObject
+        try {
+          const encObj = EncryptedObject.parse(encryptedData);
+          console.log('✅ BCS validation successful. Content ID from encrypted object:', encObj.id);
+
+          // Verify that the content ID in the encrypted object matches what we expect
+          if (article.contentSealId && encObj.id !== article.contentSealId) {
+            console.warn('⚠️ Content ID mismatch:', {
+              fromDatabase: article.contentSealId,
+              fromEncryptedObject: encObj.id
+            });
           }
-        } else {
-          throw new Error(`Unexpected encrypted data format: ${typeof response.data}`);
+        } catch (parseError) {
+          console.error('❌ BCS validation failed - encrypted data is corrupted or mis-encoded:', parseError);
+          throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
         }
-        
 
         // Decrypt using the new decryption hook (pass contentSealId as hex string directly)
         const decryptedContent = await decryptContent({
@@ -125,12 +135,11 @@ export const useArticle = (articleSlug: string | null) => {
           articleId: article.articleId,
         });
 
-        
         return decryptedContent;
-        
+
       } else {
         // Fallback: if no content seal ID, try to get parsed content from backend
-        
+
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const content = response.data.content;
 
@@ -138,10 +147,10 @@ export const useArticle = (articleSlug: string | null) => {
       }
 
     } catch (error) {
-      
+      console.log(error)
       // Provide user-friendly error messages
       let errorMessage = 'Failed to load article content';
-      
+
       if (error instanceof Error) {
         if (error.message.includes('Wallet connection required')) {
           errorMessage = 'Please connect your wallet to view this encrypted content';
@@ -157,7 +166,7 @@ export const useArticle = (articleSlug: string | null) => {
           errorMessage = error.message;
         }
       }
-      
+
       throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
@@ -188,15 +197,15 @@ export const useArticle = (articleSlug: string | null) => {
           setState(prev => ({ ...prev, content }));
         } catch (contentError) {
           // If content loading fails, still show the article metadata
-          setState(prev => ({ 
-            ...prev, 
-            error: `Failed to load article content: ${contentError instanceof Error ? contentError.message : 'Unknown error'}` 
+          setState(prev => ({
+            ...prev,
+            error: `Failed to load article content: ${contentError instanceof Error ? contentError.message : 'Unknown error'}`
           }));
         }
       } else {
-        setState(prev => ({ 
-          ...prev, 
-          error: 'Article content not available (no blob ID)' 
+        setState(prev => ({
+          ...prev,
+          error: 'Article content not available (no blob ID)'
         }));
       }
 
@@ -237,19 +246,109 @@ export const useArticle = (articleSlug: string | null) => {
   }, [articleSlug, loadArticle]);
 
   /**
+   * Manual decryption that bypasses the auto-decryption flag
+   */
+  const manualDecryptContent = useCallback(async (article: Article): Promise<string> => {
+    if (!suiClient) {
+      throw new Error('Sui client not available');
+    }
+
+    try {
+      setState(prev => ({ ...prev, isLoadingContent: true }));
+
+      if (!article.quiltBlobId) {
+        throw new Error('Article has no quilt blob ID');
+      }
+
+      // All content is encrypted - check if we have a content seal ID
+      if (article.contentSealId) {
+        // Wallet connection is required for signing the decryption transaction
+        if (!currentAccount) {
+          throw new Error('Wallet connection required to decrypt content');
+        }
+
+        // Download encrypted content from backend
+        const response = await articlesAPI.getRawContent(article.quiltBlobId);
+
+        // Handle different response formats
+        const encryptedData = new Uint8Array(response.data);
+
+        // Validate that the encrypted data is a valid BCS-encoded EncryptedObject
+        try {
+          const encObj = EncryptedObject.parse(encryptedData);
+          console.log('✅ Manual decryption BCS validation successful. Content ID:', encObj.id);
+
+          // Verify content ID match
+          if (article.contentSealId && encObj.id !== article.contentSealId) {
+            console.warn('⚠️ Manual decryption content ID mismatch:', {
+              fromDatabase: article.contentSealId,
+              fromEncryptedObject: encObj.id
+            });
+          }
+        } catch (parseError) {
+          console.error('❌ Manual decryption BCS validation failed:', parseError);
+          throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
+        }
+
+        // Manual decryption - bypasses auto-decryption flag
+        console.log('🔓 MANUAL DECRYPTION - Starting Seal decryption process...');
+        const decryptedContent = await decryptContent({
+          encryptedData,
+          contentId: article.contentSealId, // Pass as hex string directly from database
+          articleId: article.articleId,
+        });
+
+        return decryptedContent;
+      } else {
+        // Fallback: if no content seal ID, try to get parsed content from backend
+        const response = await articlesAPI.getContent(article.quiltBlobId);
+        const content = response.data.content;
+        return content;
+      }
+    } catch (error) {
+      console.log(error);
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to load article content';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Wallet connection required')) {
+          errorMessage = 'Please connect your wallet to view this encrypted content';
+        } else if (error.message.includes('key server')) {
+          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('threshold')) {
+          errorMessage = 'Decryption service unavailable. Please try again later.';
+        } else if (error.message.includes('session')) {
+          errorMessage = 'Authentication failed. Please reconnect your wallet and try again.';
+        } else if (error.message.includes('approve_free')) {
+          errorMessage = 'Content access denied. This article may not support free access.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      throw new Error(errorMessage);
+    } finally {
+      setState(prev => ({ ...prev, isLoadingContent: false }));
+    }
+  }, [suiClient, currentAccount, decryptContent]);
+
+  /**
    * Reload content only
    */
   const reloadContent = useCallback(async () => {
     if (state.article && state.article.quiltBlobId) {
       try {
-        const content = await loadArticleContent(state.article);
+        // Use manual decryption for encrypted content, regular loading for others
+        const content = state.article.contentSealId
+          ? await manualDecryptContent(state.article)
+          : await loadArticleContent(state.article);
         setState(prev => ({ ...prev, content, error: null }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to reload content';
         setState(prev => ({ ...prev, error: errorMessage }));
       }
     }
-  }, [state.article, loadArticleContent]);
+  }, [state.article, loadArticleContent, manualDecryptContent]);
 
   return {
     // State

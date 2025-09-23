@@ -4,6 +4,7 @@ import { SealClient, SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
 import { CONFIG } from './config';
 import { generateArticleContentId, generateMediaContentId } from './seal-identity';
+import { toBase64, fromBase64 } from '@mysten/bcs';
 
 // NOTE: This Seal client is deprecated for direct use in components.
 // Use useContentDecryption hook instead for proper React integration.
@@ -330,21 +331,11 @@ export class InkraySealClient {
 
 // Utility functions for data conversion
 export function arrayBufferToBase64(buffer: Uint8Array): string {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+  return toBase64(buffer);
 }
 
 export function base64ToArrayBuffer(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
+  return fromBase64(base64);
 }
 
 // Singleton instance for application-wide use

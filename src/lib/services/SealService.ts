@@ -1,8 +1,8 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { Transaction } from '@mysten/sui/transactions';
-import { SealClient, SessionKey } from '@mysten/seal';
-import { fromHex } from '@mysten/bcs';
+import { SealClient, SessionKey, EncryptedObject } from '@mysten/seal';
+import { fromHex, toBase64 } from '@mysten/bcs';
 import { generateArticleContentId, generateMediaContentId, contentIdToHex } from '../seal-identity';
 import { getSealClient, type InkraySealClient } from '../seal-client';
 import { CONFIG } from '../config';
@@ -210,8 +210,8 @@ export class SealService {
 
       // Generate content ID for media
       const contentId = generateMediaContentId(
-        mediaFile.filename, 
-        mediaFile.mimeType, 
+        mediaFile.filename,
+        mediaFile.mimeType,
         publicationId
       );
       const contentIdHex = contentIdToHex(contentId);
@@ -233,10 +233,8 @@ export class SealService {
         threshold: 2
       });
 
-      // Convert encrypted data back to base64 for transport
-      const encryptedBase64 = btoa(
-        Array.from(encryptedData, byte => String.fromCharCode(byte)).join('')
-      );
+      // Convert encrypted data back to base64 for transport using Mysten's BCS utilities
+      const encryptedBase64 = toBase64(encryptedData);
 
       return {
         ...mediaFile,
@@ -295,7 +293,7 @@ export class SealService {
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
       arguments: [
-        tx.pure.vector('u8', Array.from(contentIdBytes)),
+        tx.pure.vector('u8', contentIdBytes),
         tx.object(articleId),
       ]
     });
@@ -304,36 +302,129 @@ export class SealService {
   }
 
   /**
-   * Decrypt content using Seal protocol
+   * Decrypt content using Seal protocol (with comprehensive tracing for debugging)
    */
   public async decryptContent(
     params: DecryptionParams,
     signMessage: (message: Uint8Array) => Promise<string>
   ): Promise<string> {
+    const traceId = `seal-decrypt-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    console.group(`🔍 SEAL DECRYPT TRACE [${traceId}] - ${new Date().toISOString()}`);
+
     try {
-      // Validate inputs
+      // Phase 1: Input Parameter Logging
+      console.log('📊 Input Parameters:', {
+        encryptedDataLength: params.encryptedData?.length || 0,
+        encryptedDataType: params.encryptedData?.constructor?.name || 'undefined',
+        encryptedDataPreview: params.encryptedData ?
+          Array.from(params.encryptedData.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ') : 'null',
+        contentId: params.contentId,
+        contentIdLength: params.contentId?.length || 0,
+        articleId: params.articleId,
+        hasSignMessageFunction: typeof signMessage === 'function'
+      });
+
+      // Enhanced input validation with tracing
+      console.log('🔍 Step 1: Input validation...');
       if (!params.contentId || params.contentId.length === 0) {
+        console.error('❌ Content ID validation failed: empty or null');
         throw new Error('Invalid content ID: empty or null');
       }
 
       if (!params.contentId.startsWith('0x')) {
+        console.error('❌ Content ID validation failed: missing 0x prefix');
         throw new Error('Content ID must be a hex string starting with 0x');
       }
 
       if (!params.articleId || !/^0x[a-fA-F0-9]{64}$/.test(params.articleId)) {
+        console.error('❌ Article ID validation failed:', params.articleId);
         throw new Error('Invalid article ID format. Must be a valid Sui object ID.');
       }
+      console.log('✅ Input validation passed');
 
-      // Convert hex string back to bytes
+      // Phase 1.5: BCS Validation of encrypted data
+      console.log('🔍 Step 1.5: BCS validation of encrypted data...');
+      try {
+        const encObj = EncryptedObject.parse(params.encryptedData);
+        console.log('📝 BCS validation result:', {
+          isValid: true,
+          contentIdFromObject: encObj.id,
+          expectedContentId: params.contentId,
+          idsMatch: encObj.id === params.contentId,
+          objectSize: params.encryptedData.length,
+          objectPreview: Array.from(params.encryptedData.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+        });
+        
+        if (encObj.id !== params.contentId) {
+          console.warn('⚠️ Content ID mismatch detected!', {
+            fromEncryptedObject: encObj.id,
+            fromParameters: params.contentId,
+            recommendation: 'Verify that the correct content ID is being passed to decryption'
+          });
+        } else {
+          console.log('✅ Content ID validation passed - IDs match');
+        }
+      } catch (bcsError) {
+        console.error('❌ BCS validation failed!', {
+          error: bcsError,
+          errorMessage: bcsError instanceof Error ? bcsError.message : 'Unknown BCS error',
+          dataLength: params.encryptedData.length,
+          dataPreview: Array.from(params.encryptedData.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' '),
+          recommendation: 'Check that encrypted data is properly decoded from Base64/hex before passing to decrypt()'
+        });
+        throw new Error(`BCS validation failed: ${bcsError instanceof Error ? bcsError.message : 'Invalid encrypted object format'}`);
+      }
+
+      // Phase 2: Content ID Conversion with detailed logging
+      console.log('🔍 Step 2: Converting content ID from hex...');
+      console.log('📝 Before conversion:', {
+        contentIdHex: params.contentId,
+        hexLength: params.contentId.length,
+        expectedFormat: '0x followed by hex characters'
+      });
+
       const contentIdBytes = fromHex(params.contentId);
 
-      // Get key server IDs
+      console.log('📝 After fromHex conversion:', {
+        contentIdBytesLength: contentIdBytes.length,
+        contentIdBytesType: contentIdBytes.constructor.name,
+        contentIdBytesPreview: Array.from(contentIdBytes.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '),
+        expectedLength: 43, // tag(1) + version(2) + address(32) + nonce(8)
+        actualBytes: Array.from(contentIdBytes)
+      });
+
+      if (contentIdBytes.length !== 43) {
+        console.warn('⚠️  Unexpected content ID length! Expected 43 bytes, got:', contentIdBytes.length);
+      }
+
+      // Phase 3: Key Server Configuration Logging
+      console.log('🔍 Step 3: Getting key server configuration...');
       const serverObjectIds = this.getKeyServerIds();
+      console.log('📝 Key servers:', {
+        network: CONFIG.NETWORK,
+        serverCount: serverObjectIds.length,
+        serverIds: serverObjectIds,
+        packageId: CONFIG.PACKAGE_ID
+      });
+
       if (serverObjectIds.length === 0) {
+        console.error('❌ No key servers configured for network:', CONFIG.NETWORK);
         throw new Error(`No key servers configured for network: ${CONFIG.NETWORK}`);
       }
 
-      // Initialize Seal client for decryption
+      // Phase 4: Seal Client Initialization Logging
+      console.log('🔍 Step 4: Initializing Seal client...');
+      const sealClientConfig = {
+        suiClient: !!this.suiClient,
+        serverConfigs: serverObjectIds.map((id) => ({
+          objectId: id,
+          weight: 1,
+        })),
+        verifyKeyServers: false,
+      };
+      console.log('📝 Seal client configuration:', sealClientConfig);
+
       const sealClient = new SealClient({
         suiClient: this.suiClient,
         serverConfigs: serverObjectIds.map((id) => ({
@@ -342,50 +433,171 @@ export class SealService {
         })),
         verifyKeyServers: false,
       });
+      console.log('✅ Seal client initialized');
 
-      // Create session key
+      // Phase 5: Session Key Creation Logging
+      console.log('🔍 Step 5: Creating session key...');
+      console.log('📝 Session key parameters:', {
+        address: this.currentAccount.address,
+        packageId: CONFIG.PACKAGE_ID,
+        ttlMin: 10,
+        hasSuiClient: !!this.suiClient
+      });
+
       const sessionKey = await this.createSessionKey();
+      console.log('✅ Session key created');
 
-      // Sign the session key message
+      // Phase 6: Message Signing Logging
+      console.log('🔍 Step 6: Signing session key message...');
       const message = sessionKey.getPersonalMessage();
-      const signature = await signMessage(message);
-      sessionKey.setPersonalMessageSignature(signature);
+      console.log('📝 Personal message to sign:', {
+        messageLength: message.length,
+        messageType: message.constructor.name,
+        messagePreview: Array.from(message.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
 
-      // Build approval transaction
+      const signature = await signMessage(message);
+      console.log('📝 Signature result:', {
+        signatureLength: signature?.length || 0,
+        signatureType: typeof signature,
+        signaturePreview: signature?.substring(0, 20) + '...' || 'null'
+      });
+
+      sessionKey.setPersonalMessageSignature(signature);
+      console.log('✅ Session key signature set');
+
+      // Phase 7: Transaction Building Logging
+      console.log('🔍 Step 7: Building approval transaction...');
+      console.log('📝 Transaction parameters:', {
+        target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
+        contentIdBytesLength: contentIdBytes.length,
+        contentIdBytesArray: Array.from(contentIdBytes),
+        articleId: params.articleId
+      });
+
       const tx = this.buildApprovalTransaction(contentIdBytes, params.articleId);
+      console.log('✅ Transaction built');
 
       // Build transaction bytes for Seal
+      console.log('🔍 Step 8: Building transaction bytes...');
       const txBytes = await tx.build({
         client: this.suiClient,
         onlyTransactionKind: true
       });
+      console.log('📝 Transaction bytes:', {
+        txBytesLength: txBytes.length,
+        txBytesType: txBytes.constructor.name,
+        txBytesPreview: Array.from(txBytes.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
 
-      // Dry run the transaction to check if it would succeed
+      // Dry run with enhanced logging
+      console.log('🔍 Step 9: Dry run transaction validation...');
       try {
         const dryRunResult = await this.suiClient.dryRunTransactionBlock({
           transactionBlock: txBytes,
         });
 
+        console.log('📝 Dry run result:', {
+          status: dryRunResult.effects.status.status,
+          error: dryRunResult.effects.status.error || 'none'
+        });
+
         if (dryRunResult.effects.status.status === 'failure') {
           const errorMsg = dryRunResult.effects.status.error || 'Unknown error';
-          throw new Error(`Transaction would fail: ${errorMsg}`);
+          console.warn('⚠️  Dry run failed, but continuing with decryption:', errorMsg);
+        } else {
+          console.log('✅ Dry run passed');
         }
-      } catch {
-        // Continue with decryption even if dry run fails
+      } catch (dryRunError) {
+        console.warn('⚠️  Dry run error (continuing anyway):', dryRunError);
       }
 
-      // Decrypt using Seal protocol
+      // Phase 8: Critical Seal SDK Decrypt Call Logging
+      console.log('🔍 Step 10: CALLING SEAL SDK DECRYPT - This is where the error likely occurs');
+      console.log('📝 Seal decrypt parameters (CRITICAL):', {
+        data: {
+          type: params.encryptedData.constructor.name,
+          length: params.encryptedData.length,
+          preview: Array.from(params.encryptedData.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+        },
+        sessionKey: {
+          type: sessionKey.constructor.name,
+          // Try to get any accessible properties safely
+          properties: Object.getOwnPropertyNames(sessionKey).reduce((acc: Record<string, unknown>, prop) => {
+            try {
+              const value = (sessionKey as unknown as Record<string, unknown>)[prop];
+              if (typeof value !== 'function') {
+                acc[prop] = typeof value === 'object' ? Object.prototype.toString.call(value) : value;
+              }
+            } catch (e) {
+              const error = e as Error;
+              acc[prop] = `[Error accessing: ${error.message}]`;
+            }
+            return acc;
+          }, {} as Record<string, unknown>)
+        },
+        txBytes: {
+          type: txBytes.constructor.name,
+          length: txBytes.length,
+          preview: Array.from(txBytes.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+        }
+      });
+
+      // The actual Seal SDK call - this is where the error likely occurs
+      console.log('🚀 About to call sealClient.decrypt() - MONITOR FOR ERRORS');
       const decrypted = await sealClient.decrypt({
         data: params.encryptedData,
         sessionKey,
         txBytes,
       });
 
+      console.log('🎉 Seal decrypt SUCCESS!');
+      console.log('📝 Decryption result:', {
+        decryptedLength: decrypted.length,
+        decryptedType: decrypted.constructor.name,
+        decryptedPreview: Array.from(decrypted.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
+
       // Convert decrypted bytes to string
       const decryptedContent = new TextDecoder().decode(decrypted);
+      console.log('📝 Final decoded content:', {
+        contentLength: decryptedContent.length,
+        contentPreview: decryptedContent.substring(0, 100) + (decryptedContent.length > 100 ? '...' : '')
+      });
 
+      console.log('🎉 SEAL DECRYPT COMPLETE - SUCCESS');
+      console.groupEnd();
       return decryptedContent;
+
     } catch (error) {
+      // Enhanced error logging with full context
+      console.error('💥 SEAL DECRYPT ERROR - FULL DEBUG CONTEXT:', {
+        traceId,
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : 'No stack trace',
+        errorConstructor: error?.constructor?.name || 'Unknown',
+        inputParams: {
+          encryptedDataLength: params.encryptedData?.length || 0,
+          encryptedDataType: params.encryptedData?.constructor?.name || 'undefined',
+          contentId: params.contentId,
+          contentIdLength: params.contentId?.length || 0,
+          articleId: params.articleId
+        },
+        environment: {
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Node.js',
+          timestamp: new Date().toISOString(),
+          network: CONFIG.NETWORK,
+          packageId: CONFIG.PACKAGE_ID
+        },
+        sealContext: {
+          currentStep: 'Unknown - check logs above for last successful step',
+          accountAddress: this.currentAccount?.address || 'Not available'
+        }
+      });
+
+      console.groupEnd();
+
       let errorMessage = 'Failed to decrypt content';
 
       if (error instanceof Error) {
@@ -432,11 +644,7 @@ export class SealService {
    * Utility: Convert Uint8Array to base64
    */
   public static uint8ArrayToBase64(bytes: Uint8Array): string {
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+    return toBase64(bytes);
   }
 }
 

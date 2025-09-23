@@ -71,17 +71,17 @@ export const feedAPI = {
     fromDate?: string;
     toDate?: string;
   }) => api.get('/feed/articles', { params }),
-  
+
   getTrending: (params: {
     limit?: number;
     timeframe?: 'day' | 'week' | 'month';
   }) => api.get('/feed/trending', { params }),
-  
+
   getByPublication: (publicationId: string, params: {
     limit?: number;
     cursor?: string;
   }) => api.get('/feed/by-publication', { params: { ...params, publicationId } }),
-  
+
   getStats: () => api.get('/feed/stats'),
 };
 
@@ -96,7 +96,7 @@ export const eventsAPI = {
     fromDate?: string;
     toDate?: string;
   }) => api.get('/events/article-created', { params }),
-  
+
   getPublicationCreatedEvents: (params: {
     publication?: string;
     owner?: string;
@@ -133,12 +133,12 @@ export const articlesAPI = {
       validationPassed: boolean;
     };
   }) => api.post('/articles/create', data),
-  
+
   getBySlug: (slug: string) => api.get(`/articles/${slug}`),
-  
+
   getContent: (quiltBlobId: string) => api.get(`/articles/content/${quiltBlobId}`),
-  
-  getRawContent: (quiltBlobId: string) => api.get(`/articles/raw/${quiltBlobId}`, {
+
+  getRawContent: (quiltBlobId: string) => api.get<ArrayBuffer>(`/articles/raw/${quiltBlobId}`, {
     responseType: 'arraybuffer'
   }),
 };
