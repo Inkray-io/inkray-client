@@ -11,7 +11,6 @@ interface ArticleHeaderProps {
     date: string
     readTime: string
   }
-  articleId: string
 }
 
 export function ArticleHeader({ author }: ArticleHeaderProps) {

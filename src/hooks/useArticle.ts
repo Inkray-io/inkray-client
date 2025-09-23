@@ -3,35 +3,45 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
 import { EncryptedObject } from '@mysten/seal';
-
-export interface Article {
-  articleId: string;
-  slug: string;
-  title: string;
-  author: string;
-  authorShortAddress: string;
-  publicationId: string;
-  vaultId: string;
-  isEncrypted: boolean;
-  quiltBlobId: string;
-  quiltObjectId: string;
-  contentSealId?: string;
-  createdAt: string;
-  transactionHash: string;
-  timeAgo: string;
-}
-
-export interface ArticleState {
-  article: Article | null;
-  content: string | null;
-  isLoading: boolean;
-  isLoadingContent: boolean;
-  error: string | null;
-}
+import { log } from '@/lib/utils/Logger';
+import { parseContentError } from '@/lib/utils/errorHandling';
+import { Article, ArticleState, ArticleError, ArticleErrorType } from '@/types/article';
 
 /**
- * Simplified hook for loading and displaying articles using direct API calls
- * Independent of feed data - fetches article metadata directly from backend
+ * Comprehensive article loading and decryption hook
+ * 
+ * This hook provides complete article management including:
+ * - Loading article metadata from the backend API
+ * - Downloading and decrypting Seal-encrypted content
+ * - Handling BCS validation and data integrity checks
+ * - Managing loading states and error handling
+ * - Supporting both encrypted and unencrypted content
+ * 
+ * **IMPORTANT**: This hook preserves all Seal and Walrus data processing logic.
+ * The encryption/decryption flows and BCS validation must remain unchanged
+ * to prevent data corruption or compatibility issues.
+ * 
+ * @param articleSlug - URL slug of the article to load
+ * @returns Article state and management functions
+ * 
+ * @example
+ * ```tsx
+ * const { 
+ *   article, 
+ *   content, 
+ *   isProcessing, 
+ *   error, 
+ *   loadArticle, 
+ *   retry 
+ * } = useArticle('my-article-slug');
+ * 
+ * // Load article with encrypted content decryption
+ * useEffect(() => {
+ *   if (slug) {
+ *     loadArticle(slug);
+ *   }
+ * }, [slug]);
+ * ```
  */
 export const useArticle = (articleSlug: string | null) => {
   const [state, setState] = useState<ArticleState>({
@@ -90,12 +100,12 @@ export const useArticle = (articleSlug: string | null) => {
 
       // All content is encrypted - check if we have a content seal ID
       if (article.contentSealId) {
-        console.log('🔓 Processing encrypted content with Seal ID:', {
+        log.debug('Processing encrypted content with Seal ID', {
           articleId: article.articleId,
           contentSealId: article.contentSealId.substring(0, 20) + '...',
           quiltBlobId: article.quiltBlobId,
           title: article.title
-        });
+        }, 'useArticle');
 
         // Wallet connection is required for signing the decryption transaction
         if (!currentAccount) {
@@ -113,17 +123,17 @@ export const useArticle = (articleSlug: string | null) => {
         // Validate that the encrypted data is a valid BCS-encoded EncryptedObject
         try {
           const encObj = EncryptedObject.parse(encryptedData);
-          console.log('✅ BCS validation successful. Content ID from encrypted object:', encObj.id);
+          log.debug('BCS validation successful. Content ID from encrypted object', { contentId: encObj.id }, 'useArticle');
 
           // Verify that the content ID in the encrypted object matches what we expect
           if (article.contentSealId && encObj.id !== article.contentSealId) {
-            console.warn('⚠️ Content ID mismatch:', {
+            log.warn('Content ID mismatch', {
               fromDatabase: article.contentSealId,
               fromEncryptedObject: encObj.id
-            });
+            }, 'useArticle');
           }
         } catch (parseError) {
-          console.error('❌ BCS validation failed - encrypted data is corrupted or mis-encoded:', parseError);
+          log.error('BCS validation failed - encrypted data is corrupted or mis-encoded', parseError, 'useArticle');
           throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
         }
 
@@ -146,26 +156,8 @@ export const useArticle = (articleSlug: string | null) => {
       }
 
     } catch (error) {
-      console.log(error)
-      // Provide user-friendly error messages
-      let errorMessage = 'Failed to load article content';
-
-      if (error instanceof Error) {
-        if (error.message.includes('Wallet connection required')) {
-          errorMessage = 'Please connect your wallet to view this encrypted content';
-        } else if (error.message.includes('key server')) {
-          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
-        } else if (error.message.includes('threshold')) {
-          errorMessage = 'Decryption service unavailable. Please try again later.';
-        } else if (error.message.includes('session')) {
-          errorMessage = 'Authentication failed. Please reconnect your wallet and try again.';
-        } else if (error.message.includes('approve_free')) {
-          errorMessage = 'Content access denied. This article may not support free access.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
+      log.error('Failed to load article content', error, 'useArticle');
+      const errorMessage = parseContentError(error);
       throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
@@ -275,22 +267,22 @@ export const useArticle = (articleSlug: string | null) => {
         // Validate that the encrypted data is a valid BCS-encoded EncryptedObject
         try {
           const encObj = EncryptedObject.parse(encryptedData);
-          console.log('✅ Manual decryption BCS validation successful. Content ID:', encObj.id);
+          log.debug('Manual decryption BCS validation successful', { contentId: encObj.id }, 'useArticle');
 
           // Verify content ID match
           if (article.contentSealId && encObj.id !== article.contentSealId) {
-            console.warn('⚠️ Manual decryption content ID mismatch:', {
+            log.warn('Manual decryption content ID mismatch', {
               fromDatabase: article.contentSealId,
               fromEncryptedObject: encObj.id
-            });
+            }, 'useArticle');
           }
         } catch (parseError) {
-          console.error('❌ Manual decryption BCS validation failed:', parseError);
+          log.error('Manual decryption BCS validation failed', parseError, 'useArticle');
           throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
         }
 
         // Manual decryption - bypasses auto-decryption flag
-        console.log('🔓 MANUAL DECRYPTION - Starting Seal decryption process...');
+        log.info('MANUAL DECRYPTION - Starting Seal decryption process', null, 'useArticle');
         const decryptedContent = await decryptContent({
           encryptedData,
           contentId: article.contentSealId, // Pass as hex string directly from database
@@ -305,26 +297,8 @@ export const useArticle = (articleSlug: string | null) => {
         return content;
       }
     } catch (error) {
-      console.log(error);
-      // Provide user-friendly error messages
-      let errorMessage = 'Failed to load article content';
-
-      if (error instanceof Error) {
-        if (error.message.includes('Wallet connection required')) {
-          errorMessage = 'Please connect your wallet to view this encrypted content';
-        } else if (error.message.includes('key server')) {
-          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
-        } else if (error.message.includes('threshold')) {
-          errorMessage = 'Decryption service unavailable. Please try again later.';
-        } else if (error.message.includes('session')) {
-          errorMessage = 'Authentication failed. Please reconnect your wallet and try again.';
-        } else if (error.message.includes('approve_free')) {
-          errorMessage = 'Content access denied. This article may not support free access.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
+      log.error('Manual decryption failed', error, 'useArticle');
+      const errorMessage = parseContentError(error);
       throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));

@@ -8,7 +8,6 @@ interface ArticleFooterProps {
     comments: number
     views: number
   }
-  articleId: string
 }
 
 export function ArticleFooter({ engagement }: ArticleFooterProps) {

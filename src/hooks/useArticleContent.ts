@@ -1,25 +1,8 @@
 import { useState, useCallback } from 'react';
 import { articlesAPI } from '@/lib/api';
-
-export interface ArticleContentState {
-  content: string | null;
-  mediaFiles: Array<{
-    identifier: string;
-    filename: string;
-    tags: Record<string, string>;
-  }>;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface ArticleContentResponse {
-  content: string;
-  mediaFiles: Array<{
-    identifier: string;
-    filename: string;
-    tags: Record<string, string>;
-  }>;
-}
+import { log } from '@/lib/utils/Logger';
+import { parseApiError } from '@/lib/utils/errorHandling';
+import { ArticleContentState, ArticleContentResponse } from '@/types/article';
 
 /**
  * Hook for retrieving article content from Walrus quilt
@@ -43,7 +26,7 @@ export const useArticleContent = () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      console.log('Fetching article content for quilt:', quiltBlobId);
+      log.debug('Fetching article content for quilt', { quiltBlobId }, 'useArticleContent');
       
       const response = await articlesAPI.getContent(quiltBlobId);
       const result: ArticleContentResponse = response.data;
@@ -55,34 +38,17 @@ export const useArticleContent = () => {
         isLoading: false,
       }));
 
-      console.log('Article content fetched successfully:', {
+      log.debug('Article content fetched successfully', {
         contentLength: result.content?.length,
         mediaFilesCount: result.mediaFiles?.length,
-      });
+      }, 'useArticleContent');
 
       return result;
 
     } catch (error) {
-      console.error('Failed to fetch article content:', error);
+      log.error('Failed to fetch article content', error, 'useArticleContent');
       
-      let errorMessage = 'Failed to fetch article content';
-      
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-        if (axiosError.response) {
-          if (axiosError.response.status === 404) {
-            errorMessage = 'Article content not found';
-          } else if (axiosError.response.status === 401) {
-            errorMessage = 'Authentication required to view this content';
-          } else if (axiosError.response.status === 403) {
-            errorMessage = 'You do not have permission to view this content';
-          } else {
-            errorMessage = axiosError.response.data?.message || 'Failed to fetch content';
-          }
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
+      const errorMessage = parseApiError(error, 'Failed to fetch article content');
 
       setState(prev => ({
         ...prev,
@@ -103,39 +69,21 @@ export const useArticleContent = () => {
     }
 
     try {
-      console.log('Fetching raw article content for quilt:', quiltBlobId);
+      log.debug('Fetching raw article content for quilt', { quiltBlobId }, 'useArticleContent');
       
       const response = await articlesAPI.getRawContent(quiltBlobId);
       const rawContent = new Uint8Array(response.data);
 
-      console.log('Raw article content fetched successfully:', {
+      log.debug('Raw article content fetched successfully', {
         size: rawContent.length,
-      });
+      }, 'useArticleContent');
 
       return rawContent;
 
     } catch (error) {
-      console.error('Failed to fetch raw article content:', error);
+      log.error('Failed to fetch raw article content', error, 'useArticleContent');
       
-      let errorMessage = 'Failed to fetch raw article content';
-      
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-        if (axiosError.response) {
-          if (axiosError.response.status === 404) {
-            errorMessage = 'Article content not found';
-          } else if (axiosError.response.status === 401) {
-            errorMessage = 'Authentication required to view this content';
-          } else if (axiosError.response.status === 403) {
-            errorMessage = 'You do not have permission to view this content';
-          } else {
-            errorMessage = axiosError.response.data?.message || 'Failed to fetch raw content';
-          }
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
+      const errorMessage = parseApiError(error, 'Failed to fetch raw article content');
       throw new Error(errorMessage);
     }
   }, []);

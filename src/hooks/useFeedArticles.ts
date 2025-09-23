@@ -1,66 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { feedAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
-
-/**
- * Article data structure for the feed
- * @interface FeedArticle
- */
-export interface FeedArticle {
-  /** Unique database ID for the article */
-  id: string;
-  /** Blockchain article ID from Sui transaction */
-  articleId: string;
-  /** URL-friendly slug for the article */
-  slug: string;
-  /** Article title */
-  title: string;
-  /** Full Sui address of the article author */
-  author: string;
-  /** Shortened display version of author address */
-  authorShortAddress: string;
-  /** ID of the publication this article belongs to */
-  publicationId: string;
-  /** ID of the vault containing encrypted content */
-  vaultId: string;
-  /** Whether the article content is encrypted */
-  isEncrypted: boolean;
-  /** Walrus blob ID for content storage (optional) */
-  quiltBlobId?: string | null;
-  /** Walrus object ID for content storage (optional) */
-  quiltObjectId?: string | null;
-  /** Seal content ID for encrypted content (optional) */
-  contentSealId?: string | null;
-  /** ISO timestamp of article creation */
-  createdAt: string;
-  /** Sui transaction hash for the article creation */
-  transactionHash: string;
-  /** Human-readable time since creation (e.g., "2 hours ago") */
-  timeAgo: string;
-  /** Optional tags associated with the article */
-  tags?: string[];
-  /** Optional article summary/excerpt */
-  summary?: string;
-}
-
-/**
- * State management for the article feed
- * @interface FeedArticlesState
- */
-export interface FeedArticlesState {
-  /** Array of loaded articles */
-  articles: FeedArticle[];
-  /** Whether articles are currently being loaded */
-  isLoading: boolean;
-  /** Current error message, if any */
-  error: string | null;
-  /** Whether more articles are available for pagination */
-  hasMore: boolean;
-  /** Cursor for pagination (next page token) */
-  nextCursor: string | null;
-  /** Total number of articles available */
-  total: number;
-}
+import { FeedArticle, FeedArticlesState } from '@/types/article';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed

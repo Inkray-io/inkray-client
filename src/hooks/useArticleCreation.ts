@@ -5,39 +5,58 @@ import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
 import { getCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
 import { toBase64 } from '@mysten/bcs';
-
-export interface ArticleCreationState {
-  isProcessing: boolean;
-  uploadProgress: number;
-  encryptionProgress: number;
-  error: string | null;
-  isEncrypting: boolean;
-}
-
-export interface MediaFile {
-  content: string; // base64 encoded
-  filename: string;
-  mimeType: string;
-  size?: number;
-}
-
-export interface ArticleUploadResult {
-  articleId: string;
-  quiltBlobId: string;
-  quiltObjectId: string;
-  slug: string;
-  transactionDigest: string;
-  totalSize: number;
-  fileCount: number;
-  storageEndEpoch: number;
-}
+import { log } from '@/lib/utils/Logger';
+import { parseCreationError } from '@/lib/utils/errorHandling';
+import { ArticleCreationState, MediaFile, ArticleUploadResult } from '@/types/article';
 
 // Use CachedPublicationData from cache manager for consistency
 type PublicationInfo = CachedPublicationData;
 
 /**
- * Hook for article creation using backend API
- * Replaces complex Walrus upload logic with simple API calls
+ * Comprehensive article creation and publishing hook with Seal encryption
+ * 
+ * This hook provides complete article publishing functionality including:
+ * - Article content validation and preparation
+ * - Seal Identity-Based Encryption (IBE) for content security
+ * - Media file encryption and processing
+ * - Backend API integration for publishing
+ * - Progress tracking for encryption and upload phases
+ * - Error handling with user-friendly messages
+ * 
+ * **CRITICAL**: This hook preserves all Seal and Walrus data processing logic.
+ * The encryption flows, BCS encoding, and data structures must remain unchanged
+ * to prevent data corruption or compatibility issues with existing content.
+ * 
+ * @returns Article creation state and management functions
+ * 
+ * @example
+ * ```tsx
+ * const { 
+ *   isProcessing, 
+ *   uploadProgress, 
+ *   encryptionProgress,
+ *   error,
+ *   createAndPublishArticle,
+ *   convertFilesToMediaFiles,
+ *   checkEncryptionAvailability
+ * } = useArticleCreation();
+ * 
+ * // Create article with encryption
+ * const handlePublish = async () => {
+ *   try {
+ *     const mediaFiles = await convertFilesToMediaFiles(selectedFiles);
+ *     const result = await createAndPublishArticle(
+ *       title, 
+ *       content, 
+ *       mediaFiles, 
+ *       isGated
+ *     );
+ *     console.log('Article published:', result.slug);
+ *   } catch (error) {
+ *     console.error('Publishing failed:', error.message);
+ *   }
+ * };
+ * ```
  */
 export const useArticleCreation = () => {
   const [state, setState] = useState<ArticleCreationState>({
@@ -191,25 +210,7 @@ export const useArticleCreation = () => {
 
         return result;
       } catch (error) {
-        let errorMessage = 'Failed to create article';
-        
-        if (error && typeof error === 'object' && 'response' in error) {
-          const axiosError = error as { response?: { status?: number; data?: { message?: string } }; code?: string; message?: string };
-          if (axiosError.response?.status === 401) {
-            errorMessage = 'Authentication expired. Please log in again.';
-          } else if (axiosError.response?.status === 400) {
-            errorMessage = axiosError.response.data?.message || 'Invalid article data';
-          } else if (axiosError.response?.status === 500) {
-            errorMessage = 'Server error. Please try again later.';
-          } else if (axiosError.code === 'ECONNABORTED') {
-            errorMessage = 'Upload timeout. Please try again with smaller files.';
-          } else {
-            errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
-          }
-        } else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-
+        const errorMessage = parseCreationError(error);
         setState(prev => ({ ...prev, error: errorMessage }));
         throw new Error(errorMessage);
       } finally {
