@@ -4,9 +4,14 @@ import { Transaction } from '@mysten/sui/transactions';
 import { SealClient, SessionKey, EncryptedObject } from '@mysten/seal';
 import { fromHex, toBase64 } from '@mysten/bcs';
 import { generateArticleContentId, generateMediaContentId, contentIdToHex } from '../seal-identity';
-import { getSealClient, type InkraySealClient } from '../seal-client';
 import { CONFIG } from '../config';
 import { getCachedSessionKey, setCachedSessionKey } from '../cache-manager';
+import { 
+  getKeyServerConfigs, 
+  validateSealConfiguration, 
+  DEFAULT_ENCRYPTION_THRESHOLD,
+  DEFAULT_SESSION_KEY_TTL_MINUTES 
+} from '../seal-config';
 
 /**
  * Unified Seal Service for Content Encryption and Decryption
@@ -52,80 +57,25 @@ export interface EncryptionStatus {
 export class SealService {
   private suiClient: SuiClient;
   private currentAccount: WalletAccount;
-  private sealClient: InkraySealClient | null = null;
 
   constructor(suiClient: SuiClient, currentAccount: WalletAccount) {
     this.suiClient = suiClient;
     this.currentAccount = currentAccount;
   }
 
-  /**
-   * Initialize or get the Seal client instance
-   */
-  private getSealClientInstance(): InkraySealClient {
-    if (!this.sealClient) {
-      this.sealClient = getSealClient(this.suiClient, this.currentAccount);
-    }
-    return this.sealClient;
-  }
-
-  /**
-   * Get key server IDs for the current network
-   */
-  private getKeyServerIds(): string[] {
-    const keyServerConfigs: Record<string, string[]> = {
-      testnet: [
-        '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',
-        '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8',
-      ],
-      mainnet: [
-        '0x0000000000000000000000000000000000000000000000000000000000000004',
-        '0x0000000000000000000000000000000000000000000000000000000000000005',
-        '0x0000000000000000000000000000000000000000000000000000000000000006',
-      ],
-      devnet: [
-        '0x0000000000000000000000000000000000000000000000000000000000000007',
-        '0x0000000000000000000000000000000000000000000000000000000000000008',
-        '0x0000000000000000000000000000000000000000000000000000000000000009',
-      ],
-      localnet: [
-        '0x000000000000000000000000000000000000000000000000000000000000000a',
-        '0x000000000000000000000000000000000000000000000000000000000000000b',
-        '0x000000000000000000000000000000000000000000000000000000000000000c',
-      ]
-    };
-
-    const servers = keyServerConfigs[CONFIG.NETWORK] || keyServerConfigs.testnet;
-
-    // Check if configured from environment
-    if (CONFIG.SEAL_KEY_SERVER_IDS) {
-      const envServers = CONFIG.SEAL_KEY_SERVER_IDS.split(',').map(id => id.trim());
-      if (envServers.length > 0 && envServers[0] !== '') {
-        return envServers;
-      }
-    }
-
-    return servers;
-  }
 
   /**
    * Get encryption status and availability
    */
   public getEncryptionStatus(): EncryptionStatus {
     try {
-      if (!CONFIG.PACKAGE_ID || CONFIG.PACKAGE_ID === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-        return {
-          isAvailable: false,
-          network: CONFIG.NETWORK,
-          packageId: CONFIG.PACKAGE_ID,
-          error: 'Package ID not configured'
-        };
-      }
-
+      const validation = validateSealConfiguration();
+      
       return {
-        isAvailable: true,
+        isAvailable: validation.isValid,
         network: CONFIG.NETWORK,
         packageId: CONFIG.PACKAGE_ID,
+        error: validation.error
       };
     } catch (error) {
       return {
@@ -146,14 +96,10 @@ export class SealService {
       throw new Error('Invalid publication ID format. Must be a valid Sui object ID.');
     }
 
-    // Validate package ID format
-    if (!CONFIG.PACKAGE_ID || !/^0x[a-fA-F0-9]{60,64}$/.test(CONFIG.PACKAGE_ID)) {
-      throw new Error('Invalid package ID format. Must be a valid Sui package ID.');
-    }
-
-    // Check basic configuration requirements
-    if (!CONFIG.PACKAGE_ID || CONFIG.PACKAGE_ID === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-      throw new Error('Seal encryption not available: Package ID not configured');
+    // Use shared configuration validation
+    const validation = validateSealConfiguration();
+    if (!validation.isValid) {
+      throw new Error(`Seal encryption not available: ${validation.error}`);
     }
 
     return true;
@@ -177,14 +123,25 @@ export class SealService {
       // Convert content to bytes
       const contentBytes = new TextEncoder().encode(content);
 
-      // Get Seal client instance
-      const sealClient = this.getSealClientInstance();
+      // Create SealClient for encryption
+      const serverConfigs = getKeyServerConfigs();
+      const sealClient = new SealClient({
+        suiClient: this.suiClient,
+        serverConfigs,
+        verifyKeyServers: false,
+      });
+
+      // Convert BCS-encoded content ID to hex string for Seal API
+      const idForSeal = '0x' + Array.from(contentId)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
 
       // Encrypt using Seal protocol
-      const encryptedData = await sealClient.encryptContent(contentBytes, {
-        contentId,
+      const { encryptedObject: encryptedData } = await sealClient.encrypt({
+        threshold: DEFAULT_ENCRYPTION_THRESHOLD,
         packageId: CONFIG.PACKAGE_ID,
-        threshold: 2
+        id: idForSeal,
+        data: contentBytes,
       });
 
       return {
@@ -224,14 +181,25 @@ export class SealService {
           .map(char => char.charCodeAt(0))
       );
 
-      // Get Seal client instance
-      const sealClient = this.getSealClientInstance();
+      // Create SealClient for encryption
+      const serverConfigs = getKeyServerConfigs();
+      const sealClient = new SealClient({
+        suiClient: this.suiClient,
+        serverConfigs,
+        verifyKeyServers: false,
+      });
+
+      // Convert BCS-encoded content ID to hex string for Seal API
+      const idForSeal = '0x' + Array.from(contentId)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
 
       // Encrypt using Seal protocol
-      const encryptedData = await sealClient.encryptContent(contentBytes, {
-        contentId,
+      const { encryptedObject: encryptedData } = await sealClient.encrypt({
+        threshold: DEFAULT_ENCRYPTION_THRESHOLD,
         packageId: CONFIG.PACKAGE_ID,
-        threshold: 2
+        id: idForSeal,
+        data: contentBytes,
       });
 
       // Convert encrypted data back to base64 for transport using Mysten's BCS utilities
@@ -303,7 +271,7 @@ export class SealService {
     const sessionKey = await SessionKey.create({
       address: this.currentAccount.address,
       packageId: CONFIG.PACKAGE_ID,
-      ttlMin: 30,
+      ttlMin: DEFAULT_SESSION_KEY_TTL_MINUTES,
       suiClient: this.suiClient,
     });
 
@@ -441,15 +409,15 @@ export class SealService {
 
       // Phase 3: Key Server Configuration Logging
       console.log('🔍 Step 3: Getting key server configuration...');
-      const serverObjectIds = this.getKeyServerIds();
+      const serverConfigs = getKeyServerConfigs();
       console.log('📝 Key servers:', {
         network: CONFIG.NETWORK,
-        serverCount: serverObjectIds.length,
-        serverIds: serverObjectIds,
+        serverCount: serverConfigs.length,
+        serverConfigs,
         packageId: CONFIG.PACKAGE_ID
       });
 
-      if (serverObjectIds.length === 0) {
+      if (serverConfigs.length === 0) {
         console.error('❌ No key servers configured for network:', CONFIG.NETWORK);
         throw new Error(`No key servers configured for network: ${CONFIG.NETWORK}`);
       }
@@ -458,20 +426,14 @@ export class SealService {
       console.log('🔍 Step 4: Initializing Seal client...');
       const sealClientConfig = {
         suiClient: !!this.suiClient,
-        serverConfigs: serverObjectIds.map((id) => ({
-          objectId: id,
-          weight: 1,
-        })),
+        serverConfigs,
         verifyKeyServers: false,
       };
       console.log('📝 Seal client configuration:', sealClientConfig);
 
       const sealClient = new SealClient({
         suiClient: this.suiClient,
-        serverConfigs: serverObjectIds.map((id) => ({
-          objectId: id,
-          weight: 1,
-        })),
+        serverConfigs,
         verifyKeyServers: false,
       });
       console.log('✅ Seal client initialized');
@@ -481,7 +443,7 @@ export class SealService {
       console.log('📝 Session key parameters:', {
         address: this.currentAccount.address,
         packageId: CONFIG.PACKAGE_ID,
-        ttlMin: 43200, // 1 month
+        ttlMin: DEFAULT_SESSION_KEY_TTL_MINUTES, // 1 month
         hasSuiClient: !!this.suiClient
       });
 
