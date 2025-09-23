@@ -119,7 +119,7 @@ export function validateSealConfiguration(): { isValid: boolean; error?: string 
 export function getSealConfigStatus() {
   const validation = validateSealConfiguration();
   const servers = getKeyServerIds();
-  
+
   return {
     network: CONFIG.NETWORK,
     packageId: CONFIG.PACKAGE_ID,
@@ -139,4 +139,4 @@ export const DEFAULT_ENCRYPTION_THRESHOLD = 2;
 /**
  * Default session key TTL in minutes (1 month)
  */
-export const DEFAULT_SESSION_KEY_TTL_MINUTES = 43200; // 30 days * 24 hours * 60 minutes
+export const DEFAULT_SESSION_KEY_TTL_MINUTES = 30; // 30 days * 24 hours * 60 minutes

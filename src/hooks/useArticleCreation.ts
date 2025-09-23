@@ -201,11 +201,11 @@ export const useArticleCreation = () => {
 
         setState(prev => ({ ...prev, uploadProgress: 90 }));
 
-        if (!response.data) {
+        if (!response.data || !response.data.data) {
           throw new Error('No response data from server');
         }
 
-        const result: ArticleUploadResult = response.data;
+        const result: ArticleUploadResult = response.data.data;
         setState(prev => ({ ...prev, uploadProgress: 100 }));
 
         return result;

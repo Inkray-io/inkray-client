@@ -137,10 +137,10 @@ export default function CreateArticlePage() {
         description: `Your article "${title}" has been published successfully.`,
       })
 
-      // Navigate to the published article
+      // Navigate to the published article (wait 5s for blockchain event processing)
       setTimeout(() => {
         router.push(`/article?id=${result.slug}`)
-      }, 1500)
+      }, 5000)
 
     } catch (error) {
       toast({
