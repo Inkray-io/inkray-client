@@ -1,5 +1,8 @@
 "use client"
 
+import React, { useState, useEffect } from 'react';
+import { log } from '@/lib/utils/Logger';
+
 interface Comment {
   id: string
   author: {
@@ -14,9 +17,23 @@ interface Comment {
 
 interface PopularCommentsProps {
   comments?: Comment[]
+  onError?: (error: string) => void
 }
 
-export function PopularComments({ comments }: PopularCommentsProps) {
+interface PopularCommentsState {
+  isLoading: boolean
+  error: string | null
+  displayComments: Comment[]
+}
+
+export function PopularComments({ comments, onError }: PopularCommentsProps) {
+  const [state, setState] = useState<PopularCommentsState>({
+    isLoading: false,
+    error: null,
+    displayComments: []
+  });
+
+  // Default comments as fallback
   const defaultComments: Comment[] = [
     {
       id: "1",
@@ -53,7 +70,43 @@ export function PopularComments({ comments }: PopularCommentsProps) {
     }
   ]
 
-  const displayComments = comments || defaultComments
+  // Initialize comments when component mounts or when comments prop changes
+  useEffect(() => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      const commentsToDisplay = comments || defaultComments;
+      
+      // Validate comments structure
+      const validatedComments = commentsToDisplay.filter(comment => {
+        if (!comment.id || !comment.author?.name || !comment.content) {
+          log.warn('Invalid comment structure detected', comment, 'PopularComments');
+          return false;
+        }
+        return true;
+      });
+
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        displayComments: validatedComments,
+        error: null
+      }));
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load comments';
+      log.error('Error loading comments', error, 'PopularComments');
+      
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        displayComments: defaultComments,
+        error: errorMessage
+      }));
+
+      onError?.(errorMessage);
+    }
+  }, [comments, onError]);
 
   const getReactionColor = (type: string) => {
     switch (type) {
@@ -65,12 +118,57 @@ export function PopularComments({ comments }: PopularCommentsProps) {
     }
   }
 
+  // Loading state
+  if (state.isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-5">
+        <h3 className="font-medium text-black mb-4">Popular comments</h3>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-10 rounded-full bg-gray-200"></div>
+                <div className="space-y-1">
+                  <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  <div className="h-3 bg-gray-200 rounded w-16"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (state.error) {
+    return (
+      <div className="bg-white rounded-2xl p-5">
+        <h3 className="font-medium text-black mb-4">Popular comments</h3>
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-2">⚠️</div>
+          <div className="text-sm text-gray-600">Failed to load comments</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-blue-500 text-sm mt-2 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl p-5">
       <h3 className="font-medium text-black mb-4">Popular comments</h3>
       
       <div className="space-y-4">
-        {displayComments.map((comment) => (
+        {state.displayComments.map((comment) => (
           <div key={comment.id} className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-full bg-gray-200 overflow-hidden">

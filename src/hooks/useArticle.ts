@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
-import { fromBase64 } from '@mysten/bcs';
 import { EncryptedObject } from '@mysten/seal';
 
 export interface Article {

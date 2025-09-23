@@ -4,28 +4,71 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { INKRAY_CONFIG } from '@/lib/sui-clients';
 import { useEnhancedTransaction, type EnhancedTransactionResult } from './useEnhancedTransaction';
 
+/**
+ * Result of successful publication creation
+ * @interface PublicationResult
+ */
 export interface PublicationResult {
+  /** Unique ID of the created publication */
   publicationId: string;
+  /** ID of the associated vault for encrypted content */
   vaultId: string;
+  /** Owner capability object ID for publication management */
   ownerCapId: string;
+  /** Transaction digest of the creation transaction */
   transactionDigest: string;
+  /** Address of the publication creator */
   creatorAddress: string;
 }
 
+/**
+ * Result of adding a contributor to a publication
+ * @interface ContributorResult
+ */
 export interface ContributorResult {
+  /** Transaction digest of the contributor addition */
   transactionDigest: string;
+  /** Address of the added contributor */
   contributorAddress: string;
 }
 
+/**
+ * Internal state for publication flow operations
+ * @interface PublicationState
+ */
 interface PublicationState {
+  /** Whether a publication is currently being created */
   isCreating: boolean;
+  /** Whether a contributor is currently being added */
   isAddingContributor: boolean;
+  /** Current error message, if any */
   error: string | null;
 }
 
 /**
  * Hook for managing publication creation and contributor management
+ * 
+ * This hook provides functions to create publications on the Sui blockchain
+ * and manage contributors. It handles transaction creation, signing, and
+ * result parsing for publication-related operations.
+ * 
  * Adapted from contracts/scripts/src/workflows/publication-flow.ts
+ * 
+ * @returns Object containing publication flow state and actions
+ * 
+ * @example
+ * ```tsx
+ * const { createPublication, addContributor, isCreating } = usePublicationFlow();
+ * 
+ * const handleCreatePublication = async () => {
+ *   try {
+ *     const result = await createPublication("My Publication");
+ *     console.log("Created publication:", result.publicationId);
+ *   } catch (error) {
+ *     console.error("Failed to create publication:", error);
+ *   }
+ * };
+ * ```
  */
 export const usePublicationFlow = () => {
   const [state, setState] = useState<PublicationState>({
