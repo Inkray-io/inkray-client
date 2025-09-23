@@ -52,9 +52,27 @@ export const useArticle = (articleSlug: string | null) => {
     error: null,
   });
 
+  // Add wallet connection state tracking
+  const [isWalletReady, setIsWalletReady] = useState(false);
+  const [isWaitingForWallet, setIsWaitingForWallet] = useState(false);
+
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const { decryptContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
+
+  // Monitor wallet connection status
+  useEffect(() => {
+    const walletReady = !!(currentAccount && suiClient);
+    setIsWalletReady(walletReady);
+    
+    if (walletReady && isWaitingForWallet) {
+      log.debug('Wallet connection established, ready for decryption', {
+        account: currentAccount?.address,
+        hasClient: !!suiClient
+      }, 'useArticle');
+      setIsWaitingForWallet(false);
+    }
+  }, [currentAccount, suiClient, isWaitingForWallet]);
 
   /**
    * Load article metadata directly from backend API
@@ -85,11 +103,10 @@ export const useArticle = (articleSlug: string | null) => {
   /**
    * Load article content (with decryption for encrypted content)
    */
-  const loadArticleContent = useCallback(async (article: Article): Promise<string | null> => {
+  const loadArticleContent = useCallback(async (article: Article, forceWait: boolean = false): Promise<string | null> => {
     if (!suiClient) {
       throw new Error('Sui client not available');
     }
-
 
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
@@ -107,9 +124,20 @@ export const useArticle = (articleSlug: string | null) => {
           title: article.title
         }, 'useArticle');
 
-        // Wallet connection is required for signing the decryption transaction
-        if (!currentAccount) {
-          throw new Error('Wallet connection required to decrypt content');
+        // Check wallet connection for encrypted content
+        if (!currentAccount || !isWalletReady) {
+          if (forceWait) {
+            // Set waiting state and don't throw error - let the wallet monitoring handle retry
+            setIsWaitingForWallet(true);
+            setState(prev => ({ 
+              ...prev, 
+              isLoadingContent: false,
+              error: 'Waiting for wallet connection to decrypt content...'
+            }));
+            return null;
+          } else {
+            throw new Error('Wallet connection required to decrypt content');
+          }
         }
 
         // Download encrypted content from backend
@@ -162,7 +190,7 @@ export const useArticle = (articleSlug: string | null) => {
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
     }
-  }, [suiClient, currentAccount, decryptContent]);
+  }, [suiClient, currentAccount, isWalletReady, decryptContent]);
 
   /**
    * Load complete article (metadata + content)
@@ -176,16 +204,27 @@ export const useArticle = (articleSlug: string | null) => {
       content: null,
     }));
 
+    // Clear wallet waiting state when starting fresh
+    setIsWaitingForWallet(false);
+
     try {
-      // 1. Load article metadata from backend
+      // 1. Load article metadata from backend (doesn't require wallet)
+      log.debug('Loading article metadata', { slug }, 'useArticle');
       const article = await loadArticleMetadata(slug);
       setState(prev => ({ ...prev, article }));
 
-      // 2. Load article content
+      // 2. Progressive content loading based on encryption status
       if (article.quiltBlobId) {
         try {
-          const content = await loadArticleContent(article);
-          setState(prev => ({ ...prev, content }));
+          // For encrypted content, use forceWait to gracefully handle wallet not ready
+          const isEncrypted = !!article.contentSealId;
+          const content = await loadArticleContent(article, isEncrypted);
+          
+          if (content !== null) {
+            setState(prev => ({ ...prev, content }));
+          }
+          // If content is null and encrypted, it means we're waiting for wallet
+          
         } catch (contentError) {
           // If content loading fails, still show the article metadata
           setState(prev => ({
@@ -223,8 +262,42 @@ export const useArticle = (articleSlug: string | null) => {
         isLoadingContent: false,
         error: null,
       });
+      setIsWaitingForWallet(false);
     }
   }, [articleSlug, loadArticle]);
+
+  /**
+   * Auto-retry content loading when wallet becomes ready
+   */
+  useEffect(() => {
+    const shouldRetryContent = isWalletReady && 
+                              isWaitingForWallet && 
+                              state.article && 
+                              state.article.contentSealId && 
+                              !state.content;
+
+    if (shouldRetryContent) {
+      log.debug('Wallet ready, automatically retrying content decryption', {
+        articleId: state.article.articleId,
+        slug: articleSlug
+      }, 'useArticle');
+
+      // Clear waiting state and error, then retry content loading
+      setIsWaitingForWallet(false);
+      setState(prev => ({ ...prev, error: null }));
+      
+      loadArticleContent(state.article, false)
+        .then(content => {
+          if (content) {
+            setState(prev => ({ ...prev, content }));
+          }
+        })
+        .catch(error => {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to decrypt content';
+          setState(prev => ({ ...prev, error: errorMessage }));
+        });
+    }
+  }, [isWalletReady, isWaitingForWallet, state.article, state.content, articleSlug, loadArticleContent]);
 
 
   /**
@@ -328,11 +401,14 @@ export const useArticle = (articleSlug: string | null) => {
     ...state,
     isProcessing: state.isLoading || state.isLoadingContent || isDecrypting,
     error: state.error || decryptionError,
+    isWaitingForWallet,
+    isWalletReady,
 
     // Actions
     loadArticle,
     clearError: () => {
       setState(prev => ({ ...prev, error: null }));
+      setIsWaitingForWallet(false);
       clearDecryptionError();
     },
     retry,
@@ -342,5 +418,6 @@ export const useArticle = (articleSlug: string | null) => {
     hasContent: !!state.content,
     hasArticle: !!state.article,
     canLoadContent: !!state.article?.quiltBlobId,
+    needsWalletForContent: !!(state.article?.contentSealId && !isWalletReady),
   };
 };

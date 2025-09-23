@@ -6,14 +6,14 @@ import { AppLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useArticle } from "@/hooks/useArticle";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import { 
-  Loader2, 
-  AlertCircle, 
-  ArrowLeft, 
-  Calendar, 
-  User, 
-  Eye, 
-  Lock, 
+import {
+  Loader2,
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  User,
+  Eye,
+  Lock,
   Unlock,
   RefreshCw,
   ExternalLink
@@ -41,6 +41,9 @@ function ArticlePageContent() {
     retry,
     reloadContent,
     canLoadContent,
+    isWaitingForWallet,
+    isWalletReady,
+    needsWalletForContent,
   } = useArticle(articleSlug);
 
   const handleBack = () => {
@@ -81,9 +84,9 @@ function ArticlePageContent() {
         <div className="max-w-4xl mx-auto py-6 space-y-6">
           {/* Back Button */}
           <div className="flex items-center gap-4">
-            <Button 
-              onClick={handleBack} 
-              variant="ghost" 
+            <Button
+              onClick={handleBack}
+              variant="ghost"
               size="sm"
               className="gap-2"
             >
@@ -93,25 +96,33 @@ function ArticlePageContent() {
           </div>
 
           {/* Loading States */}
-          {isProcessing && (
+          {(isProcessing || isWaitingForWallet) && (
             <div className="bg-white rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 <div className="space-y-2">
                   <p className="font-medium">
-                    {isLoadingContent && article?.contentSealId ? 'Decrypting content with Seal...' :
-                     isLoadingContent ? 'Loading content from Walrus...' :
-                     'Loading article...'}
+                    {isWaitingForWallet ? 'Waiting for wallet connection...' :
+                      isLoadingContent && article?.contentSealId ? 'Decrypting content with Seal...' :
+                        isLoadingContent ? 'Loading content from Walrus...' :
+                          'Loading article...'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {isLoadingContent && article?.contentSealId ? 'Using Seal decryption for encrypted content' :
-                     isLoadingContent ? 'Fetching content from decentralized storage' :
-                     'Please wait while we load your article'}
+                    {isWaitingForWallet ? 'Please connect your wallet to decrypt this encrypted content' :
+                      isLoadingContent && article?.contentSealId ? 'Using Seal decryption for encrypted content' :
+                        isLoadingContent ? 'Fetching content from decentralized storage' :
+                          'Please wait while we load your article'}
                   </p>
-                  {article?.contentSealId && isLoadingContent && (
+                  {(article?.contentSealId && (isLoadingContent || isWaitingForWallet)) && (
                     <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-3">
                       <Lock className="h-4 w-4" />
                       <span>Encrypted Content - Wallet Required</span>
+                    </div>
+                  )}
+                  {isWaitingForWallet && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-orange-600 mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Content will automatically decrypt once wallet is connected</span>
                     </div>
                   )}
                 </div>
@@ -120,11 +131,11 @@ function ArticlePageContent() {
           )}
 
           {/* Error State */}
-          {error && (
+          {error && !isWaitingForWallet && (
             <div className="bg-white rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                  {error.includes('Wallet connection required') ? (
+                  {error.includes('Wallet connection required') || error.includes('Waiting for wallet') ? (
                     <Lock className="w-8 h-8 text-orange-600" />
                   ) : (
                     <AlertCircle className="w-8 h-8 text-red-600" />
@@ -132,19 +143,24 @@ function ArticlePageContent() {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-xl font-bold text-gray-900">
-                    {error.includes('Wallet connection required') ? 'Wallet Required' :
-                     error.includes('Decryption') ? 'Decryption Failed' :
-                     'Failed to Load Article'}
+                    {error.includes('Wallet connection required') || error.includes('Waiting for wallet') ? 'Wallet Required' :
+                      error.includes('Decryption') ? 'Decryption Failed' :
+                        'Failed to Load Article'}
                   </h2>
-                  <p className={`max-w-md mx-auto ${
-                    error.includes('Wallet connection required') ? 'text-orange-700' : 'text-red-700'
-                  }`}>
-                    {error}
+                  <p className={`max-w-md mx-auto ${error.includes('Wallet connection required') || error.includes('Waiting for wallet') ? 'text-orange-700' : 'text-red-700'
+                    }`}>
+                    {error.includes('Waiting for wallet') ? 'Please connect your wallet to decrypt this encrypted article content.' : error}
                   </p>
                   {article?.contentSealId && (
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-3">
                       <Lock className="h-4 w-4" />
                       <span>This article contains encrypted content</span>
+                    </div>
+                  )}
+                  {needsWalletForContent && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Connect your wallet to access encrypted content</span>
                     </div>
                   )}
                 </div>
@@ -213,9 +229,6 @@ function ArticlePageContent() {
                     <div>
                       {content?.length || 0} characters
                     </div>
-                    <div>
-                      Published on Sui blockchain
-                    </div>
                   </div>
                 </div>
               </div>
@@ -224,21 +237,21 @@ function ArticlePageContent() {
               <div className="bg-white rounded-2xl p-8">
                 {content ? (
                   <div className="prose prose-lg max-w-none">
-                    <ReactMarkdown 
+                    <ReactMarkdown
                       components={{
                         // Custom styling for markdown elements
-                        h1: ({children}) => <h1 className="text-3xl font-bold mb-6 text-gray-900">{children}</h1>,
-                        h2: ({children}) => <h2 className="text-2xl font-semibold mb-4 mt-8 text-gray-900">{children}</h2>,
-                        h3: ({children}) => <h3 className="text-xl font-semibold mb-3 mt-6 text-gray-900">{children}</h3>,
-                        p: ({children}) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
-                        strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                        em: ({children}) => <em className="italic text-gray-800">{children}</em>,
-                        code: ({children}) => (
+                        h1: ({ children }) => <h1 className="text-3xl font-bold mb-6 text-gray-900">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-2xl font-semibold mb-4 mt-8 text-gray-900">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-xl font-semibold mb-3 mt-6 text-gray-900">{children}</h3>,
+                        p: ({ children }) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                        em: ({ children }) => <em className="italic text-gray-800">{children}</em>,
+                        code: ({ children }) => (
                           <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">
                             {children}
                           </code>
                         ),
-                        pre: ({children}) => (
+                        pre: ({ children }) => (
                           <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
                             {children}
                           </pre>
@@ -265,8 +278,8 @@ function ArticlePageContent() {
                         {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
                       </p>
                       <p className="text-muted-foreground text-sm">
-                        {article.contentSealId ? 
-                          'Click to decrypt and load the article content using Seal' : 
+                        {article.contentSealId ?
+                          'Click to decrypt and load the article content using Seal' :
                           'Click to load the article content'
                         }
                       </p>
@@ -306,21 +319,26 @@ function ArticlePageContent() {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     <p>Published on Sui blockchain</p>
-                    <p>Transaction: {article.transactionHash || 'Unknown'}</p>
+                    <p className="flex items-center gap-2">
+                      Object ID:{' '}
+                      <button
+                        onClick={() => article.articleId && window.open(`https://suiexplorer.com/object/${article.articleId}?network=testnet`, '_blank')}
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      >
+                        <span className="font-mono">
+                          {article.articleId ?
+                            `${article.articleId.slice(0, 8)}...${article.articleId.slice(-8)}` :
+                            'Unknown'
+                          }
+                        </span>
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    </p>
                   </div>
-                  
+
                   <div className="flex gap-3">
                     <Button variant="outline" size="sm">
                       Share Article
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => article.transactionHash && window.open(`https://suiexplorer.com/txblock/${article.transactionHash}?network=testnet`, '_blank')}
-                      className="gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      View on Explorer
                     </Button>
                   </div>
                 </div>
