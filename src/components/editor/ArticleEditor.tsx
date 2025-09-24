@@ -14,43 +14,43 @@ interface ArticleEditorProps {
   className?: string
 }
 
-export function ArticleEditor({ 
-  initialValue = '', 
-  onChange, 
-  placeholder = 'Start writing your article...', 
-  className = '' 
+export function ArticleEditor({
+  initialValue = '',
+  onChange,
+  placeholder = 'Start writing your article...',
+  className = ''
 }: ArticleEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const crepeRef = useRef<Crepe | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  
+
   // Use useRef to store the latest onChange callback
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
-  
+
   // Store initial value to prevent re-initialization
   const initialValueRef = useRef(initialValue)
 
   useEffect(() => {
     if (!editorRef.current) return
-    
+
     const initializeEditor = async () => {
       try {
         setIsLoading(true)
-        
+
         // Create Crepe instance with listener configuration
         const crepe = new Crepe({
           root: editorRef.current!,
           defaultValue: initialValueRef.current,
         })
-        
+
         // Configure the listener before creating the editor
         if (onChangeRef.current) {
-          crepe.editor.use(listener)
-          
+          crepe.editor.use(listener);
+
           crepe.editor.config((ctx) => {
             const listenerManager = ctx.get(listenerCtx)
-            
+
             listenerManager.markdownUpdated((_, markdown) => {
               // Use the ref to get the latest onChange callback
               if (onChangeRef.current) {
@@ -59,22 +59,22 @@ export function ArticleEditor({
             })
           })
         }
-        
+
         // Initialize the editor after configuration
         await crepe.create()
-        
+
         // Store reference for cleanup
         crepeRef.current = crepe
-        
+
         setIsLoading(false)
       } catch (error) {
         // Failed to initialize Milkdown editor - continue without it
         setIsLoading(false)
       }
     }
-    
+
     initializeEditor()
-    
+
     // Cleanup on unmount
     return () => {
       if (crepeRef.current) {
@@ -83,7 +83,7 @@ export function ArticleEditor({
       }
     }
   }, [placeholder]) // Only re-initialize if placeholder changes
-  
+
   return (
     <div className={`relative ${className}`}>
       {isLoading && (
@@ -91,7 +91,7 @@ export function ArticleEditor({
           <div className="text-gray-600">Loading editor...</div>
         </div>
       )}
-      <div 
+      <div
         ref={editorRef}
         className="min-h-[500px] w-full"
       />

@@ -36,7 +36,6 @@ function ArticlePageContent() {
     article,
     content,
     isProcessing,
-    isLoadingContent,
     error,
     clearError,
     retry,
@@ -44,6 +43,8 @@ function ArticlePageContent() {
     canLoadContent,
     isWaitingForWallet,
     needsWalletForContent,
+    loadingStage,
+    loadingStateInfo,
   } = useArticle(articleSlug);
 
   const handleBack = () => {
@@ -95,40 +96,6 @@ function ArticlePageContent() {
             </Button>
           </div>
 
-          {/* Loading States */}
-          {(isProcessing || isWaitingForWallet) && (
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <div className="space-y-2">
-                  <p className="font-medium">
-                    {isWaitingForWallet ? 'Waiting for wallet connection...' :
-                      isLoadingContent && article?.contentSealId ? 'Decrypting content with Seal...' :
-                        isLoadingContent ? 'Loading content from Walrus...' :
-                          'Loading article...'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {isWaitingForWallet ? 'Please connect your wallet to decrypt this encrypted content' :
-                      isLoadingContent && article?.contentSealId ? 'Using Seal decryption for encrypted content' :
-                        isLoadingContent ? 'Fetching content from decentralized storage' :
-                          'Please wait while we load your article'}
-                  </p>
-                  {(article?.contentSealId && (isLoadingContent || isWaitingForWallet)) && (
-                    <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-3">
-                      <Lock className="h-4 w-4" />
-                      <span>Encrypted Content - Wallet Required</span>
-                    </div>
-                  )}
-                  {isWaitingForWallet && (
-                    <div className="flex items-center justify-center gap-2 text-sm text-orange-600 mt-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>Content will automatically decrypt once wallet is connected</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Error State */}
           {error && !isWaitingForWallet && (
@@ -172,6 +139,21 @@ function ArticlePageContent() {
                   <Button onClick={handleBack} variant="outline">
                     Back to Feed
                   </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Early Loading State - When no article metadata yet */}
+          {loadingStage === 'metadata' && (
+            <div className="bg-white rounded-2xl p-8">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <div className="space-y-2">
+                  <p className="font-medium">{loadingStateInfo.message}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {loadingStateInfo.description}
+                  </p>
                 </div>
               </div>
             </div>
@@ -274,10 +256,66 @@ function ArticlePageContent() {
                       {content}
                     </ReactMarkdown>
                   </div>
-                ) : isLoadingContent ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-                    <p className="text-muted-foreground">Loading content from Walrus...</p>
+                ) : isProcessing || isWaitingForWallet ? (
+                  /* Unified Loading State */
+                  <div className="text-center py-12 space-y-6">
+                    {loadingStateInfo.showSpinner && (
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    )}
+                    
+                    {/* Stage-specific icons */}
+                    {loadingStage === 'waiting-wallet' && (
+                      <Lock className="h-12 w-12 text-orange-500 mx-auto" />
+                    )}
+                    {loadingStage === 'decrypting' && (
+                      <div className="relative">
+                        <Lock className="h-12 w-12 text-blue-500 mx-auto" />
+                        <div className="absolute -top-1 -right-1">
+                          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      <p className="text-xl font-medium text-gray-900">
+                        {loadingStateInfo.message}
+                      </p>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        {loadingStateInfo.description}
+                      </p>
+                      
+                      {/* Stage-specific additional info */}
+                      {loadingStage === 'waiting-wallet' && article?.contentSealId && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+                          <div className="flex items-center gap-2 text-orange-700 mb-2">
+                            <Lock className="h-4 w-4" />
+                            <span className="font-medium">Encrypted Content</span>
+                          </div>
+                          <p className="text-sm text-orange-600">
+                            Content will automatically decrypt once wallet is connected
+                          </p>
+                        </div>
+                      )}
+                      
+                      {loadingStage === 'decrypting' && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                          <div className="flex items-center gap-2 text-blue-700 mb-2">
+                            <Lock className="h-4 w-4" />
+                            <span className="font-medium">Seal IBE Decryption</span>
+                          </div>
+                          <p className="text-sm text-blue-600">
+                            Decrypting content using Identity-Based Encryption
+                          </p>
+                        </div>
+                      )}
+                      
+                      {loadingStage === 'content' && article?.contentSealId && (
+                        <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                          <Lock className="h-4 w-4" />
+                          <span>Encrypted content - decryption will begin shortly</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : canLoadContent ? (
                   <div className="text-center py-12 space-y-4">

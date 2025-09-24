@@ -7,6 +7,17 @@ import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
 import { Article, ArticleState, ArticleError, ArticleErrorType } from '@/types/article';
 
+// Loading stages for better UX feedback
+type LoadingStage = 'idle' | 'metadata' | 'content' | 'decrypting' | 'waiting-wallet';
+
+interface LoadingStateInfo {
+  stage: LoadingStage;
+  message: string;
+  description: string;
+  showSpinner: boolean;
+  needsWallet: boolean;
+}
+
 /**
  * Comprehensive article loading and decryption hook
  * 
@@ -52,13 +63,60 @@ export const useArticle = (articleSlug: string | null) => {
     error: null,
   });
 
-  // Add wallet connection state tracking
+  // Enhanced loading state tracking
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [isWaitingForWallet, setIsWaitingForWallet] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<LoadingStage>('idle');
 
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const { decryptContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
+
+  // Get loading state information based on current stage
+  const getLoadingStateInfo = useCallback((): LoadingStateInfo => {
+    switch (loadingStage) {
+      case 'metadata':
+        return {
+          stage: 'metadata',
+          message: 'Loading article...',
+          description: 'Fetching article metadata from the backend',
+          showSpinner: true,
+          needsWallet: false
+        };
+      case 'content':
+        return {
+          stage: 'content', 
+          message: 'Loading content from Walrus...',
+          description: 'Downloading content from decentralized storage',
+          showSpinner: true,
+          needsWallet: false
+        };
+      case 'decrypting':
+        return {
+          stage: 'decrypting',
+          message: 'Decrypting content with Seal...',
+          description: 'Using Seal Identity-Based Encryption to decrypt content',
+          showSpinner: true,
+          needsWallet: true
+        };
+      case 'waiting-wallet':
+        return {
+          stage: 'waiting-wallet',
+          message: 'Waiting for wallet connection...',
+          description: 'Please connect your wallet to decrypt this encrypted content',
+          showSpinner: false,
+          needsWallet: true
+        };
+      default:
+        return {
+          stage: 'idle',
+          message: '',
+          description: '',
+          showSpinner: false,
+          needsWallet: false
+        };
+    }
+  }, [loadingStage]);
 
   // Monitor wallet connection status
   useEffect(() => {
@@ -110,6 +168,7 @@ export const useArticle = (articleSlug: string | null) => {
 
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
+      setLoadingStage('content');
 
       if (!article.quiltBlobId) {
         throw new Error('Article has no quilt blob ID');
@@ -129,6 +188,7 @@ export const useArticle = (articleSlug: string | null) => {
           if (forceWait) {
             // Set waiting state and don't throw error - let the wallet monitoring handle retry
             setIsWaitingForWallet(true);
+            setLoadingStage('waiting-wallet');
             setState(prev => ({ 
               ...prev, 
               isLoadingContent: false,
@@ -165,6 +225,9 @@ export const useArticle = (articleSlug: string | null) => {
           throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
         }
 
+        // Update to decrypting stage
+        setLoadingStage('decrypting');
+        
         // Decrypt using the new decryption hook (pass contentSealId as hex string directly)
         const decryptedContent = await decryptContent({
           encryptedData,
@@ -189,6 +252,7 @@ export const useArticle = (articleSlug: string | null) => {
       throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
+      setLoadingStage('idle');
     }
   }, [suiClient, currentAccount, isWalletReady, decryptContent]);
 
@@ -206,6 +270,7 @@ export const useArticle = (articleSlug: string | null) => {
 
     // Clear wallet waiting state when starting fresh
     setIsWaitingForWallet(false);
+    setLoadingStage('metadata');
 
     try {
       // 1. Load article metadata from backend (doesn't require wallet)
@@ -244,6 +309,7 @@ export const useArticle = (articleSlug: string | null) => {
       setState(prev => ({ ...prev, error: errorMessage }));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
+      setLoadingStage('idle');
     }
   }, [loadArticleMetadata, loadArticleContent]);
 
@@ -263,6 +329,7 @@ export const useArticle = (articleSlug: string | null) => {
         error: null,
       });
       setIsWaitingForWallet(false);
+      setLoadingStage('idle');
     }
   }, [articleSlug, loadArticle]);
 
@@ -284,6 +351,7 @@ export const useArticle = (articleSlug: string | null) => {
 
       // Clear waiting state and error, then retry content loading
       setIsWaitingForWallet(false);
+      setLoadingStage('content');
       setState(prev => ({ ...prev, error: null }));
       
       loadArticleContent(state.article, false)
@@ -319,6 +387,7 @@ export const useArticle = (articleSlug: string | null) => {
 
     try {
       setState(prev => ({ ...prev, isLoadingContent: true }));
+      setLoadingStage('content');
 
       if (!article.quiltBlobId) {
         throw new Error('Article has no quilt blob ID');
@@ -355,6 +424,7 @@ export const useArticle = (articleSlug: string | null) => {
         }
 
         // Manual decryption - bypasses auto-decryption flag
+        setLoadingStage('decrypting');
         log.info('MANUAL DECRYPTION - Starting Seal decryption process', null, 'useArticle');
         const decryptedContent = await decryptContent({
           encryptedData,
@@ -375,6 +445,7 @@ export const useArticle = (articleSlug: string | null) => {
       throw new Error(errorMessage);
     } finally {
       setState(prev => ({ ...prev, isLoadingContent: false }));
+      setLoadingStage('idle');
     }
   }, [suiClient, currentAccount, decryptContent]);
 
@@ -403,12 +474,15 @@ export const useArticle = (articleSlug: string | null) => {
     error: state.error || decryptionError,
     isWaitingForWallet,
     isWalletReady,
+    loadingStage,
+    loadingStateInfo: getLoadingStateInfo(),
 
     // Actions
     loadArticle,
     clearError: () => {
       setState(prev => ({ ...prev, error: null }));
       setIsWaitingForWallet(false);
+      setLoadingStage('idle');
       clearDecryptionError();
     },
     retry,
