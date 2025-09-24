@@ -1,6 +1,7 @@
 "use client"
 
-import { useRef, useEffect, useState } from 'react'
+import React, { useRef } from 'react'
+import { Milkdown, useEditor } from '@milkdown/react'
 import { Crepe } from '@milkdown/crepe'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
 import '@milkdown/crepe/theme/common/style.css'
@@ -20,81 +21,68 @@ export function ArticleEditor({
   placeholder = 'Start writing your article...',
   className = ''
 }: ArticleEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null)
-  const crepeRef = useRef<Crepe | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Use useRef to store the latest onChange callback
+  // Use ref to store callbacks to prevent re-initialization
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
-  // Store initial value to prevent re-initialization
-  const initialValueRef = useRef(initialValue)
+  // Configure editor using the official useEditor hook with minimal dependencies
+  useEditor((root) => {
+    // Create basic Crepe instance first
+    const crepe = new Crepe({
+      root,
+      defaultValue: initialValue,
+      features: {
+        // Enable core features - simplified to avoid schema conflicts
+        [Crepe.Feature.CodeMirror]: true,
+        [Crepe.Feature.ListItem]: true,
+        [Crepe.Feature.LinkTooltip]: true,
+        [Crepe.Feature.ImageBlock]: true,
+        [Crepe.Feature.BlockEdit]: true,
+        [Crepe.Feature.Cursor]: true,
+      },
+    })
 
-  useEffect(() => {
-    if (!editorRef.current) return
+    // Add listener plugin first
+    crepe.editor.use(listener)
 
-    const initializeEditor = async () => {
-      try {
-        setIsLoading(true)
-
-        // Create Crepe instance with listener configuration
-        const crepe = new Crepe({
-          root: editorRef.current!,
-          defaultValue: initialValueRef.current,
-        })
-
-        // Configure the listener before creating the editor
+    // Then configure after plugins are added
+    crepe.editor.config((ctx) => {
+      // Configure listener for change events using the ref
+      const listenerManager = ctx.get(listenerCtx)
+      listenerManager.markdownUpdated((_, markdown) => {
         if (onChangeRef.current) {
-          crepe.editor.use(listener);
-
-          crepe.editor.config((ctx) => {
-            const listenerManager = ctx.get(listenerCtx)
-
-            listenerManager.markdownUpdated((_, markdown) => {
-              // Use the ref to get the latest onChange callback
-              if (onChangeRef.current) {
-                onChangeRef.current(markdown)
-              }
-            })
-          })
+          onChangeRef.current(markdown)
         }
+      })
 
-        // Initialize the editor after configuration
-        await crepe.create()
+      // Configure ImageBlock feature with upload functionality
+      ctx.update(Crepe.Feature.ImageBlock, () => ({
+        onUpload: async (file: File) => {
+          // TODO: Implement actual image upload to your storage service
+          console.log(`Uploading file: ${file.name}`)
+          
+          // For now, create a local URL for preview
+          // In production, you would upload to your storage and return the URL
+          const url = URL.createObjectURL(file)
+          
+          // Simulate upload delay
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          
+          return url
+        },
+        captionPlaceholderText: placeholder || 'Add image caption...',
+      }))
+    })
 
-        // Store reference for cleanup
-        crepeRef.current = crepe
+    return crepe.editor
+  }) // Remove dependencies to prevent re-initialization
 
-        setIsLoading(false)
-      } catch (error) {
-        // Failed to initialize Milkdown editor - continue without it
-        setIsLoading(false)
-      }
-    }
-
-    initializeEditor()
-
-    // Cleanup on unmount
-    return () => {
-      if (crepeRef.current) {
-        crepeRef.current.destroy()
-        crepeRef.current = null
-      }
-    }
-  }, [placeholder]) // Only re-initialize if placeholder changes
-
+  // Return the official Milkdown component
   return (
-    <div className={`relative ${className}`}>
-      {isLoading && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-          <div className="text-gray-600">Loading editor...</div>
-        </div>
-      )}
-      <div
-        ref={editorRef}
-        className="min-h-[500px] w-full"
-      />
+    <div className={`milkdown-editor ${className}`}>
+      <div className="min-h-[500px] w-full">
+        <Milkdown />
+      </div>
     </div>
   )
 }

@@ -9,8 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@milkdown/crepe": "^7.15.5",
-    "@milkdown/plugin-listener": "^7.15.5",
+    "@milkdown/crepe": "^7.16.0",
+    "@milkdown/plugin-listener": "^7.16.0",
+    "@milkdown/react": "^7.16.0",
     "@mysten/bcs": "^1.7.0",
     "@mysten/dapp-kit": "^0.17.7",
     "@mysten/seal": "^0.5.2",

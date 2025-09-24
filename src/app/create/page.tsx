@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout'
 import { ArticleEditor } from '@/components/editor/ArticleEditor'
+import { MilkdownEditorWrapper } from '@/components/editor/MilkdownEditorWrapper'
 import { Button } from '@/components/ui/button'
 import { CategorySelector } from '@/components/ui/category-selector'
 import { SummaryInput } from '@/components/ui/summary-input'
@@ -274,12 +275,14 @@ export default function CreateArticlePage() {
 
             {/* Editor Container */}
             <div className="bg-white rounded-2xl p-6">
-              <ArticleEditor
-                initialValue={content}
-                onChange={setContent}
-                placeholder="Start writing your article..."
-                className="min-h-[600px]"
-              />
+              <MilkdownEditorWrapper>
+                <ArticleEditor
+                  initialValue={content}
+                  onChange={setContent}
+                  placeholder="Start writing your article..."
+                  className="min-h-[600px]"
+                />
+              </MilkdownEditorWrapper>
             </div>
 
             {/* Actions Footer */}
