@@ -20,6 +20,7 @@ import {
   Tag
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -44,7 +45,6 @@ function ArticlePageContent() {
     isWaitingForWallet,
     needsWalletForContent,
     loadingStage,
-    loadingStateInfo,
   } = useArticle(articleSlug);
 
   const handleBack = () => {
@@ -144,21 +144,6 @@ function ArticlePageContent() {
             </div>
           )}
 
-          {/* Early Loading State - When no article metadata yet */}
-          {loadingStage === 'metadata' && (
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <div className="space-y-2">
-                  <p className="font-medium">{loadingStateInfo.message}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {loadingStateInfo.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Article Content */}
           {article && (
             <div className="space-y-6">
@@ -230,7 +215,13 @@ function ArticlePageContent() {
 
               {/* Article Body */}
               <div className="bg-white rounded-2xl p-8">
-                {content ? (
+                {/* Show animated loader while loading content */}
+                {(loadingStage !== 'idle' && !content) ? (
+                  <ArticleAnimatedLoader 
+                    currentStage={loadingStage}
+                    isEncrypted={!!article.contentSealId}
+                  />
+                ) : content ? (
                   <div className="prose prose-lg max-w-none">
                     <ReactMarkdown
                       components={{
@@ -255,67 +246,6 @@ function ArticlePageContent() {
                     >
                       {content}
                     </ReactMarkdown>
-                  </div>
-                ) : isProcessing || isWaitingForWallet ? (
-                  /* Unified Loading State */
-                  <div className="text-center py-12 space-y-6">
-                    {loadingStateInfo.showSpinner && (
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    )}
-                    
-                    {/* Stage-specific icons */}
-                    {loadingStage === 'waiting-wallet' && (
-                      <Lock className="h-12 w-12 text-orange-500 mx-auto" />
-                    )}
-                    {loadingStage === 'decrypting' && (
-                      <div className="relative">
-                        <Lock className="h-12 w-12 text-blue-500 mx-auto" />
-                        <div className="absolute -top-1 -right-1">
-                          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="space-y-3">
-                      <p className="text-xl font-medium text-gray-900">
-                        {loadingStateInfo.message}
-                      </p>
-                      <p className="text-muted-foreground max-w-md mx-auto">
-                        {loadingStateInfo.description}
-                      </p>
-                      
-                      {/* Stage-specific additional info */}
-                      {loadingStage === 'waiting-wallet' && article?.contentSealId && (
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
-                          <div className="flex items-center gap-2 text-orange-700 mb-2">
-                            <Lock className="h-4 w-4" />
-                            <span className="font-medium">Encrypted Content</span>
-                          </div>
-                          <p className="text-sm text-orange-600">
-                            Content will automatically decrypt once wallet is connected
-                          </p>
-                        </div>
-                      )}
-                      
-                      {loadingStage === 'decrypting' && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                          <div className="flex items-center gap-2 text-blue-700 mb-2">
-                            <Lock className="h-4 w-4" />
-                            <span className="font-medium">Seal IBE Decryption</span>
-                          </div>
-                          <p className="text-sm text-blue-600">
-                            Decrypting content using Identity-Based Encryption
-                          </p>
-                        </div>
-                      )}
-                      
-                      {loadingStage === 'content' && article?.contentSealId && (
-                        <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
-                          <Lock className="h-4 w-4" />
-                          <span>Encrypted content - decryption will begin shortly</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 ) : canLoadContent ? (
                   <div className="text-center py-12 space-y-4">
