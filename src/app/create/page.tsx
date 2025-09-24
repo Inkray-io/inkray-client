@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout'
 import { ArticleEditor } from '@/components/editor/ArticleEditor'
 import { Button } from '@/components/ui/button'
-import { HiDocumentText, HiEye, HiCloudArrowUp } from 'react-icons/hi2'
+import { CategorySelector } from '@/components/ui/category-selector'
+import { SummaryInput } from '@/components/ui/summary-input'
+import { HiDocumentText } from 'react-icons/hi2'
 import { RequireAuth } from '@/components/auth/RequireAuth'
 import { RequirePublication } from '@/components/auth/RequirePublication'
 import { useArticleCreation } from '@/hooks/useArticleCreation'
+import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { getCachedDraft, setCachedDraft, clearDraftCache } from '@/lib/cache-manager'
@@ -59,24 +62,28 @@ export default function CreateArticlePage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [summary, setSummary] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [isGated, setIsGated] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  const { categories, isLoading: categoriesLoading, error: categoriesError } = useCategories()
 
   // Auto-save draft to localStorage
   useEffect(() => {
-    if (title || content) {
+    if (title || content || summary || categoryId) {
       const draft = {
         title,
         content,
+        summary,
+        categoryId,
         isGated
       }
 
       setCachedDraft(draft)
       setLastSaved(new Date())
     }
-  }, [title, content, isGated])
+  }, [title, content, summary, categoryId, isGated])
 
   // Load saved draft on mount
   useEffect(() => {
@@ -86,6 +93,8 @@ export default function CreateArticlePage() {
         if (draft) {
           setTitle(draft.title || '')
           setContent(draft.content || '')
+          setSummary(draft.summary || '')
+          setCategoryId(draft.categoryId || '')
           setIsGated(draft.isGated || false)
           setLastSaved(new Date(draft.timestamp))
         }
@@ -97,28 +106,20 @@ export default function CreateArticlePage() {
     loadDraft()
   }, [])
 
-  const handleSaveDraft = async () => {
-    setIsSaving(true)
-
-    // Simulate saving (replace with actual API call later)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const draft = {
-      title,
-      content,
-      isGated
-    }
-
-    setCachedDraft(draft)
-    setLastSaved(new Date())
-    setIsSaving(false)
-  }
-
   const handlePublish = async () => {
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || !content.trim() || !summary.trim() || !categoryId) {
       toast({
         title: "Missing Content",
-        description: "Please add a title and content before publishing.",
+        description: "Please fill in all required fields: title, content, summary, and category.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (summary.length < 10) {
+      toast({
+        title: "Summary Too Short",
+        description: "Summary must be at least 10 characters long.",
         variant: "destructive",
       })
       return
@@ -127,7 +128,7 @@ export default function CreateArticlePage() {
     try {
       clearError()
 
-      const result = await createAndPublishArticle(title.trim(), content.trim(), [], isGated) // [] = no media files, use isGated state
+      const result = await createAndPublishArticle(title.trim(), content.trim(), summary.trim(), categoryId, [], isGated) // [] = no media files, use isGated state
 
       // Clear draft on successful publish
       clearDraftCache()
@@ -156,6 +157,8 @@ export default function CreateArticlePage() {
       clearDraftCache()
       setTitle('')
       setContent('')
+      setSummary('')
+      setCategoryId('')
       setIsGated(false)
       setLastSaved(null)
     }
@@ -165,7 +168,7 @@ export default function CreateArticlePage() {
     <RequireAuth redirectTo="/">
       <RequirePublication redirectTo="/create-publication">
         <AppLayout currentPage="create">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="mx-auto space-y-6">
             {/* Header */}
             <div className="bg-white rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
@@ -182,27 +185,8 @@ export default function CreateArticlePage() {
                   )}
 
                   <Button
-                    variant="outline"
-                    onClick={() => setShowPreview(!showPreview)}
-                    className="gap-2"
-                  >
-                    <HiEye className="size-4" />
-                    {showPreview ? 'Edit' : 'Preview'}
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onClick={handleSaveDraft}
-                    disabled={isSaving}
-                    className="gap-2"
-                  >
-                    <HiCloudArrowUp className="size-4" />
-                    {isSaving ? 'Saving...' : 'Save Draft'}
-                  </Button>
-
-                  <Button
                     onClick={handlePublish}
-                    disabled={isProcessing || !title.trim() || !content.trim()}
+                    disabled={isProcessing || !title.trim() || !content.trim() || !summary.trim() || !categoryId}
                     className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50"
                   >
                     {isProcessing ? (
@@ -253,33 +237,49 @@ export default function CreateArticlePage() {
                   className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black"
                 />
               </div>
+
+              {/* Summary and Category */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <SummaryInput
+                    value={summary}
+                    onChange={setSummary}
+                    placeholder="Write a brief summary or headline for your article..."
+                    label="Summary"
+                    maxLength={280}
+                    minLength={10}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  {categoriesError ? (
+                    <div className="text-red-600 text-sm">
+                      Failed to load categories: {categoriesError}
+                    </div>
+                  ) : (
+                    <CategorySelector
+                      value={categoryId}
+                      onValueChange={setCategoryId}
+                      categories={categories}
+                      placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
+                      disabled={categoriesLoading}
+                      required
+                    />
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Editor/Preview Container */}
+            {/* Editor Container */}
             <div className="bg-white rounded-2xl p-6">
-              {showPreview ? (
-                /* Preview Mode */
-                <div>
-                  <h2 className="text-xl font-semibold mb-4 text-black">Preview</h2>
-                  <div className="prose max-w-none">
-                    <h1 className="text-3xl font-bold mb-4">{title || 'Untitled Article'}</h1>
-                    <div
-                      className="text-gray-800 leading-relaxed whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{
-                        __html: content.replace(/\n/g, '<br>')
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                /* Editor Mode */
-                <ArticleEditor
-                  initialValue={content}
-                  onChange={setContent}
-                  placeholder="Start writing your article..."
-                  className="min-h-[600px]"
-                />
-              )}
+              <ArticleEditor
+                initialValue={content}
+                onChange={setContent}
+                placeholder="Start writing your article..."
+                className="min-h-[600px]"
+              />
             </div>
 
             {/* Actions Footer */}

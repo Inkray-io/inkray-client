@@ -250,6 +250,8 @@ export const api = {
     create: (data: {
       title: string;
       content: string;
+      summary: string;
+      categoryId: string;
       publicationId: string;
       authorAddress: string;
       isGated?: boolean;
@@ -285,6 +287,7 @@ export const api = {
       articleId: string;
       slug: string;
       title: string;
+      summary: string;
       author: string;
       authorShortAddress: string;
       publicationId: string;
@@ -293,6 +296,11 @@ export const api = {
       quiltBlobId: string;
       quiltObjectId: string;
       contentSealId?: string;
+      category: {
+        id: string;
+        slug: string;
+        name: string;
+      };
       createdAt: string;
       transactionHash: string;
       timeAgo: string;
@@ -311,6 +319,24 @@ export const api = {
       apiClient.axios.get<ArrayBuffer>(`/articles/raw/${quiltBlobId}`, {
         responseType: 'arraybuffer'
       }),
+  },
+
+  // Categories endpoints
+  categories: {
+    getAll: () => apiClient.get<{
+      categories: {
+        id: string;
+        slug: string;
+        name: string;
+      }[];
+      total: number;
+    }>('/categories'),
+    
+    getBySlug: (slug: string) => apiClient.get<{
+      id: string;
+      slug: string;
+      name: string;
+    }>(`/categories/${slug}`),
   },
 
   // Feed endpoints

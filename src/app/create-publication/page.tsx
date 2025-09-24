@@ -16,14 +16,14 @@ export default function CreatePublicationPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { 
-    createPublication, 
-    isCreating, 
-    error, 
+  const {
+    createPublication,
+    isCreating,
+    error,
     clearError,
-    getUserPublications 
+    getUserPublications
   } = usePublicationFlow();
-  
+
   const [publicationName, setPublicationName] = useState('');
   const [hasExistingPublications, setHasExistingPublications] = useState(false);
   const [isCheckingPublications, setIsCheckingPublications] = useState(true);
@@ -40,7 +40,7 @@ export default function CreatePublicationPage() {
       setIsCheckingPublications(true);
       const publications = await getUserPublications();
       setHasExistingPublications(publications.length > 0);
-      
+
       // If user already has publications, redirect to create article
       if (publications.length > 0) {
         toast({
@@ -58,7 +58,7 @@ export default function CreatePublicationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!publicationName.trim()) {
       toast({
         title: "Error",
@@ -71,7 +71,7 @@ export default function CreatePublicationPage() {
     try {
       clearError();
       const result = await createPublication(publicationName.trim());
-      
+
       toast({
         title: "Success",
         description: `Publication "${publicationName}" created successfully!`,
@@ -87,7 +87,7 @@ export default function CreatePublicationPage() {
 
       // Redirect to article creation
       setTimeout(() => router.push('/create'), 1500);
-      
+
     } catch (error) {
       toast({
         title: "Publication Creation Failed",
@@ -216,7 +216,7 @@ export default function CreatePublicationPage() {
 
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-              This will create a publication on the Sui blockchain. Transaction fees may apply.
+              This will create a publication on the Sui blockchain.
             </p>
           </div>
         </div>

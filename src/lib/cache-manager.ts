@@ -28,6 +28,8 @@ export interface CachedPublicationData {
 export interface CachedDraftData {
   title: string;
   content: string;
+  summary: string;
+  categoryId: string;
   isGated: boolean;
   packageId: string; // Track which package ID this draft belongs to
   timestamp: number;

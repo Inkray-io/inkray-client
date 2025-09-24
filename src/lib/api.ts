@@ -107,10 +107,17 @@ export const eventsAPI = {
   }) => api.get('/events/publication-created', { params }),
 };
 
+export const categoriesAPI = {
+  getAll: () => api.get('/categories'),
+  getBySlug: (slug: string) => api.get(`/categories/${slug}`),
+};
+
 export const articlesAPI = {
   create: (data: {
     title: string;
     content: string;
+    summary: string;
+    categoryId: string;
     publicationId: string;
     authorAddress: string;
     isGated?: boolean;

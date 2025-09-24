@@ -49,6 +49,8 @@ type PublicationInfo = CachedPublicationData;
  *     const result = await createAndPublishArticle(
  *       title, 
  *       content, 
+ *       summary,
+ *       categoryId,
  *       mediaFiles, 
  *       isGated
  *     );
@@ -92,6 +94,8 @@ export const useArticleCreation = () => {
     async (
       title: string,
       content: string,
+      summary: string,
+      categoryId: string,
       mediaFiles: MediaFile[] = [],
       isGated: boolean = false
     ): Promise<ArticleUploadResult> => {
@@ -170,6 +174,8 @@ export const useArticleCreation = () => {
 
         const requestData = {
           title,
+          summary,
+          categoryId,
           content: encryptedContentBase64, // Base64-encoded encrypted content
           contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
           publicationId: publication.publicationId,

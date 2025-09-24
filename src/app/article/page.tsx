@@ -16,7 +16,8 @@ import {
   Lock,
   Unlock,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Tag
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -183,7 +184,7 @@ function ArticlePageContent() {
               <div className="bg-white rounded-2xl p-8">
                 <div className="space-y-6">
                   {/* Article Meta */}
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       <span>{article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}</span>
@@ -194,6 +195,12 @@ function ArticlePageContent() {
                         {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
                       </span>
                     </div>
+                    {article.category && (
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-blue-600" />
+                        <span className="text-blue-600 font-medium">{article.category.name}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       {article.isEncrypted ? (
                         <>
@@ -218,6 +225,13 @@ function ArticlePageContent() {
                   <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                     {article.title || 'Untitled Article'}
                   </h1>
+
+                  {/* Article Summary */}
+                  {article.summary && (
+                    <p className="text-lg text-gray-600 leading-relaxed italic">
+                      {article.summary}
+                    </p>
+                  )}
 
                   {/* Article Stats */}
                   <div className="flex items-center gap-6 text-sm text-muted-foreground border-t pt-4">
