@@ -64,7 +64,7 @@ export default function CreateArticlePage() {
   const [content, setContent] = useState('')
   const [summary, setSummary] = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [isGated, setIsGated] = useState(false)
+  const [gated, setGated] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   const { categories, isLoading: categoriesLoading, error: categoriesError } = useCategories()
@@ -77,13 +77,13 @@ export default function CreateArticlePage() {
         content,
         summary,
         categoryId,
-        isGated
+        gated
       }
 
       setCachedDraft(draft)
       setLastSaved(new Date())
     }
-  }, [title, content, summary, categoryId, isGated])
+  }, [title, content, summary, categoryId, gated])
 
   // Load saved draft on mount
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function CreateArticlePage() {
           setContent(draft.content || '')
           setSummary(draft.summary || '')
           setCategoryId(draft.categoryId || '')
-          setIsGated(draft.isGated || false)
+          setGated(draft.gated || false)
           setLastSaved(new Date(draft.timestamp))
         }
       } catch {
@@ -128,7 +128,7 @@ export default function CreateArticlePage() {
     try {
       clearError()
 
-      const result = await createAndPublishArticle(title.trim(), content.trim(), summary.trim(), categoryId, [], isGated) // [] = no media files, use isGated state
+      const result = await createAndPublishArticle(title.trim(), content.trim(), summary.trim(), categoryId, [], gated) // [] = no media files, use gated state
 
       // Clear draft on successful publish
       clearDraftCache()
@@ -159,7 +159,7 @@ export default function CreateArticlePage() {
       setContent('')
       setSummary('')
       setCategoryId('')
-      setIsGated(false)
+      setGated(false)
       setLastSaved(null)
     }
   }

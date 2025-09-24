@@ -159,7 +159,7 @@ export const useFeedArticles = () => {
       },
       title: article.title,
       slug: article.slug,
-      description: `Published on Sui blockchain • ${article.isEncrypted ? '🔒 Premium content' : '📖 Free article'}`,
+      description: `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
       engagement: {
         likes: 0, // TODO: Implement real engagement metrics from backend
         comments: 0,
@@ -168,7 +168,7 @@ export const useFeedArticles = () => {
       transactionHash: article.transactionHash,
       quiltBlobId: article.quiltBlobId,
       quiltObjectId: article.quiltObjectId,
-      isEncrypted: article.isEncrypted,
+      gated: article.gated,
     };
   }, []);
 

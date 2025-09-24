@@ -254,7 +254,7 @@ export const api = {
       categoryId: string;
       publicationId: string;
       authorAddress: string;
-      isGated?: boolean;
+      gated?: boolean;
       mediaFiles?: Array<{
         content: string;
         filename: string;
@@ -292,7 +292,7 @@ export const api = {
       authorShortAddress: string;
       publicationId: string;
       vaultId: string;
-      isEncrypted: boolean;
+      gated: boolean;
       quiltBlobId: string;
       quiltObjectId: string;
       contentSealId?: string;

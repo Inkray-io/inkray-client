@@ -349,7 +349,7 @@ export interface ArticleMetadata {
   publicationId: string;
   quiltBlobId: string;
   contentId: string;
-  isEncrypted: boolean;
+  gated: boolean;
   createdAt: string;
   transactionDigest: string;
   mediaFiles?: EncryptedMediaFile[];

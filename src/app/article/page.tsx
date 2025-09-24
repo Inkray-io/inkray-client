@@ -202,7 +202,7 @@ function ArticlePageContent() {
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      {article.isEncrypted ? (
+                      {article.gated ? (
                         <>
                           <Lock className="h-4 w-4 text-orange-600" />
                           <span className="text-orange-600">Premium Article</span>

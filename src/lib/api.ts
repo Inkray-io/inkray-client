@@ -120,7 +120,7 @@ export const articlesAPI = {
     categoryId: string;
     publicationId: string;
     authorAddress: string;
-    isGated?: boolean;
+    gated?: boolean;
     mediaFiles?: Array<{
       content: string;
       filename: string;

@@ -52,7 +52,7 @@ type PublicationInfo = CachedPublicationData;
  *       summary,
  *       categoryId,
  *       mediaFiles, 
- *       isGated
+ *       gated
  *     );
  *     console.log('Article published:', result.slug);
  *   } catch (error) {
@@ -97,7 +97,7 @@ export const useArticleCreation = () => {
       summary: string,
       categoryId: string,
       mediaFiles: MediaFile[] = [],
-      isGated: boolean = false
+      gated: boolean = false
     ): Promise<ArticleUploadResult> => {
       if (!currentAccount) {
         throw new Error('Wallet not connected');
@@ -180,7 +180,7 @@ export const useArticleCreation = () => {
           contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
           publicationId: publication.publicationId,
           authorAddress: currentAccount.address,
-          isGated,
+          gated,
           mediaFiles: encryptedMediaFiles.map(file => ({
             content: file.content, // Already base64 encoded encrypted content
             filename: file.filename,

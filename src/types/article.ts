@@ -23,8 +23,8 @@ export interface Article {
   publicationId: string;
   /** ID of the vault containing encrypted content */
   vaultId: string;
-  /** Whether the article content is encrypted with Seal */
-  isEncrypted: boolean;
+  /** Whether the article is gated (access restricted) */
+  gated: boolean;
   /** Walrus blob ID for content storage */
   quiltBlobId: string;
   /** Walrus object ID for content storage */
