@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { Lock, Download, Database, Wallet, CheckCircle, Loader2 } from "lucide-react"
+import { Lock, Download, Database, Wallet, CheckCircle } from "lucide-react"
 
 type LoadingStage = 'idle' | 'metadata' | 'content' | 'decrypting' | 'waiting-wallet'
 

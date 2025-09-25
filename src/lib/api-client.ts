@@ -121,7 +121,7 @@ export class ApiClient {
   /**
    * POST request with type-safe response
    */
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({
       method: 'POST',
       url,
@@ -133,7 +133,7 @@ export class ApiClient {
   /**
    * PUT request with type-safe response
    */
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({
       method: 'PUT',
       url,
@@ -145,7 +145,7 @@ export class ApiClient {
   /**
    * PATCH request with type-safe response
    */
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({
       method: 'PATCH',
       url,
@@ -170,7 +170,7 @@ export class ApiClient {
    */
   async getPaginated<T>(
     url: string,
-    params?: Record<string, any>,
+    params?: Record<string, unknown>,
     config?: AxiosRequestConfig
   ): Promise<{
     data: T[];
@@ -235,14 +235,14 @@ export const api = {
       wallet: string;
       blockchain?: string;
       username?: string;
-    }) => apiClient.post<{ accessToken: string; account: any }>('/auth', data),
+    }) => apiClient.post<{ accessToken: string; account: Record<string, unknown> }>('/auth', data),
   },
 
   // User endpoints
   users: {
-    getProfile: () => apiClient.get<any>('/users/profile'),
+    getProfile: () => apiClient.get<Record<string, unknown>>('/users/profile'),
     updateProfile: (data: { username?: string }) => 
-      apiClient.patch<any>('/users/profile', data),
+      apiClient.patch<Record<string, unknown>>('/users/profile', data),
   },
 
   // Article endpoints
@@ -348,17 +348,17 @@ export const api = {
       publicationId?: string;
       fromDate?: string;
       toDate?: string;
-    }) => apiClient.getPaginated<any>('/feed/articles', params),
+    }) => apiClient.getPaginated<Record<string, unknown>>('/feed/articles', params),
 
     getTrending: (params?: {
       limit?: number;
       timeframe?: 'day' | 'week' | 'month';
-    }) => apiClient.get<any[]>('/feed/trending', { params }),
+    }) => apiClient.get<Record<string, unknown>[]>('/feed/trending', { params }),
 
     getByPublication: (publicationId: string, params?: {
       limit?: number;
       cursor?: string;
-    }) => apiClient.getPaginated<any>('/feed/by-publication', {
+    }) => apiClient.getPaginated<Record<string, unknown>>('/feed/by-publication', {
       ...params,
       publicationId,
     }),
@@ -380,7 +380,7 @@ export const api = {
       limit?: number;
       fromDate?: string;
       toDate?: string;
-    }) => apiClient.getPaginated<any>('/events/article-created', params),
+    }) => apiClient.getPaginated<Record<string, unknown>>('/events/article-created', params),
 
     getPublicationCreatedEvents: (params?: {
       publication?: string;
@@ -389,7 +389,7 @@ export const api = {
       limit?: number;
       fromDate?: string;
       toDate?: string;
-    }) => apiClient.getPaginated<any>('/events/publication-created', params),
+    }) => apiClient.getPaginated<Record<string, unknown>>('/events/publication-created', params),
   },
 };
 

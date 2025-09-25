@@ -4,6 +4,7 @@ import { SealClient, SessionKey } from '@mysten/seal';
 import { generateArticleContentId, generateMediaContentId } from './seal-identity';
 import { toBase64, fromBase64 } from '@mysten/bcs';
 import { getKeyServerConfigs, DEFAULT_SESSION_KEY_TTL_MINUTES, DEFAULT_ENCRYPTION_THRESHOLD, type SealNetwork } from './seal-config';
+import { CONFIG } from './config';
 
 // NOTE: Direct decryption methods are deprecated.
 // Use useContentDecryption hook for React components.

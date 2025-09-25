@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout'
-import { ArticleEditor } from '@/components/editor/ArticleEditor'
+import { ArticleEditor, ArticleEditorRef } from '@/components/editor/ArticleEditor'
 import { MilkdownEditorWrapper } from '@/components/editor/MilkdownEditorWrapper'
 import { Button } from '@/components/ui/button'
 import { CategorySelector } from '@/components/ui/category-selector'
@@ -16,6 +16,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { getCachedDraft, setCachedDraft, clearDraftCache } from '@/lib/cache-manager'
+import { TemporaryImage } from '@/types/article'
 
 // Utility function to extract plain text from markdown
 function getPlainTextFromMarkdown(markdown: string): string {
@@ -67,6 +68,10 @@ export default function CreateArticlePage() {
   const [categoryId, setCategoryId] = useState('')
   const [gated, setGated] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [tempImages, setTempImages] = useState<TemporaryImage[]>([])
+
+  // Editor ref to access temporary images
+  const editorRef = useRef<ArticleEditorRef>(null)
 
   const { categories, isLoading: categoriesLoading, error: categoriesError } = useCategories()
 
@@ -129,10 +134,23 @@ export default function CreateArticlePage() {
     try {
       clearError()
 
-      const result = await createAndPublishArticle(title.trim(), content.trim(), summary.trim(), categoryId, [], gated) // [] = no media files, use gated state
+      // Get temporary images from editor
+      const currentTempImages = editorRef.current?.getTemporaryImages() || []
 
-      // Clear draft on successful publish
+      const result = await createAndPublishArticle(
+        title.trim(), 
+        content.trim(), 
+        summary.trim(), 
+        categoryId, 
+        [], // existing media files
+        gated, 
+        currentTempImages // temporary images from editor
+      )
+
+      // Clear draft and temporary images on successful publish
       clearDraftCache()
+      editorRef.current?.clearTemporaryImages()
+      setTempImages([])
 
       toast({
         title: "Article Published!",
@@ -277,13 +295,30 @@ export default function CreateArticlePage() {
             <div className="bg-white rounded-2xl p-6">
               <MilkdownEditorWrapper>
                 <ArticleEditor
+                  ref={editorRef}
                   initialValue={content}
                   onChange={setContent}
+                  onTempImagesChange={setTempImages}
                   placeholder="Start writing your article..."
                   className="min-h-[600px]"
                 />
               </MilkdownEditorWrapper>
             </div>
+
+            {/* Image Upload Status */}
+            {tempImages.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <HiDocumentText className="size-4" />
+                  <span className="text-sm font-medium">
+                    {tempImages.length} image{tempImages.length > 1 ? 's' : ''} ready for upload
+                  </span>
+                </div>
+                <div className="text-xs text-blue-600 mt-1">
+                  Images will be uploaded when you publish the article
+                </div>
+              </div>
+            )}
 
             {/* Actions Footer */}
             <div className="bg-white rounded-2xl p-4">

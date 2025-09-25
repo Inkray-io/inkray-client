@@ -3,11 +3,12 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { api } from '@/lib/api-client';
 import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
-import { getCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
+import { getCachedPublication, setCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
+import { CONFIG as INKRAY_CONFIG } from '@/lib/config';
 import { toBase64 } from '@mysten/bcs';
 import { log } from '@/lib/utils/Logger';
 import { parseCreationError } from '@/lib/utils/errorHandling';
-import { ArticleCreationState, MediaFile, ArticleUploadResult } from '@/types/article';
+import { ArticleCreationState, MediaFile, ArticleUploadResult, TemporaryImage } from '@/types/article';
 import { ApiError } from '@/types/api';
 
 // Use CachedPublicationData from cache manager for consistency
@@ -74,21 +75,138 @@ export const useArticleCreation = () => {
   const suiClient = useSuiClient();
 
   /**
-   * Get user's publication info with automatic cache validation
+   * Get user's publication info with automatic cache validation and blockchain fallback
    */
   const getUserPublication = useCallback(async (): Promise<PublicationInfo | null> => {
-    // Use cache manager with automatic package ID validation
+    // First check cache for fast response
     const cachedPublication = getCachedPublication();
-    
     if (cachedPublication) {
+      log.info('Found cached publication', { publicationId: cachedPublication.publicationId });
       return cachedPublication;
     }
-    
-    return null;
-  }, []);
+
+    // If no cache and no wallet connection, return null
+    if (!currentAccount || !suiClient) {
+      log.info('No wallet connection, cannot fetch publications from blockchain');
+      return null;
+    }
+
+    try {
+      log.info('No cached publication found, querying blockchain...', { 
+        address: currentAccount.address 
+      });
+
+      // Query for PublicationOwnerCap objects owned by the current account
+      const ownedObjects = await suiClient.getOwnedObjects({
+        owner: currentAccount.address,
+        filter: {
+          StructType: `${INKRAY_CONFIG.PACKAGE_ID}::publication::PublicationOwnerCap`,
+        },
+        options: {
+          showContent: true,
+        },
+      });
+
+      log.info('Blockchain query completed', { 
+        foundObjects: ownedObjects.data.length 
+      });
+
+      if (ownedObjects.data.length === 0) {
+        log.info('No publications found on blockchain');
+        return null;
+      }
+
+      // Get the first publication (user should typically have one)
+      const firstOwnerCap = ownedObjects.data[0];
+      if (!firstOwnerCap.data?.content || !('fields' in firstOwnerCap.data.content)) {
+        log.error('Invalid owner cap data structure');
+        return null;
+      }
+
+      const fields = firstOwnerCap.data.content.fields as Record<string, unknown>;
+      const publicationId = fields.publication_id as string;
+      const ownerCapId = firstOwnerCap.data.objectId;
+
+      // Get publication details
+      const publicationObject = await suiClient.getObject({
+        id: publicationId,
+        options: { showContent: true },
+      });
+
+      if (!publicationObject.data?.content || !('fields' in publicationObject.data.content)) {
+        log.error('Invalid publication data structure');
+        return null;
+      }
+
+      const publicationFields = publicationObject.data.content.fields as Record<string, unknown>;
+      const publicationName = publicationFields.name as string;
+      const vaultId = publicationFields.vault_id as string;
+
+      // Create publication info object
+      const publicationInfo: CachedPublicationData = {
+        publicationId,
+        vaultId,
+        ownerCapId,
+        name: publicationName,
+        packageId: INKRAY_CONFIG.PACKAGE_ID,
+        timestamp: Date.now(),
+      };
+
+      // Cache the result for future use
+      setCachedPublication(publicationInfo);
+
+      log.info('Successfully fetched and cached publication from blockchain', {
+        publicationId,
+        name: publicationName
+      });
+
+      return publicationInfo;
+
+    } catch (error) {
+      log.error('Failed to fetch publication from blockchain', { error });
+      return null;
+    }
+  }, [currentAccount, suiClient]);
+
+  /**
+   * Convert temporary images to MediaFile format for upload
+   * @param tempImages - Array of temporary images from editor
+   * @returns Promise resolving to MediaFile array
+   */
+  const convertTempImagesToMediaFiles = useCallback(
+    async (tempImages: TemporaryImage[]): Promise<MediaFile[]> => {
+      log.info('Converting temporary images to MediaFile format', {
+        count: tempImages.length
+      });
+
+      const mediaFiles: MediaFile[] = await Promise.all(
+        tempImages.map(async (tempImg) => {
+          const buffer = await tempImg.file.arrayBuffer();
+          const uint8Array = new Uint8Array(buffer);
+          const base64 = toBase64(uint8Array);
+          
+          return {
+            content: base64,
+            filename: tempImg.filename,
+            mimeType: tempImg.mimeType,
+            size: tempImg.size,
+          };
+        })
+      );
+
+      log.info('Temporary images converted successfully', {
+        originalCount: tempImages.length,
+        convertedCount: mediaFiles.length
+      });
+
+      return mediaFiles;
+    },
+    []
+  );
 
   /**
    * Create and publish an article using backend API
+   * @param tempImages - Optional temporary images from editor (will be converted to MediaFiles)
    */
   const createAndPublishArticle = useCallback(
     async (
@@ -97,7 +215,8 @@ export const useArticleCreation = () => {
       summary: string,
       categoryId: string,
       mediaFiles: MediaFile[] = [],
-      gated: boolean = false
+      gated: boolean = false,
+      tempImages: TemporaryImage[] = []
     ): Promise<ArticleUploadResult> => {
       if (!currentAccount) {
         throw new Error('Wallet not connected');
@@ -113,6 +232,21 @@ export const useArticleCreation = () => {
       }));
 
       try {
+        // Convert temporary images to MediaFiles and merge with existing mediaFiles
+        let allMediaFiles = [...mediaFiles];
+        if (tempImages.length > 0) {
+          log.info('Converting temporary images for upload', {
+            tempImageCount: tempImages.length,
+            existingMediaFiles: mediaFiles.length
+          });
+          
+          const convertedTempImages = await convertTempImagesToMediaFiles(tempImages);
+          allMediaFiles = [...allMediaFiles, ...convertedTempImages];
+          
+          log.info('Media files merged successfully', {
+            totalMediaFiles: allMediaFiles.length
+          });
+        }
         // 1. Get user's publication
         const publication = await getUserPublication();
         if (!publication) {
@@ -125,7 +259,7 @@ export const useArticleCreation = () => {
           content, // Validate the original markdown content
           publicationId: publication.publicationId,
           authorAddress: currentAccount.address,
-          mediaFiles: [], // Files converted to base64, validation happens before conversion
+          mediaFiles: [], // Keep empty for validation, actual files processed separately
         });
         
         if (!validation.isValid) {
@@ -160,9 +294,9 @@ export const useArticleCreation = () => {
 
         // 5. Encrypt media files if present
         let encryptedMediaFiles: EncryptedMediaFile[] = [];
-        if (mediaFiles && mediaFiles.length > 0) {
+        if (allMediaFiles && allMediaFiles.length > 0) {
           encryptedMediaFiles = await sealService.encryptMediaFiles(
-            mediaFiles,
+            allMediaFiles,
             publication.publicationId
           );
         }
@@ -230,7 +364,7 @@ export const useArticleCreation = () => {
         }));
       }
     },
-    [currentAccount, suiClient, getUserPublication]
+    [currentAccount, suiClient, getUserPublication, convertTempImagesToMediaFiles]
   );
 
   /**
@@ -322,6 +456,7 @@ export const useArticleCreation = () => {
     // Actions
     createAndPublishArticle,
     convertFilesToMediaFiles,
+    convertTempImagesToMediaFiles, // New helper for temporary images
     getUserPublication,
     checkEncryptionAvailability,
     clearError,

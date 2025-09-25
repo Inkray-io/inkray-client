@@ -87,7 +87,7 @@ export default function FeedPage() {
           const displayArticle = formatArticleForDisplay(article)
           return (
             <FeedPost
-              key={article.id}
+              key={article.articleId}
               author={displayArticle.author}
               title={displayArticle.title}
               description={displayArticle.description}

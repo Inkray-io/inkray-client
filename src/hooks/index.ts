@@ -12,10 +12,13 @@ export { useSuiNS } from './useSuiNS';
 // Article Management Hooks
 export { 
   useArticleCreation, 
+} from './useArticleCreation';
+
+export { 
   type ArticleCreationState,
   type MediaFile,
   type ArticleUploadResult,
-} from './useArticleCreation';
+} from '@/types/article';
 
 export { 
   useContentDecryption, 
@@ -33,9 +36,11 @@ export {
 // Feed Management Hooks
 export { 
   useFeedArticles, 
-  type FeedArticle,
-  type FeedArticlesState,
 } from './useFeedArticles';
+
+export { 
+  type FeedArticle,
+} from '@/types/article';
 
 // Publication Management Hooks
 export { 
@@ -51,5 +56,5 @@ export {
 } from './useEnhancedTransaction';
 
 // UI Hooks
-export { useMobile } from './use-mobile';
+export { useIsMobile as useMobile } from './use-mobile';
 export { useToast, toast } from './use-toast';

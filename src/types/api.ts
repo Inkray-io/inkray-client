@@ -8,7 +8,7 @@
 /**
  * Base API response interface matching backend ResponseBuilder
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
@@ -18,7 +18,7 @@ export interface ApiResponse<T = any> {
 /**
  * Success response wrapper
  */
-export interface SuccessResponse<T = any> extends ApiResponse<T> {
+export interface SuccessResponse<T = unknown> extends ApiResponse<T> {
   success: true;
   data: T;
 }
@@ -31,14 +31,14 @@ export interface ErrorResponse extends ApiResponse {
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
 }
 
 /**
  * Paginated response interface for lists
  */
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   success: true;
   data: T[];
   pagination: {
@@ -145,13 +145,13 @@ export function isPaginatedResponse<T>(response: ApiResponse<T[]>): response is 
 export class ApiError extends Error {
   public readonly code: ApiErrorCode;
   public readonly statusCode: number;
-  public readonly details?: any;
+  public readonly details?: unknown;
   public readonly timestamp: string;
 
   constructor(
     code: ApiErrorCode,
     message: string,
-    details?: any,
+    details?: unknown,
     statusCode?: number,
   ) {
     super(message);

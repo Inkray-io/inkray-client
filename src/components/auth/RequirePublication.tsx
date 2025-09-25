@@ -62,7 +62,7 @@ export function RequirePublication({
     }
     
     checkPublication()
-  }, [getUserPublication, router, toast, redirectTo, showRedirectMessage])
+  }, [getUserPublication, router, redirectTo, showRedirectMessage])
 
   // Loading state - don't redirect yet, just show loading
   if (isLoading) {

@@ -37,6 +37,12 @@ export interface Article {
   transactionHash: string;
   /** Human-readable time since creation (e.g., "2 hours ago") */
   timeAgo: string;
+  /** Article category information */
+  category?: {
+    id: string;
+    slug: string;
+    name: string;
+  };
   /** Optional tags associated with the article */
   tags?: string[];
   /** Optional article summary/excerpt */
@@ -200,4 +206,34 @@ export interface ArticleError {
   message: string;
   details?: Record<string, unknown>;
   retryable: boolean;
+}
+
+/**
+ * Temporary image data for editor image handling before upload
+ */
+export interface TemporaryImage {
+  /** Unique identifier (UUID) */
+  id: string;
+  /** Original file object */
+  file: File;
+  /** Original filename */
+  filename: string;
+  /** File MIME type */
+  mimeType: string;
+  /** File size in bytes */
+  size: number;
+  /** Predicted media index (media0, media1, etc.) */
+  index: number;
+  /** Final URL that will remain in markdown */
+  finalUrl: string;
+}
+
+/**
+ * Image validation result
+ */
+export interface ImageValidation {
+  /** Whether the image is valid */
+  isValid: boolean;
+  /** Array of validation error messages */
+  errors: string[];
 }

@@ -150,6 +150,7 @@ export default function AuthPage() {
         }
       }
     }
+    return undefined;
   }, [isConnected, address, authData, step, isLoading]);
 
 
