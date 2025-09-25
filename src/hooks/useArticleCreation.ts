@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { api } from '@/lib/api-client';
 import { validateArticleCreation } from '@/lib/validation';
-import { createSealService, type EncryptedMediaFile, type EncryptionStatus } from '@/lib/services/SealService';
+import { createSealService, type EncryptionStatus } from '@/lib/services/SealService';
 import { getCachedPublication, setCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
 import { CONFIG as INKRAY_CONFIG } from '@/lib/config';
 import { toBase64 } from '@mysten/bcs';
@@ -181,9 +181,15 @@ export const useArticleCreation = () => {
 
       const mediaFiles: MediaFile[] = await Promise.all(
         tempImages.map(async (tempImg) => {
-          const buffer = await tempImg.file.arrayBuffer();
-          const uint8Array = new Uint8Array(buffer);
-          const base64 = toBase64(uint8Array);
+          // Use FileReader API for reliable base64 conversion (handles large files)
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1]); // Remove "data:image/...;base64," prefix
+            };
+            reader.readAsDataURL(tempImg.file);
+          });
           
           return {
             content: base64,
@@ -292,14 +298,11 @@ export const useArticleCreation = () => {
 
         setState(prev => ({ ...prev, encryptionProgress: 50 }));
 
-        // 5. Encrypt media files if present
-        let encryptedMediaFiles: EncryptedMediaFile[] = [];
-        if (allMediaFiles && allMediaFiles.length > 0) {
-          encryptedMediaFiles = await sealService.encryptMediaFiles(
-            allMediaFiles,
-            publication.publicationId
-          );
-        }
+        // 5. Skip media file encryption - media files are stored unencrypted for direct serving
+        // Only article content is encrypted with Seal, media files remain as plain binary data
+        log.info('Skipping media file encryption - storing as unencrypted for direct serving', {
+          mediaFileCount: allMediaFiles.length
+        });
 
         setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
         // 6. Prepare request data with encrypted content
@@ -315,12 +318,12 @@ export const useArticleCreation = () => {
           publicationId: publication.publicationId,
           authorAddress: currentAccount.address,
           gated,
-          mediaFiles: encryptedMediaFiles.map(file => ({
-            content: file.content, // Already base64 encoded encrypted content
+          mediaFiles: allMediaFiles.map(file => ({
+            content: file.content, // Base64 encoded unencrypted content
             filename: file.filename,
             mimeType: file.mimeType,
-            contentId: file.contentIdHex, // Include content ID for each media file
             size: file.size,
+            // No contentId for unencrypted media files
           })),
           storageEpochs: 5,
           // Encryption metadata for backend

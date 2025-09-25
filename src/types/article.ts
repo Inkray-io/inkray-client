@@ -226,6 +226,8 @@ export interface TemporaryImage {
   index: number;
   /** Final URL that will remain in markdown */
   finalUrl: string;
+  /** Blob URL for preview in editor */
+  blobUrl: string;
 }
 
 /**

@@ -21,6 +21,9 @@ export class TemporaryImageManager {
     // This URL will remain unchanged in the markdown
     const finalUrl = `${process.env.NEXT_PUBLIC_API_URL}/articles/media/media${index}`
     
+    // Create blob URL for immediate preview in editor
+    const blobUrl = URL.createObjectURL(file)
+    
     const tempImage: TemporaryImage = {
       id,
       file,
@@ -29,6 +32,7 @@ export class TemporaryImageManager {
       size: file.size,
       index,
       finalUrl,
+      blobUrl,
     }
     
     this.images.set(finalUrl, tempImage) // Key by final URL
@@ -42,6 +46,16 @@ export class TemporaryImageManager {
    */
   getImageByUrl(url: string): TemporaryImage | undefined {
     return this.images.get(url)
+  }
+
+  /**
+   * Get blob URL for preview by final URL
+   * @param url - The final URL to look up
+   * @returns Blob URL for preview or undefined if not found
+   */
+  getBlobUrl(url: string): string | undefined {
+    const image = this.images.get(url)
+    return image?.blobUrl
   }
 
   /**
@@ -61,20 +75,30 @@ export class TemporaryImageManager {
   }
 
   /**
-   * Clear all temporary images
+   * Clear all temporary images and revoke blob URLs
    */
   clear(): void {
+    // Revoke all blob URLs to free memory
+    for (const image of this.images.values()) {
+      URL.revokeObjectURL(image.blobUrl)
+    }
     this.images.clear()
     this.indexCounter = 0
   }
 
   /**
-   * Remove a specific image by URL
+   * Remove a specific image by URL and revoke blob URL
    * @param url - The final URL to remove
    * @returns True if image was removed, false if not found
    */
   removeImage(url: string): boolean {
-    return this.images.delete(url)
+    const image = this.images.get(url)
+    if (image) {
+      // Revoke blob URL to free memory
+      URL.revokeObjectURL(image.blobUrl)
+      return this.images.delete(url)
+    }
+    return false
   }
 
   /**

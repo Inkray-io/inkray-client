@@ -94,6 +94,17 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
             console.log(`Generated URL: ${finalUrl}`)
             return finalUrl
           },
+          proxyDomURL: (originalURL: string) => {
+            // Check if this is one of our temporary image URLs
+            const blobUrl = tempImageManager.current.getBlobUrl(originalURL)
+            if (blobUrl) {
+              // Return blob URL for immediate preview in editor
+              console.log(`Proxying ${originalURL} to blob URL for preview`)
+              return blobUrl
+            }
+            // Return original URL for any other images (published articles, etc.)
+            return originalURL
+          },
           blockCaptionPlaceholderText: placeholder || 'Add image caption...',
         },
       },
@@ -107,7 +118,6 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
       const listenerManager = ctx.get(listenerCtx)
       listenerManager.markdownUpdated((_, markdown: string) => {
         if (onChangeRef.current) {
-          console.log(markdown)
           onChangeRef.current(markdown)
         }
       })

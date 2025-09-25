@@ -5,6 +5,7 @@ import { useContentDecryption } from './useContentDecryption';
 import { EncryptedObject } from '@mysten/seal';
 import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
+import { transformMediaUrls } from '@/lib/utils/mediaUrlTransform';
 import { Article, ArticleState, ArticleError, ArticleErrorType } from '@/types/article';
 
 // Loading stages for better UX feedback
@@ -235,7 +236,10 @@ export const useArticle = (articleSlug: string | null) => {
           articleId: article.articleId,
         });
 
-        return decryptedContent;
+        // Transform media URLs to include articleId parameter
+        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
+
+        return transformedContent;
 
       } else {
         // Fallback: if no content seal ID, try to get parsed content from backend
@@ -243,7 +247,10 @@ export const useArticle = (articleSlug: string | null) => {
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const content = response.data.content;
 
-        return content;
+        // Transform media URLs to include articleId parameter (even for unencrypted content)
+        const transformedContent = transformMediaUrls(content, article.articleId);
+
+        return transformedContent;
       }
 
     } catch (error) {
@@ -432,12 +439,19 @@ export const useArticle = (articleSlug: string | null) => {
           articleId: article.articleId,
         });
 
-        return decryptedContent;
+        // Transform media URLs to include articleId parameter
+        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
+
+        return transformedContent;
       } else {
         // Fallback: if no content seal ID, try to get parsed content from backend
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const content = response.data.content;
-        return content;
+        
+        // Transform media URLs to include articleId parameter (even for unencrypted content)
+        const transformedContent = transformMediaUrls(content, article.articleId);
+        
+        return transformedContent;
       }
     } catch (error) {
       log.error('Manual decryption failed', error, 'useArticle');
