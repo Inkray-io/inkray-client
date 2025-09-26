@@ -92,8 +92,8 @@ export const useArticleCreation = () => {
     }
 
     try {
-      log.info('No cached publication found, querying blockchain...', { 
-        address: currentAccount.address 
+      log.info('No cached publication found, querying blockchain...', {
+        address: currentAccount.address
       });
 
       // Query for PublicationOwnerCap objects owned by the current account
@@ -107,8 +107,8 @@ export const useArticleCreation = () => {
         },
       });
 
-      log.info('Blockchain query completed', { 
-        foundObjects: ownedObjects.data.length 
+      log.info('Blockchain query completed', {
+        foundObjects: ownedObjects.data.length
       });
 
       if (ownedObjects.data.length === 0) {
@@ -190,7 +190,7 @@ export const useArticleCreation = () => {
             };
             reader.readAsDataURL(tempImg.file);
           });
-          
+
           return {
             content: base64,
             filename: tempImg.filename,
@@ -228,13 +228,13 @@ export const useArticleCreation = () => {
         throw new Error('Wallet not connected');
       }
 
-      setState(prev => ({ 
-        ...prev, 
-        error: null, 
-        isProcessing: true, 
+      setState(prev => ({
+        ...prev,
+        error: null,
+        isProcessing: true,
         uploadProgress: 0,
         encryptionProgress: 0,
-        isEncrypting: false 
+        isEncrypting: false
       }));
 
       try {
@@ -245,10 +245,10 @@ export const useArticleCreation = () => {
             tempImageCount: tempImages.length,
             existingMediaFiles: mediaFiles.length
           });
-          
+
           const convertedTempImages = await convertTempImagesToMediaFiles(tempImages);
           allMediaFiles = [...allMediaFiles, ...convertedTempImages];
-          
+
           log.info('Media files merged successfully', {
             totalMediaFiles: allMediaFiles.length
           });
@@ -267,7 +267,7 @@ export const useArticleCreation = () => {
           authorAddress: currentAccount.address,
           mediaFiles: [], // Keep empty for validation, actual files processed separately
         });
-        
+
         if (!validation.isValid) {
           throw new Error(`Content validation failed: ${validation.errors.join(', ')}`);
         }
@@ -279,7 +279,7 @@ export const useArticleCreation = () => {
 
         const sealService = createSealService(suiClient, currentAccount);
         const encryptionStatus = sealService.getEncryptionStatus();
-        
+
         if (!encryptionStatus.isAvailable) {
           throw new Error(`Seal encryption not available: ${encryptionStatus.error || 'Unknown error'}`);
         }
@@ -325,7 +325,7 @@ export const useArticleCreation = () => {
             size: file.size,
             // No contentId for unencrypted media files
           })),
-          storageEpochs: 5,
+          storageEpochs: 1,
           // Encryption metadata for backend
           isEncrypted: true, // Flag to indicate content is encrypted
           encryptionMetadata: {
@@ -349,7 +349,7 @@ export const useArticleCreation = () => {
         return result;
       } catch (error) {
         let errorMessage: string;
-        
+
         if (error instanceof ApiError) {
           // Use the user-friendly message from ApiError
           errorMessage = error.getUserMessage();
@@ -357,7 +357,7 @@ export const useArticleCreation = () => {
           // Fallback to existing error parsing
           errorMessage = parseCreationError(error);
         }
-        
+
         setState(prev => ({ ...prev, error: errorMessage }));
         throw new Error(errorMessage);
       } finally {
@@ -419,7 +419,7 @@ export const useArticleCreation = () => {
 
       const sealService = createSealService(suiClient, currentAccount);
       const status = sealService.getEncryptionStatus();
-      
+
       return {
         isAvailable: status.isAvailable,
         error: status.error,
