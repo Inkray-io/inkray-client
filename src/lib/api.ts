@@ -149,3 +149,31 @@ export const articlesAPI = {
     responseType: 'arraybuffer'
   }),
 };
+
+export const followsAPI = {
+  followPublication: (publicationId: string) => 
+    api.post(`/follows/${publicationId}`),
+  
+  unfollowPublication: (publicationId: string) => 
+    api.delete(`/follows/${publicationId}`),
+  
+  toggleFollow: (publicationId: string) => 
+    api.post(`/follows/${publicationId}/toggle`),
+  
+  getFollowStatus: (publicationId: string) => 
+    api.get(`/follows/${publicationId}/status`),
+  
+  getPublicationInfo: (publicationId: string, userId?: string) => 
+    api.get(`/follows/${publicationId}/info`, { 
+      params: userId ? { userId } : {} 
+    }),
+  
+  getFollowerCount: (publicationId: string) => 
+    api.get(`/follows/${publicationId}/count`),
+  
+  getMyFollows: (params: { cursor?: string; limit?: number }) => 
+    api.get('/follows/my-follows', { params }),
+  
+  getPublicationStats: (publicationId: string) => 
+    api.get(`/follows/${publicationId}/stats`),
+};

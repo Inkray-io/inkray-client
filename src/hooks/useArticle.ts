@@ -6,7 +6,7 @@ import { EncryptedObject } from '@mysten/seal';
 import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
 import { transformMediaUrls } from '@/lib/utils/mediaUrlTransform';
-import { Article, ArticleState, ArticleError, ArticleErrorType } from '@/types/article';
+import { Article, ArticleState } from '@/types/article';
 
 // Loading stages for better UX feedback
 type LoadingStage = 'idle' | 'metadata' | 'content' | 'decrypting' | 'waiting-wallet';
@@ -352,7 +352,7 @@ export const useArticle = (articleSlug: string | null) => {
 
     if (shouldRetryContent) {
       log.debug('Wallet ready, automatically retrying content decryption', {
-        articleId: state.article.articleId,
+        articleId: state.article?.articleId,
         slug: articleSlug
       }, 'useArticle');
 
@@ -361,7 +361,8 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('content');
       setState(prev => ({ ...prev, error: null }));
       
-      loadArticleContent(state.article, false)
+      if (state.article) {
+        loadArticleContent(state.article, false)
         .then(content => {
           if (content) {
             setState(prev => ({ ...prev, content }));
@@ -371,6 +372,7 @@ export const useArticle = (articleSlug: string | null) => {
           const errorMessage = error instanceof Error ? error.message : 'Failed to decrypt content';
           setState(prev => ({ ...prev, error: errorMessage }));
         });
+      }
     }
   }, [isWalletReady, isWaitingForWallet, state.article, state.content, articleSlug, loadArticleContent]);
 

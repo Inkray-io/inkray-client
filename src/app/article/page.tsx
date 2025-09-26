@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
+import { FollowBar } from "@/components/follow";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -212,6 +213,20 @@ function ArticlePageContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Follow Bar */}
+              {article.followInfo && (
+                <FollowBar
+                  publicationId={article.publicationId}
+                  publicationName={article.followInfo.publicationName}
+                  initialFollowInfo={{
+                    isFollowing: article.followInfo.isFollowing,
+                    followerCount: article.followInfo.followerCount,
+                    followedAt: article.followInfo.followedAt,
+                  }}
+                  className="mb-6"
+                />
+              )}
 
               {/* Article Body */}
               <div className="bg-white rounded-2xl p-8">

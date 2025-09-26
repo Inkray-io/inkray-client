@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useLayoutEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 type SidebarMode = "expanded" | "compact"
 

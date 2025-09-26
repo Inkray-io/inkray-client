@@ -148,7 +148,7 @@ export const useFeedArticles = () => {
    */
   const formatArticleForDisplay = useCallback((article: FeedArticle) => {
     return {
-      id: article.id,
+      id: article.articleId,
       author: {
         name: article.authorShortAddress,
         avatar: "/placeholder-user.jpg",

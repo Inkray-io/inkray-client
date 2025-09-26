@@ -10,13 +10,10 @@ import Cookies from 'js-cookie';
 import { CONFIG } from './config';
 import {
   ApiResponse,
-  SuccessResponse,
-  ErrorResponse,
   PaginatedResponse,
   ApiResponseParser,
   ApiError,
   ApiErrorCode,
-  isSuccessResponse,
   isErrorResponse,
 } from '@/types/api';
 

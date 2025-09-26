@@ -47,6 +47,13 @@ export interface Article {
   tags?: string[];
   /** Optional article summary/excerpt */
   summary?: string;
+  /** Publication follow information */
+  followInfo?: {
+    publicationName: string;
+    followerCount: number;
+    isFollowing: boolean;
+    followedAt?: string;
+  };
 }
 
 /**
