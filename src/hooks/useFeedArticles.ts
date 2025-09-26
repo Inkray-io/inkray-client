@@ -54,14 +54,14 @@ export const useFeedArticles = () => {
       const params: Parameters<typeof feedAPI.getArticles>[0] = {
         limit: 20,
       };
-      
+
       if (cursor) {
         params.cursor = cursor;
       }
 
       const response = await feedAPI.getArticles(params);
       const result = response.data;
-      
+
       return {
         articles: result.data || [],
         hasMore: result.meta?.hasMore || false,
@@ -159,7 +159,7 @@ export const useFeedArticles = () => {
       },
       title: article.title,
       slug: article.slug,
-      description: `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
       engagement: {
         likes: 0, // TODO: Implement real engagement metrics from backend
         comments: 0,
@@ -180,7 +180,7 @@ export const useFeedArticles = () => {
   return {
     // State
     ...state,
-    
+
     // Actions
     loadMore,
     refresh,
