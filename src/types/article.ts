@@ -246,3 +246,59 @@ export interface ImageValidation {
   /** Array of validation error messages */
   errors: string[];
 }
+
+/**
+ * Publication information from the backend
+ */
+export interface Publication {
+  /** Publication ID (Sui address) */
+  id: string;
+  /** Publication display name */
+  name: string;
+  /** Optional publication description */
+  description?: string;
+  /** Owner's Sui address */
+  owner: string;
+  /** Optional vault ID for publication storage */
+  vaultId?: string;
+  /** Publication creation date */
+  createdAt: string;
+  /** Number of articles published */
+  articleCount: number;
+  /** Number of followers */
+  followerCount: number;
+  /** Whether current user follows this publication */
+  isFollowing: boolean;
+  /** Date user followed this publication (if following) */
+  followedAt?: string;
+}
+
+/**
+ * Publication state for hooks managing publication data
+ */
+export interface PublicationState {
+  /** Current publication data */
+  publication: Publication | null;
+  /** Whether publication data is being loaded */
+  isLoading: boolean;
+  /** Current error message, if any */
+  error: string | null;
+}
+
+/**
+ * Publication articles feed state
+ */
+export interface PublicationFeedState {
+  /** Array of loaded articles from this publication */
+  articles: FeedArticle[];
+  /** Whether articles are currently being loaded */
+  isLoading: boolean;
+  /** Current error message, if any */
+  error: string | null;
+  /** Whether more articles are available for pagination */
+  hasMore: boolean;
+  /** Cursor for pagination (next page token) */
+  nextCursor: string | null;
+  /** Total number of articles in current batch */
+  total: number;
+}

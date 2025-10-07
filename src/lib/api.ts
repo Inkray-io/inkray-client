@@ -177,3 +177,22 @@ export const followsAPI = {
   getPublicationStats: (publicationId: string) => 
     api.get(`/follows/${publicationId}/stats`),
 };
+
+export const publicationsAPI = {
+  getPublication: (publicationId: string, userId?: string) =>
+    api.get(`/publications/${publicationId}`, {
+      params: userId ? { userId } : {},
+    }),
+
+  getPublicationAuthenticated: (publicationId: string) =>
+    api.get(`/publications/${publicationId}/authenticated`),
+
+  getPublicationArticles: (
+    publicationId: string,
+    params: {
+      cursor?: string;
+      limit?: number;
+    }
+  ) =>
+    api.get(`/publications/${publicationId}/articles`, { params }),
+};

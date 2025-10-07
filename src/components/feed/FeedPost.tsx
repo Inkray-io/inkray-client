@@ -26,6 +26,11 @@ interface FeedPostProps {
   slug?: string
   // Click handler to allow custom navigation
   onClick?: () => void
+  // Publication information for linking
+  publication?: {
+    id: string
+    name: string
+  }
 }
 
 export function FeedPost({ 
@@ -36,7 +41,8 @@ export function FeedPost({
   hasReadMore = false,
   engagement,
   slug,
-  onClick
+  onClick,
+  publication
 }: FeedPostProps) {
   const router = useRouter()
   
@@ -54,6 +60,14 @@ export function FeedPost({
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')
       router.push(ROUTES.ARTICLE_WITH_ID(articleId))
+    }
+  }
+
+  const handlePublicationClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (publication?.id) {
+      router.push(ROUTES.PUBLICATION_WITH_ID(publication.id))
     }
   }
   
@@ -84,14 +98,25 @@ export function FeedPost({
       
       {/* Content */}
       <div className="space-y-5">
-        <div className="space-y-3">
+        <div>
           <h2 
             className="text-xl font-medium text-black cursor-pointer hover:text-primary transition-colors"
             onClick={handleArticleClick}
           >
             {title}
           </h2>
-          <p className="text-black/80">
+          {publication && (
+            <div className="text-sm text-black/50 mt-1">
+              Published in{' '}
+              <button
+                onClick={handlePublicationClick}
+                className="font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
+              >
+                {publication.name}
+              </button>
+            </div>
+          )}
+          <p className="text-black/80 mt-4">
             {description}
           </p>
         </div>

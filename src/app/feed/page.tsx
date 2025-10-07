@@ -95,6 +95,10 @@ export default function FeedPage() {
               hasReadMore={true}
               slug={article.slug}
               onClick={() => handleArticleClick(article.slug)}
+              publication={{
+                id: article.publicationId,
+                name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`
+              }}
             />
           )
         })}

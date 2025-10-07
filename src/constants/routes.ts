@@ -20,6 +20,7 @@ export const ROUTES = {
   
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
+  PUBLICATION_WITH_ID: (id: string) => `/publication?id=${id}`,
   
   // External routes (if needed in future)
   EXTERNAL: {

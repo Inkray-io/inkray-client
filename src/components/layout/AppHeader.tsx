@@ -17,7 +17,7 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
   const { isConnected } = useWalletConnection()
   
   return (
-    <header className="flex items-center justify-between px-4 sm:px-8 lg:px-[120px] xl:px-[160px] py-6 lg:py-10 max-w-[1600px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto w-full">
+    <header className="flex items-center justify-between px-4 sm:px-8 lg:px-[60px] xl:px-[80px] py-6 lg:py-10 max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto w-full">
       {/* Left side - Logo and Mobile Menu */}
       <div className="flex items-center gap-4">
         <img src="/logo.svg" alt="Inkray" className="h-8 lg:h-10" />

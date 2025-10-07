@@ -2,8 +2,10 @@
 
 import { useFollows } from '@/hooks/useFollows';
 import { FollowButton } from './FollowButton';
-import { Users, AlertCircle } from 'lucide-react';
+import { Users, AlertCircle, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/constants/routes';
 
 interface FollowBarProps {
   publicationId: string;
@@ -24,6 +26,7 @@ export function FollowBar({
   className,
   variant = 'default',
 }: FollowBarProps) {
+  const router = useRouter();
   const {
     isFollowing,
     followerCount,
@@ -39,6 +42,10 @@ export function FollowBar({
     await toggleFollow();
   };
 
+  const handlePublicationClick = () => {
+    router.push(ROUTES.PUBLICATION_WITH_ID(publicationId));
+  };
+
   if (variant === 'compact') {
     return (
       <div className={cn(
@@ -50,9 +57,12 @@ export function FollowBar({
             <Users className="h-4 w-4 text-blue-600" />
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-gray-900 truncate text-sm">
+            <button
+              onClick={handlePublicationClick}
+              className="font-medium text-gray-900 truncate text-sm hover:text-primary transition-colors text-left"
+            >
               {publicationName}
-            </p>
+            </button>
             <p className="text-xs text-muted-foreground">
               {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
             </p>
@@ -85,9 +95,15 @@ export function FollowBar({
           
           {/* Publication Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 truncate">
-              {publicationName}
-            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePublicationClick}
+                className="font-semibold text-lg text-gray-900 truncate hover:text-primary transition-colors text-left"
+              >
+                {publicationName}
+              </button>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>
                 {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
