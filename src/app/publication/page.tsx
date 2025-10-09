@@ -6,12 +6,12 @@ import { usePublication } from '@/hooks/usePublication';
 import { usePublicationFeed } from '@/hooks/usePublicationFeed';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicationHeader } from '@/components/publication/PublicationHeader';
-import { ArticleCard } from '@/components/article/ArticleCard';
+import { FeedPost } from '@/components/feed/FeedPost';
 import { TopWriters } from '@/components/widgets/TopWriters';
 import { PopularComments } from '@/components/widgets/PopularComments';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 /**
  * Publication page content component
@@ -102,31 +102,16 @@ const PublicationPageContent: React.FC = () => {
       rightSidebar={rightSidebar}
       showRightSidebar={true}
     >
-      <div className="space-y-5">
+      <div className="bg-white rounded-2xl overflow-hidden">
         {/* Publication Profile Section */}
         <PublicationHeader 
           publication={publication}
           isLoading={publicationLoading}
         />
 
-        {/* Posts Navigation and Content */}
+        {/* Articles Feed */}
         {!publicationLoading && publication && (
-          <div className="bg-white rounded-2xl overflow-hidden">
-            {/* Sort/Filter Header */}
-            <div className="px-3 py-0">
-              <div className="flex items-center gap-4 py-4">
-                <Button 
-                  variant="ghost" 
-                  className="text-black text-sm font-medium px-3 py-2.5 border-b-2 border-blue-600 bg-transparent"
-                >
-                  Fresh
-                </Button>
-                <ChevronDown className="w-5 h-5 text-black ml-auto" />
-              </div>
-            </div>
-
-            {/* Articles Feed */}
-            <div className="px-6 pb-10">
+          <div className="px-6 pt-6 pb-10 border-t border-gray-200">
               {/* Articles Error Alert */}
               {articlesError && (
                 <Alert variant="destructive" className="mb-4">
@@ -176,12 +161,37 @@ const PublicationPageContent: React.FC = () => {
               {/* Articles List */}
               {articles.length > 0 && (
                 <div className="space-y-6">
-                  {articles.map((article) => (
-                    <ArticleCard 
-                      key={article.articleId} 
-                      article={article}
-                    />
-                  ))}
+                  {articles.map((article) => {
+                    // Format article data for FeedPost component
+                    const formattedArticle = {
+                      author: {
+                        name: article.authorShortAddress,
+                        avatar: "/placeholder-user.jpg",
+                        date: article.timeAgo,
+                        readTime: "2 min",
+                        mintedBy: 0,
+                      },
+                      title: article.title,
+                      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+                      engagement: article.engagement || {
+                        likes: 0,
+                        comments: 0,
+                        views: 0,
+                      },
+                      slug: article.slug,
+                      publication: publication ? {
+                        id: publication.id,
+                        name: publication.name,
+                      } : undefined,
+                    };
+
+                    return (
+                      <FeedPost 
+                        key={article.articleId} 
+                        {...formattedArticle}
+                      />
+                    );
+                  })}
 
                   {/* Load More Button */}
                   {hasMore && (
@@ -222,7 +232,6 @@ const PublicationPageContent: React.FC = () => {
                   </Button>
                 </div>
               )}
-            </div>
           </div>
         )}
       </div>

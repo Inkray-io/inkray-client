@@ -47,14 +47,6 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
     await toggleFollow();
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric',
-    });
-  };
 
   if (isLoading) {
     return (
@@ -110,7 +102,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   if (!publication) return null;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="bg-white rounded-t-2xl overflow-hidden">
       {/* Cover Image */}
       <div className="relative h-40 sm:h-60 bg-neutral-200 rounded-tl-2xl rounded-tr-2xl overflow-hidden">
         {/* Background cover image */}
@@ -154,7 +146,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
       </div>
       
       {/* Publication Info Section */}
-      <div className="px-3 sm:px-6 pb-5">
+      <div className="px-3 sm:px-6 pb-6 pt-6">
         {/* Mobile Layout */}
         <div className="sm:hidden w-full">
           <div className="space-y-3 w-full">
@@ -162,9 +154,6 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
               <h1 className="font-semibold text-lg text-black leading-[1.4] pr-4">
                 {publication.name}
               </h1>
-              <p className="font-normal text-xs text-black/50 leading-[1.3]">
-                From {formatDate(publication.createdAt)}
-              </p>
             </div>
             {/* Follow Button - Mobile */}
             <div className="px-3">
@@ -189,11 +178,6 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
               <h1 className="font-semibold text-lg text-black leading-[1.4] truncate">
                 {publication.name}
               </h1>
-              <div className="flex items-center w-full">
-                <p className="font-normal text-xs text-black/50 leading-[1.3]">
-                  From {formatDate(publication.createdAt)}
-                </p>
-              </div>
             </div>
           </div>
           
@@ -216,19 +200,6 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
         <div className="flex gap-3 items-start px-3 sm:px-6 font-medium text-sm text-black leading-[1.3] mt-4.5">
           <span>{followerCount || 0} subscribers</span>
           <span>{publication.articleCount || 0} posts</span>
-        </div>
-        
-        {/* Divider */}
-        <div className="w-full h-px bg-gray-200 mt-4.5"></div>
-        
-        {/* Navigation Tabs */}
-        <div className="flex gap-3 items-start px-3 sm:px-6 pt-3">
-          <div className="flex gap-2.5 items-center justify-center pb-4 border-b-2 border-[#005efc]">
-            <span className="font-medium text-sm text-black leading-[1.3]">Posts</span>
-          </div>
-          <div className="flex gap-2.5 items-center justify-center pb-4">
-            <span className="font-medium text-sm text-black leading-[1.3]">Comments</span>
-          </div>
         </div>
       </div>
     </div>

@@ -20,7 +20,9 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
     <header className="flex items-center justify-between px-4 sm:px-8 lg:px-[60px] xl:px-[80px] py-6 lg:py-10 max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto w-full">
       {/* Left side - Logo and Mobile Menu */}
       <div className="flex items-center gap-4">
-        <img src="/logo.svg" alt="Inkray" className="h-8 lg:h-10" />
+        <Link href={ROUTES.FEED}>
+          <img src="/logo.svg" alt="Inkray" className="h-8 lg:h-10 cursor-pointer hover:opacity-80 transition-opacity" />
+        </Link>
         
         {/* Mobile Menu Button - Only visible on mobile/tablet */}
         <div className="lg:hidden">
