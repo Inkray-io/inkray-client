@@ -196,3 +196,13 @@ export const publicationsAPI = {
   ) =>
     api.get(`/publications/${publicationId}/articles`, { params }),
 };
+
+export const nftAPI = {
+  getRecentMints: (articleId: string, limit?: number) =>
+    api.get(`/nft/recent/${articleId}`, { 
+      params: limit ? { limit } : {} 
+    }),
+
+  getMintCount: (articleId: string) =>
+    api.get(`/nft/count/${articleId}`),
+};

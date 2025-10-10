@@ -22,6 +22,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
 import { FollowBar } from "@/components/follow";
+import { NftMintingSection } from "@/components/nft";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -225,6 +226,15 @@ function ArticlePageContent() {
                     followedAt: article.followInfo.followedAt,
                   }}
                   className="mb-6"
+                />
+              )}
+
+              {/* NFT Minting Section */}
+              {article.articleId && (
+                <NftMintingSection
+                  articleId={article.articleId}
+                  articleTitle={article.title || 'Untitled Article'}
+                  authorAddress={article.author}
                 />
               )}
 

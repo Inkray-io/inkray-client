@@ -19,6 +19,10 @@ const ConfigSchema = z.object({
     /^0x[a-fA-F0-9]{60,64}$/,
     'NEXT_PUBLIC_PACKAGE_ID must be a valid Sui address (0x followed by 60-64 hex characters)'
   ),
+  NFT_MINT_CONFIG_ID: z.string().min(1, 'NEXT_PUBLIC_NFT_MINT_CONFIG_ID is required').regex(
+    /^0x[a-fA-F0-9]{60,64}$/,
+    'NEXT_PUBLIC_NFT_MINT_CONFIG_ID must be a valid Sui address (0x followed by 60-64 hex characters)'
+  ),
   NETWORK: NetworkSchema,
 
   // Walrus Configuration
@@ -73,6 +77,7 @@ function loadAndValidateConfig() {
 
     const rawConfig = {
       PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID || '',
+      NFT_MINT_CONFIG_ID: process.env.NEXT_PUBLIC_NFT_MINT_CONFIG_ID || '',
       NETWORK: rawNetwork,
       WALRUS_AGGREGATOR_URL: process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || defaults.WALRUS_AGGREGATOR_URL,
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || defaults.WALRUS_PUBLISHER_URL,
@@ -139,6 +144,7 @@ try {
 
     CONFIG = {
       PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID || '0x0000000000000000000000000000000000000000000000000000000000000000',
+      NFT_MINT_CONFIG_ID: process.env.NEXT_PUBLIC_NFT_MINT_CONFIG_ID || '0x0000000000000000000000000000000000000000000000000000000000000001',
       NETWORK: (process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet') || 'testnet',
       WALRUS_AGGREGATOR_URL: process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || 'https://aggregator-devnet.walrus.space',
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || 'https://publisher-devnet.walrus.space',
@@ -194,6 +200,7 @@ export const validateConfiguration = (): { valid: boolean; errors: string[] } =>
   try {
     ConfigSchema.parse({
       PACKAGE_ID: CONFIG.PACKAGE_ID,
+      NFT_MINT_CONFIG_ID: CONFIG.NFT_MINT_CONFIG_ID,
       NETWORK: CONFIG.NETWORK,
       WALRUS_AGGREGATOR_URL: CONFIG.WALRUS_AGGREGATOR_URL,
       WALRUS_PUBLISHER_URL: CONFIG.WALRUS_PUBLISHER_URL,
