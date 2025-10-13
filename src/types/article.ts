@@ -54,6 +54,8 @@ export interface Article {
     isFollowing: boolean;
     followedAt?: string;
   };
+  /** Total tip amount received for this article (in MIST) */
+  totalTips: number;
 }
 
 /**
@@ -271,6 +273,12 @@ export interface Publication {
   isFollowing: boolean;
   /** Date user followed this publication (if following) */
   followedAt?: string;
+  /** Total tips received (direct + article tips) in MIST */
+  totalTips?: number;
+  /** Direct publication tips in MIST */
+  directTips?: number;
+  /** Tips from articles in MIST */
+  articleTips?: number;
 }
 
 /**
@@ -301,4 +309,24 @@ export interface PublicationFeedState {
   nextCursor: string | null;
   /** Total number of articles in current batch */
   total: number;
+}
+
+/**
+ * Publication article data structure from API
+ * Used for transforming publication-specific article responses
+ */
+export interface PublicationArticle {
+  id: string;
+  title: string;
+  slug: string;
+  summary?: string;
+  author: string;
+  authorShortAddress: string;
+  createdAt: string;
+  transactionHash: string;
+  quiltObjectId?: string;
+  quiltBlobId?: string;
+  gated: boolean;
+  timeAgo: string;
+  totalTips: number;
 }

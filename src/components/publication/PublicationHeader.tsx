@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Publication } from '@/types/article';
 import { useFollows } from '@/hooks/useFollows';
 import { FollowButton } from '@/components/follow/FollowButton';
+import { PublicationTipButton } from '@/components/publication/PublicationTipButton';
+import { TipDisplay } from '@/components/ui/TipDisplay';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -155,8 +157,8 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
                 {publication.name}
               </h1>
             </div>
-            {/* Follow Button - Mobile */}
-            <div className="px-3">
+            {/* Action Buttons - Mobile */}
+            <div className="px-3 flex gap-3">
               <FollowButton
                 isFollowing={isFollowing}
                 isLoading={followLoading}
@@ -166,6 +168,11 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
                 size="default"
                 showFollowerCount={false}
                 className="bg-[#005efc] hover:bg-[#0052d9] text-white font-semibold text-sm"
+              />
+              <PublicationTipButton
+                publicationId={publication.id}
+                publicationName={publication.name}
+                size="default"
               />
             </div>
           </div>
@@ -181,8 +188,8 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
             </div>
           </div>
           
-          {/* Follow Button - Desktop */}
-          <div className="flex-shrink-0 ml-4">
+          {/* Action Buttons - Desktop */}
+          <div className="flex-shrink-0 ml-4 flex gap-3">
             <FollowButton
               isFollowing={isFollowing}
               isLoading={followLoading}
@@ -193,6 +200,11 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
               showFollowerCount={false}
               className="bg-[#005efc] hover:bg-[#0052d9] text-white font-semibold text-base px-3 py-3 rounded-[10px]"
             />
+            <PublicationTipButton
+              publicationId={publication.id}
+              publicationName={publication.name}
+              size="default"
+            />
           </div>
         </div>
         
@@ -200,6 +212,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
         <div className="flex gap-3 items-start px-3 sm:px-6 font-medium text-sm text-black leading-[1.3] mt-4.5">
           <span>{followerCount || 0} subscribers</span>
           <span>{publication.articleCount || 0} posts</span>
+          <TipDisplay amount={publication.totalTips || 0} size="sm" />
         </div>
       </div>
     </div>

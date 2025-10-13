@@ -75,6 +75,9 @@ export const usePublication = (publicationId: string) => {
           followerCount: publicationData.followerCount,
           isFollowing: publicationData.isFollowing,
           followedAt: publicationData.followedAt,
+          totalTips: publicationData.totalTips || 0,
+          directTips: publicationData.directTips || 0,
+          articleTips: publicationData.articleTips || 0,
         };
 
         setState(prev => ({

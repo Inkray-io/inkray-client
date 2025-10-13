@@ -99,6 +99,9 @@ export default function FeedPage() {
                 id: article.publicationId,
                 name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`
               }}
+              articleId={article.articleId}
+              publicationId={article.publicationId}
+              totalTips={article.totalTips}
             />
           )
         })}

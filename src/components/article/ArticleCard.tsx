@@ -4,6 +4,8 @@ import { FeedArticle } from '@/types/article';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, User, Lock } from 'lucide-react';
+import { TipButton } from './TipButton';
+import { TipDisplay } from '@/components/ui/TipDisplay';
 
 interface ArticleCardProps {
   article: FeedArticle;
@@ -91,6 +93,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             </div>
           )}
         </Link>
+
+        {/* Tip Display and Button Section */}
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <TipDisplay amount={article.totalTips || 0} size="sm" />
+          <TipButton 
+            articleId={article.articleId}
+            publicationId={article.publicationId}
+            articleTitle={article.title}
+          />
+        </div>
       </CardContent>
     </Card>
   );

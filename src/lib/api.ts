@@ -206,3 +206,24 @@ export const nftAPI = {
   getMintCount: (articleId: string) =>
     api.get(`/nft/count/${articleId}`),
 };
+
+/**
+ * Tipping API endpoints
+ * 
+ * Note: Tip transactions are handled directly via blockchain transactions (no backend API needed).
+ * Tip data is automatically aggregated from blockchain events and included in feed/publication responses.
+ * 
+ * All tipping functionality is implemented through:
+ * - TipButton component for article tips
+ * - PublicationTipButton component for publication tips
+ * - Backend event handlers process blockchain events automatically
+ * - Tip totals are included in article and publication API responses
+ * 
+ * This object is reserved for future tip analytics endpoints if needed.
+ */
+export const tipsAPI = {
+  // Future endpoint possibilities:
+  // - getTipHistory: (articleId: string) => api.get(`/tips/article/${articleId}/history`)
+  // - getTipStats: (publicationId: string) => api.get(`/tips/publication/${publicationId}/stats`)  
+  // - getTopTippers: () => api.get('/tips/analytics/top-tippers')
+} as const;

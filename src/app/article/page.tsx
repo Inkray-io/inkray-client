@@ -23,6 +23,8 @@ import ReactMarkdown from "react-markdown";
 import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
+import { TipButton } from "@/components/article/TipButton";
+import { TipDisplay } from "@/components/ui/TipDisplay";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -236,6 +238,26 @@ function ArticlePageContent() {
                   articleTitle={article.title || 'Untitled Article'}
                   authorAddress={article.author}
                 />
+              )}
+
+              {/* Tip Section */}
+              {article.articleId && article.publicationId && (
+                <div className="bg-white rounded-2xl p-6 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-medium">Support this article</h3>
+                      <TipDisplay amount={article.totalTips || 0} size="default" />
+                    </div>
+                    <TipButton 
+                      articleId={article.articleId}
+                      publicationId={article.publicationId}
+                      articleTitle={article.title || 'Untitled Article'}
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tips help support content creators on the platform
+                  </p>
+                </div>
               )}
 
               {/* Article Body */}

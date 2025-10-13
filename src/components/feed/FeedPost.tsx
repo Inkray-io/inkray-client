@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation"
 import { HiDotsHorizontal } from "react-icons/hi"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
+import { TipButton } from "@/components/article/TipButton"
+import { TipDisplay } from "@/components/ui/TipDisplay"
 
 interface FeedPostProps {
   author: {
@@ -31,6 +33,10 @@ interface FeedPostProps {
     id: string
     name: string
   }
+  // Article information for tipping
+  articleId?: string
+  publicationId?: string
+  totalTips?: number
 }
 
 export function FeedPost({ 
@@ -42,7 +48,10 @@ export function FeedPost({
   engagement,
   slug,
   onClick,
-  publication
+  publication,
+  articleId,
+  publicationId,
+  totalTips
 }: FeedPostProps) {
   const router = useRouter()
   
@@ -171,6 +180,18 @@ export function FeedPost({
                   <div className="size-2 bg-primary rounded"></div>
                   <span className="text-gray-600 text-sm">{engagement.views} views</span>
                 </div>
+              </div>
+            )}
+
+            {/* Tip section */}
+            {articleId && publicationId && (
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <TipDisplay amount={totalTips || 0} size="sm" />
+                <TipButton 
+                  articleId={articleId}
+                  publicationId={publicationId}
+                  articleTitle={title}
+                />
               </div>
             )}
           </div>

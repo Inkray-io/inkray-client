@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { publicationsAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
-import { FeedArticle, PublicationFeedState } from '@/types/article';
+import { FeedArticle, PublicationFeedState, PublicationArticle } from '@/types/article';
 
 /**
  * Hook to fetch articles from a specific publication
@@ -66,20 +66,6 @@ export const usePublicationFeed = (publicationId: string) => {
         const result = response.data.data;
         
         // Transform articles to FeedArticle format
-        interface PublicationArticle {
-          id: string;
-          title: string;
-          slug: string;
-          summary?: string;
-          author: string;
-          authorShortAddress: string;
-          createdAt: string;
-          transactionHash: string;
-          quiltObjectId?: string;
-          quiltBlobId?: string;
-          gated: boolean;
-          timeAgo: string;
-        }
 
         const articles: FeedArticle[] = result.articles.map((article: PublicationArticle) => ({
           articleId: article.id,
@@ -96,14 +82,15 @@ export const usePublicationFeed = (publicationId: string) => {
           transactionHash: article.transactionHash,
           timeAgo: article.timeAgo,
           summary: article.summary,
+          totalTips: article.totalTips,
           authorInfo: {
             name: article.authorShortAddress,
             avatar: "/placeholder-user.jpg",
-            readTime: "2 min", // TODO: Calculate from content
-            mintedBy: 0, // TODO: Add this metric from backend
+            readTime: "2 min",
+            mintedBy: 0,
           },
           engagement: {
-            likes: 0, // TODO: Implement real engagement metrics from backend
+            likes: 0,
             comments: 0,
             views: 0,
           },

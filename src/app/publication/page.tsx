@@ -189,6 +189,9 @@ const PublicationPageContent: React.FC = () => {
                       <FeedPost 
                         key={article.articleId} 
                         {...formattedArticle}
+                        articleId={article.articleId}
+                        publicationId={article.publicationId}
+                        totalTips={article.totalTips}
                       />
                     );
                   })}
