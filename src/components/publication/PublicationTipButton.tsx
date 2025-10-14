@@ -7,7 +7,8 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
-import { Heart, Loader2, Wallet } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
 
 interface PublicationTipButtonProps {
@@ -25,7 +26,7 @@ export function PublicationTipButton({
   variant = "outline",
   size = "default"
 }: PublicationTipButtonProps) {
-  const { isConnected, connect, account } = useWalletConnection();
+  const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const [isOpen, setIsOpen] = useState(false);
   const [isTipping, setIsTipping] = useState(false);
@@ -35,7 +36,7 @@ export function PublicationTipButton({
 
   const handleTip = async (amount: number) => {
     if (!isConnected || !account) {
-      connect();
+      // Will be handled by showing ConnectButton instead
       return;
     }
 
@@ -96,17 +97,7 @@ export function PublicationTipButton({
   };
 
   if (!isConnected) {
-    return (
-      <Button 
-        onClick={() => connect()}
-        variant={variant}
-        size={size}
-        className="gap-2"
-      >
-        <Wallet className="w-4 h-4" />
-        Connect to Tip
-      </Button>
-    );
+    return <ConnectButton />;
   }
 
   return (

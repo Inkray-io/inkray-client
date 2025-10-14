@@ -1,6 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { createUserAvatarConfig } from "@/lib/utils/avatar"
+import { Avatar } from "@/components/ui/Avatar"
 
 interface ArticleFooterProps {
   engagement: {
@@ -58,9 +60,12 @@ export function ArticleFooter({ engagement }: ArticleFooterProps) {
         {/* Comment Preview */}
         <div className="border-t border-gray-100 pt-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="size-10 rounded-full bg-gray-200 overflow-hidden">
-              <img src="/placeholder-user.jpg" alt="Commenter" className="size-full object-cover" />
-            </div>
+            <Avatar
+              {...createUserAvatarConfig({
+                publicKey: "anonymous_commenter",
+                name: "Anonymous User",
+              }, 'md')}
+            />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-black text-sm">Anonymous User</span>

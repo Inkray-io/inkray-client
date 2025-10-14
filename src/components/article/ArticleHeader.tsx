@@ -2,6 +2,7 @@
 
 import { HiDotsHorizontal } from "react-icons/hi"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/Avatar"
 
 interface ArticleHeaderProps {
   author: {
@@ -18,9 +19,12 @@ export function ArticleHeader({ author }: ArticleHeaderProps) {
     <div className="bg-white rounded-2xl p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-            <img src={author.avatar} alt={author.name} className="size-full object-cover" />
-          </div>
+          <Avatar
+            src={author.avatar}
+            alt={author.name}
+            size="md"
+            fallbackText={author.name}
+          />
           <div>
             <div className="font-semibold text-black">{author.name}</div>
             <div className="text-sm text-black/50">

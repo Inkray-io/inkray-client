@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
-import { Coins, Loader2, Wallet } from "lucide-react";
+import { Coins, Loader2 } from "lucide-react";
 
 interface MintButtonProps {
   articleId: string;
@@ -14,15 +15,15 @@ interface MintButtonProps {
   onMintSuccess?: () => void;
 }
 
-export function MintButton({ articleId, articleTitle, onMintSuccess }: MintButtonProps) {
-  const { isConnected, connect, account } = useWalletConnection();
+export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
+  const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
 
   const handleMint = async () => {
     if (!isConnected || !account) {
-      connect();
+      // Will be handled by showing ConnectButton instead
       return;
     }
 
@@ -82,14 +83,9 @@ export function MintButton({ articleId, articleTitle, onMintSuccess }: MintButto
 
   if (!isConnected) {
     return (
-      <Button 
-        onClick={handleMint}
-        className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
-        size="lg"
-      >
-        <Wallet className="w-4 h-4" />
-        Connect Wallet to Mint
-      </Button>
+      <div className="w-full">
+        <ConnectButton />
+      </div>
     );
   }
 

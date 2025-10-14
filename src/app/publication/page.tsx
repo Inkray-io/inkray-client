@@ -12,6 +12,7 @@ import { PopularComments } from '@/components/widgets/PopularComments';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { createUserAvatarConfig } from '@/lib/utils/avatar';
 
 /**
  * Publication page content component
@@ -104,10 +105,12 @@ const PublicationPageContent: React.FC = () => {
     >
       <div className="bg-white rounded-2xl overflow-hidden">
         {/* Publication Profile Section */}
-        <PublicationHeader 
-          publication={publication}
-          isLoading={publicationLoading}
-        />
+        {publication && (
+          <PublicationHeader 
+            publication={publication}
+            isLoading={publicationLoading}
+          />
+        )}
 
         {/* Articles Feed */}
         {!publicationLoading && publication && (
@@ -166,7 +169,11 @@ const PublicationPageContent: React.FC = () => {
                     const formattedArticle = {
                       author: {
                         name: article.authorShortAddress,
-                        avatar: "/placeholder-user.jpg",
+                        avatar: createUserAvatarConfig({
+                          publicKey: article.author,
+                          // Don't pass short address as name - let the function detect it's an address
+                        }, 'md').src,
+                        address: article.author, // Add full address for consistent gradient generation
                         date: article.timeAgo,
                         readTime: "2 min",
                         mintedBy: 0,

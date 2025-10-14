@@ -4,6 +4,8 @@ import { useFollows } from '@/hooks/useFollows';
 import { FollowButton } from '@/components/follow/FollowButton';
 import { PublicationTipButton } from '@/components/publication/PublicationTipButton';
 import { TipDisplay } from '@/components/ui/TipDisplay';
+import { Avatar } from '@/components/ui/Avatar';
+import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -123,22 +125,18 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
           <div className="flex items-end justify-between">
             <div className="flex items-center gap-7.5">
               {/* Profile Avatar */}
-              <div className="w-20 h-20 sm:w-25 sm:h-25 rounded-full overflow-hidden bg-white p-0.5 relative">
-                {/* Ellipse background */}
-                <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500"></div>
-                
-                {/* Avatar image */}
-                <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-200">
-                  <img 
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-                    alt={publication.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = `data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' rx='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 25C55.5228 25 60 29.4772 60 35C60 40.5228 55.5228 45 50 45C44.4772 45 40 40.5228 40 35C40 29.4772 44.4772 25 50 25ZM50 50C61.0457 50 70 55.9543 70 62.5V75H30V62.5C30 55.9543 38.9543 50 50 50Z' fill='%239CA3AF'/%3E%3C/svg%3E`;
-                    }}
+              {(() => {
+                const avatarConfig = createPublicationAvatarConfig(publication, 'xl');
+                return (
+                  <Avatar
+                    src={avatarConfig.src}
+                    alt={avatarConfig.alt}
+                    size="xl"
+                    gradientBorder={true}
+                    fallbackText={avatarConfig.fallbackText}
                   />
-                </div>
-              </div>
+                );
+              })()}
             </div>
             
             {/* Placeholder for top-right content if needed */}

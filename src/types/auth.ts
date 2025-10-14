@@ -4,6 +4,7 @@ export interface Account {
   wallet: string;
   blockchain: string;
   username?: string;
+  avatar?: string | null;
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;

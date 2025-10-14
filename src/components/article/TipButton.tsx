@@ -7,8 +7,9 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
-import { Heart, Loader2, Wallet } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
+import { ConnectButton } from "@mysten/dapp-kit";
 
 interface TipButtonProps {
   articleId: string;
@@ -18,7 +19,7 @@ interface TipButtonProps {
 }
 
 export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess }: TipButtonProps) {
-  const { isConnected, connect, account } = useWalletConnection();
+  const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const [isOpen, setIsOpen] = useState(false);
   const [isTipping, setIsTipping] = useState(false);
@@ -28,7 +29,7 @@ export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess
 
   const handleTip = async (amount: number) => {
     if (!isConnected || !account) {
-      connect();
+      // User needs to connect wallet first
       return;
     }
 
@@ -92,15 +93,12 @@ export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess
 
   if (!isConnected) {
     return (
-      <Button 
-        onClick={() => connect()}
-        variant="outline"
-        size="sm"
-        className="gap-2"
-      >
-        <Wallet className="w-4 h-4" />
-        Connect to Tip
-      </Button>
+      <div className="flex items-center gap-2">
+        <ConnectButton 
+          connectText="Connect to Tip"
+          className="text-sm"
+        />
+      </div>
     );
   }
 

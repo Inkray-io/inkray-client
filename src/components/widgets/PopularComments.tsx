@@ -1,5 +1,7 @@
 "use client"
 
+import { Avatar } from '@/components/ui/Avatar';
+
 interface Comment {
   id: string
   author: {
@@ -67,16 +69,12 @@ export function PopularComments({ comments }: PopularCommentsProps) {
           <div key={comment.id} className="space-y-2">
             {/* Author Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-                <img 
-                  src={comment.author.avatar} 
-                  alt={comment.author.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = `data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='20' fill='%23E5E7EB'/%3E%3Cpath d='M20 10C22.2091 10 24 11.7909 24 14C24 16.2091 22.2091 18 20 18C17.7909 18 16 16.2091 16 14C16 11.7909 17.7909 10 20 10ZM20 20C24.4183 20 28 22.2386 28 25V30H12V25C12 22.2386 15.5817 20 20 20Z' fill='%239CA3AF'/%3E%3C/svg%3E`;
-                  }}
-                />
-              </div>
+              <Avatar
+                src={comment.author.avatar}
+                alt={comment.author.name}
+                size="md"
+                fallbackText={comment.author.name}
+              />
               <div className="flex items-center gap-1">
                 <span className="text-black text-sm font-semibold leading-[1.4]">
                   {comment.author.name}

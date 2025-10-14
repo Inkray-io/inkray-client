@@ -12,7 +12,10 @@ import {
   SheetClose 
 } from "@/components/ui/sheet"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { useAuth } from "@/contexts/AuthContext"
 import { getDisplayName } from "@/utils/address"
+import { createUserAvatarConfig } from "@/lib/utils/avatar"
+import { Avatar } from "@/components/ui/Avatar"
 
 interface MobileMenuProps {
   children: React.ReactNode
@@ -21,6 +24,7 @@ interface MobileMenuProps {
 
 export function MobileMenu({ children, currentPage: _currentPage = "feed" }: MobileMenuProps) {
   const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
+  const { account } = useAuth()
   
   // Note: currentPage can be used for future active state management
   const topics = [
@@ -54,13 +58,24 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
               <>
                 {/* Connected User Profile */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="size-12 rounded-full bg-gray-300 overflow-hidden">
-                    <img 
-                      src="/placeholder-user.jpg" 
-                      alt="User avatar" 
-                      className="size-full object-cover"
+                  {account ? (
+                    <Avatar
+                      {...createUserAvatarConfig({
+                        id: account.id,
+                        publicKey: address || account.publicKey, // Use address if available
+                        name: account.username,
+                        avatar: account.avatar,
+                      }, 'lg')}
                     />
-                  </div>
+                  ) : (
+                    <Avatar
+                      src={null}
+                      alt="User avatar"
+                      size="lg"
+                      fallbackText="??"
+                      gradientColors="from-gray-400 to-gray-500"
+                    />
+                  )}
                   <div className="flex-1">
                     <div className="font-semibold text-black">
                       {suiNSLoading ? 'Loading...' : primary}

@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
 import { TipDisplay } from "@/components/ui/TipDisplay"
+import { Avatar } from "@/components/ui/Avatar"
+import { createUserAvatarConfig } from "@/lib/utils/avatar"
 
 interface FeedPostProps {
   author: {
     name: string
-    avatar: string
+    avatar: string | null
+    address?: string // Full address for proper avatar config generation
     mintedBy: number
     date: string
     readTime: string
@@ -55,6 +58,12 @@ export function FeedPost({
 }: FeedPostProps) {
   const router = useRouter()
   
+  // Create proper avatar config for the author
+  const authorAvatarConfig = createUserAvatarConfig({
+    publicKey: author.address || author.name, // Use full address if available, otherwise use name
+    avatar: author.avatar,
+  }, 'md');
+  
   const handleArticleClick = () => {
     if (onClick) {
       onClick()
@@ -85,9 +94,9 @@ export function FeedPost({
       {/* Author Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full overflow-hidden">
-            <img src={author.avatar} alt={author.name} className="size-full object-cover" />
-          </div>
+          <Avatar
+            {...authorAvatarConfig}
+          />
           <div>
             <div className="font-semibold text-black">{author.name}</div>
             <div className="text-sm text-black/50">

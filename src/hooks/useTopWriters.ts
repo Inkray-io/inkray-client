@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { publicationsAPI } from '@/lib/api';
+import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 
 interface TopWriterData {
   id: string;
   name: string;
   followerCount: number;
+  avatar: string | null;
 }
 
 interface Writer {
@@ -14,6 +16,13 @@ interface Writer {
   name: string;
   subscribers: string;
   avatar: string;
+  avatarConfig: {
+    src: string | null;
+    alt: string;
+    fallbackText: string;
+    gradientColors: string;
+    size: 'md';
+  };
 }
 
 interface UseTopWritersReturn {
@@ -35,23 +44,25 @@ export function useTopWriters(): UseTopWritersReturn {
   const [error, setError] = useState<string | null>(null);
 
   const transformApiDataToWriters = (apiData: TopWriterData[]): Writer[] => {
-    return apiData.map((publication, index) => ({
-      rank: index + 1,
-      name: publication.name,
-      subscribers: `${publication.followerCount} subscriber${publication.followerCount !== 1 ? 's' : ''}`,
-      // Use a default avatar pattern since publications don't have avatars in the schema
-      avatar: `https://images.unsplash.com/photo-${getAvatarImageId(index)}?w=40&h=40&fit=crop&crop=face`
-    }));
-  };
+    return apiData.map((publication, index) => {
+      // Create avatar configuration using database avatar with fallback
+      const avatarConfig = createPublicationAvatarConfig(
+        {
+          id: publication.id,
+          name: publication.name,
+          avatar: publication.avatar, // Database avatar (nullable)
+        },
+        'md'
+      );
 
-  const getAvatarImageId = (index: number): string => {
-    // Cycle through different avatar images for variety
-    const avatarIds = [
-      '1494790108755-2616b612b786', // First default avatar
-      '1507003211169-0a1dd7228f2d', // Second default avatar  
-      '1472099645785-5658abf4ff4e'  // Third default avatar
-    ];
-    return avatarIds[index % avatarIds.length];
+      return {
+        rank: index + 1,
+        name: publication.name,
+        subscribers: `${publication.followerCount} subscriber${publication.followerCount !== 1 ? 's' : ''}`,
+        avatar: avatarConfig.src || '', // Use configured avatar for backward compatibility
+        avatarConfig, // Include full avatar config
+      };
+    });
   };
 
   const fetchTopWriters = useCallback(async () => {

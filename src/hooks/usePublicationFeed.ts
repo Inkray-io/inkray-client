@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { publicationsAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, PublicationFeedState, PublicationArticle } from '@/types/article';
+import { createUserAvatarConfig } from '@/lib/utils/avatar';
 
 /**
  * Hook to fetch articles from a specific publication
@@ -85,7 +86,10 @@ export const usePublicationFeed = (publicationId: string) => {
           totalTips: article.totalTips,
           authorInfo: {
             name: article.authorShortAddress,
-            avatar: "/placeholder-user.jpg",
+            avatar: createUserAvatarConfig({
+              publicKey: article.author,
+              // Don't pass short address as name - let the function detect it's an address
+            }, 'md').src,
             readTime: "2 min",
             mintedBy: 0,
           },

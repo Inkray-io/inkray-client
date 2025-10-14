@@ -87,7 +87,7 @@ export interface FeedArticle extends Article {
   /** Author display information for feed */
   authorInfo?: {
     name: string;
-    avatar: string;
+    avatar: string | null;
     readTime: string;
     mintedBy: number;
   };
@@ -263,6 +263,8 @@ export interface Publication {
   owner: string;
   /** Optional vault ID for publication storage */
   vaultId?: string;
+  /** Optional avatar URL */
+  avatar?: string;
   /** Publication creation date */
   createdAt: string;
   /** Number of articles published */

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
 import { getDisplayName, copyToClipboard } from "@/utils/address"
+import { createUserAvatarConfig } from "@/lib/utils/avatar"
+import { Avatar } from "@/components/ui/Avatar"
 import Link from "next/link"
 
 interface UserProfileProps {
@@ -50,13 +52,26 @@ export function UserProfile({ className = "" }: UserProfileProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 h-auto p-2 hover:bg-gray-50"
       >
-        <div className="size-8 rounded-full bg-gray-300 overflow-hidden flex-shrink-0">
-          <img 
-            src="/placeholder-user.jpg" 
-            alt="User avatar" 
-            className="size-full object-cover"
+        {account ? (
+          <Avatar
+            {...createUserAvatarConfig({
+              id: account.id,
+              publicKey: address, // Use full address instead of account.publicKey
+              name: account.username, // Only pass real username, not formatted address
+              avatar: account.avatar,
+            }, 'sm')}
+            className="flex-shrink-0"
           />
-        </div>
+        ) : (
+          <Avatar
+            src={null}
+            alt="User avatar"
+            size="sm"
+            fallbackText="??"
+            gradientColors="from-gray-400 to-gray-500"
+            className="flex-shrink-0"
+          />
+        )}
         
         <div className="flex-1 text-left min-w-0">
           <div className="font-medium text-black text-sm truncate">

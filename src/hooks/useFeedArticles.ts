@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { feedAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
+import { createUserAvatarConfig } from '@/lib/utils/avatar';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed
@@ -147,11 +148,17 @@ export const useFeedArticles = () => {
    * Format article for display
    */
   const formatArticleForDisplay = useCallback((article: FeedArticle) => {
+    // Create proper avatar config for user (without passing short address as name)
+    const avatarConfig = createUserAvatarConfig({
+      publicKey: article.author,
+      // Don't pass the short address as name - let the function detect it's an address
+    }, 'md');
+
     return {
       id: article.articleId,
       author: {
         name: article.authorShortAddress,
-        avatar: "/placeholder-user.jpg",
+        avatar: avatarConfig.src,
         address: article.author,
         date: article.timeAgo,
         readTime: "2 min", // TODO: Calculate from content
