@@ -1,5 +1,8 @@
 "use client"
 
+import { useTopWriters } from '@/hooks/useTopWriters';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+
 interface Writer {
   rank: number
   name: string
@@ -11,29 +14,80 @@ interface TopWritersProps {
   writers?: Writer[]
 }
 
-export function TopWriters({ writers }: TopWritersProps) {
-  const defaultWriters: Writer[] = [
-    { 
-      rank: 1, 
-      name: "QuillSeeker", 
-      subscribers: "4504 subscribers", 
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face"
-    },
-    { 
-      rank: 2, 
-      name: "SilentType", 
-      subscribers: "7602 subscribers", 
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face"
-    },
-    { 
-      rank: 3, 
-      name: "LedgerLines", 
-      subscribers: "3240 subscribers", 
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-    }
-  ]
+export function TopWriters({ writers: propsWriters }: TopWritersProps) {
+  const { writers: apiWriters, isLoading, error, refetch } = useTopWriters();
 
-  const displayWriters = writers || defaultWriters
+  // Use props writers if provided, otherwise use API data
+  const displayWriters = propsWriters || apiWriters;
+
+  // Loading state
+  if (isLoading && displayWriters.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-5">
+        <div className="flex items-center h-[22px] mb-4">
+          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        </div>
+        
+        <div className="space-y-4">
+          {[1, 2, 3].map((rank) => (
+            <div key={rank} className="flex items-center gap-3">
+              {/* Rank number skeleton */}
+              <div className="w-6 text-center">
+                <div className="w-4 h-4 bg-gray-200 rounded animate-pulse mx-auto"></div>
+              </div>
+              {/* Avatar skeleton */}
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+              {/* Writer info skeleton */}
+              <div className="flex-1 space-y-1">
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                <div className="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="h-6 bg-gray-200 rounded animate-pulse mt-4 w-28"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && displayWriters.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-5">
+        <div className="flex items-center h-[22px] mb-4">
+          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        </div>
+        
+        <div className="text-center py-4 space-y-3">
+          <AlertCircle className="w-6 h-6 text-gray-400 mx-auto" />
+          <p className="text-sm text-gray-500">Failed to load top writers</p>
+          <button 
+            onClick={refetch}
+            className="text-[#005efc] hover:underline text-sm flex items-center gap-1 mx-auto"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (displayWriters.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-5">
+        <div className="flex items-center h-[22px] mb-4">
+          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        </div>
+        
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-500">No publications found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl p-5">

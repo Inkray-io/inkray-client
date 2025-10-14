@@ -126,7 +126,7 @@ export function PublicationTipButton({
         <DialogHeader>
           <DialogTitle className="text-lg">Tip This Publication</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Send a tip to support "{publicationName}"
+            Send a tip to support &ldquo;{publicationName}&rdquo;
           </p>
         </DialogHeader>
 

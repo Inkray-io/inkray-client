@@ -117,7 +117,7 @@ export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess
         <DialogHeader>
           <DialogTitle className="text-lg">Tip This Article</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Send a tip to support "{articleTitle}"
+            Send a tip to support &ldquo;{articleTitle}&rdquo;
           </p>
         </DialogHeader>
 

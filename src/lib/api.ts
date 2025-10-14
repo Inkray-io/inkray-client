@@ -195,6 +195,11 @@ export const publicationsAPI = {
     }
   ) =>
     api.get(`/publications/${publicationId}/articles`, { params }),
+
+  getTopWriters: (limit?: number) =>
+    api.get('/publications/top-writers', {
+      params: limit ? { limit } : {},
+    }),
 };
 
 export const nftAPI = {
