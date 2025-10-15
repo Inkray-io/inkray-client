@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   User,
   Lock,
-  Unlock,
   RefreshCw,
   ExternalLink,
   Tag
@@ -160,9 +159,18 @@ function ArticlePageContent() {
                         <div className="font-semibold text-black text-sm">
                           {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
-                          {content && ` • ${Math.ceil((content.length || 0) / 1000)} min read`}
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <span>
+                            {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
+                            {content && ` • ${Math.ceil((content.length || 0) / 1000)} min read`}
+                          </span>
+                          {article.category && (
+                            <>
+                              <span>•</span>
+                              <Tag className="size-3" />
+                              <span>{article.category.name}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -187,34 +195,6 @@ function ArticlePageContent() {
                       </p>
                     )}
 
-                    {/* Article Meta Info */}
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                      {article.category && (
-                        <div className="flex items-center gap-1">
-                          <Tag className="size-3" />
-                          <span>{article.category.name}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        {article.gated ? (
-                          <>
-                            <Lock className="size-3" />
-                            <span>Premium</span>
-                          </>
-                        ) : (
-                          <>
-                            <Unlock className="size-3" />
-                            <span>Free</span>
-                          </>
-                        )}
-                      </div>
-                      {article.contentSealId && (
-                        <div className="flex items-center gap-1">
-                          <Lock className="size-3" />
-                          <span>Encrypted</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* Article Body */}
@@ -306,6 +286,7 @@ function ArticlePageContent() {
                 <FollowBar
                   publicationId={article.publicationId}
                   publicationName={article.followInfo.publicationName}
+                  publicationAvatar={article.followInfo.publicationAvatar || null}
                   initialFollowInfo={{
                     isFollowing: article.followInfo.isFollowing,
                     followerCount: article.followInfo.followerCount,

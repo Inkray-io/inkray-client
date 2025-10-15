@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { MintButton } from "./MintButton";
-import { RecentMints } from "./RecentMints";
+import { VerificationSection } from "./VerificationSection";
 import { nftAPI } from "@/lib/api";
-import { Image, Hash } from "lucide-react";
+import { Image } from "lucide-react";
 
 interface NftMintingSectionProps {
   articleId: string;
@@ -54,42 +54,18 @@ export function NftMintingSection({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Mint NFT</h2>
-        <p className="text-sm text-gray-600">
-          Mint this article as an NFT for permanent access and collectible ownership
-        </p>
-        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-          <span className="flex items-center gap-1">
-            <Hash className="w-3 h-3" />
-            {loadingCount ? "..." : `${mintCount} minted`}
-          </span>
-          <span>by {formatAddress(authorAddress)}</span>
-        </div>
-      </div>
-
+    <div className="bg-white rounded-2xl p-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Mint Button */}
         <div className="space-y-4">
           {/* Article Preview */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex gap-4">
-              {/* Placeholder Image */}
-              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Image className="w-6 h-6 text-gray-400" aria-label="Article placeholder image" />
-              </div>
-              
-              {/* Article Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 text-sm line-clamp-2 mb-1">
-                  {articleTitle}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Article NFT • Free Mint
-                </p>
-              </div>
-            </div>
+          <div className="bg-gray-100 rounded-xl p-8 flex items-center justify-center">
+            <Image className="w-16 h-16 text-gray-400" />
+          </div>
+
+          {/* Collection Description */}
+          <div className="text-sm text-gray-500 text-center">
+            Mint this entry as an NFT to add it to your collection.
           </div>
 
           {/* Mint Button */}
@@ -98,13 +74,27 @@ export function NftMintingSection({
             articleTitle={articleTitle}
             onMintSuccess={handleMintSuccess}
           />
+
+          {/* Collection Stats */}
+          <div className="flex items-center justify-center gap-3">
+            {/* Collector Avatars */}
+            <div className="flex -space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full border-2 border-white"></div>
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-teal-500 rounded-full border-2 border-white"></div>
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full border-2 border-white"></div>
+            </div>
+            
+            {/* Collection Count */}
+            <div className="text-xs text-gray-500">
+              {loadingCount ? "..." : `${mintCount} collected`}
+            </div>
+          </div>
         </div>
 
-        {/* Right Column - Recent Mints */}
+        {/* Right Column - Verification */}
         <div>
-          <RecentMints 
-            articleId={articleId} 
-            key={refreshKey} // Force refresh when mint succeeds
+          <VerificationSection 
+            articleId={articleId}
           />
         </div>
       </div>

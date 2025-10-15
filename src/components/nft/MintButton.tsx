@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
-import { Coins, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MintButtonProps {
   articleId: string;
@@ -90,37 +90,32 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <Button 
+    <div className="relative flex flex-col">
+      <button
         onClick={handleMint}
         disabled={isMinting}
-        className="w-full gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
-        size="lg"
+        className={cn(
+          "w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
+          isMinting 
+            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+            : "bg-blue-50 text-primary hover:bg-blue-100"
+        )}
       >
         {isMinting ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Minting NFT...
+            Minting...
           </>
         ) : (
-          <>
-            <Coins className="w-4 h-4" />
-            Mint NFT (Free)
-          </>
+          "Mint"
         )}
-      </Button>
+      </button>
 
       {mintError && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
           {mintError}
         </div>
       )}
-
-      <div className="text-xs text-gray-500 space-y-1">
-        <p>• Mint this article as an NFT for permanent access</p>
-        <p>• NFT minting is completely free</p>
-        <p>• You&apos;ll own a unique collectible</p>
-      </div>
     </div>
   );
 }

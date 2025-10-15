@@ -50,6 +50,7 @@ export interface Article {
   /** Publication follow information */
   followInfo?: {
     publicationName: string;
+    publicationAvatar?: string | null;
     followerCount: number;
     isFollowing: boolean;
     followedAt?: string;

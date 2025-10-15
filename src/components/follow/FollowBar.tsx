@@ -2,14 +2,17 @@
 
 import { useFollows } from '@/hooks/useFollows';
 import { FollowButton } from './FollowButton';
-import { Users, AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, ExternalLink, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
+import { Avatar } from '@/components/ui/Avatar';
+import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 
 interface FollowBarProps {
   publicationId: string;
   publicationName: string;
+  publicationAvatar?: string | null;
   initialFollowInfo: {
     isFollowing: boolean;
     followerCount: number;
@@ -22,6 +25,7 @@ interface FollowBarProps {
 export function FollowBar({
   publicationId,
   publicationName,
+  publicationAvatar,
   initialFollowInfo,
   className,
   variant = 'default',
@@ -47,64 +51,82 @@ export function FollowBar({
   };
 
   if (variant === 'compact') {
+    const compactAvatarConfig = createPublicationAvatarConfig(
+      { id: publicationId, name: publicationName, avatar: publicationAvatar },
+      'sm'
+    );
+
     return (
       <div className={cn(
         'flex items-center justify-between p-3 bg-gray-50 rounded-lg border',
         className
       )}>
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <Users className="h-4 w-4 text-blue-600" />
-          </div>
+          <Avatar
+            src={compactAvatarConfig.src}
+            alt={compactAvatarConfig.alt}
+            size="sm"
+            fallbackText={compactAvatarConfig.fallbackText}
+            gradientColors={compactAvatarConfig.gradientColors}
+            className="flex-shrink-0"
+          />
           <div className="min-w-0">
             <button
               onClick={handlePublicationClick}
-              className="font-medium text-gray-900 truncate text-sm hover:text-primary transition-colors text-left"
+              className="font-semibold text-gray-900 truncate text-sm hover:text-primary transition-colors text-left"
             >
               {publicationName}
             </button>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500">
               {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
             </p>
           </div>
         </div>
-        
+
         <FollowButton
           isFollowing={isFollowing}
           isLoading={isLoading}
           onToggleFollow={handleToggleFollow}
-          size="sm"
-          variant="outline"
         />
       </div>
     );
   }
 
+  const defaultAvatarConfig = createPublicationAvatarConfig(
+    { id: publicationId, name: publicationName, avatar: publicationAvatar },
+    'md'
+  );
+
   return (
     <div className={cn(
-      'bg-white border rounded-xl p-6 space-y-4',
+      'bg-white rounded-xl p-6 space-y-4',
       className
     )}>
       {/* Publication Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Publication Avatar */}
-          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <Users className="h-6 w-6 text-white" />
-          </div>
-          
+          <Avatar
+            src={defaultAvatarConfig.src}
+            alt={defaultAvatarConfig.alt}
+            size="md"
+            fallbackText={defaultAvatarConfig.fallbackText}
+            gradientColors={defaultAvatarConfig.gradientColors}
+            className="flex-shrink-0"
+          />
+
           {/* Publication Info */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePublicationClick}
-                className="font-semibold text-lg text-gray-900 truncate hover:text-primary transition-colors text-left"
+                className="font-semibold text-sm text-gray-900 truncate hover:text-primary transition-colors text-left"
               >
                 {publicationName}
               </button>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              <ExternalLink className="h-4 w-4 text-gray-500" />
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
               <span>
                 {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
               </span>
@@ -123,8 +145,6 @@ export function FollowBar({
             isFollowing={isFollowing}
             isLoading={isLoading}
             onToggleFollow={handleToggleFollow}
-            size="default"
-            variant={isFollowing ? 'outline' : 'default'}
           />
         </div>
       </div>
@@ -154,9 +174,9 @@ export function FollowBar({
       )}
 
       {/* Publication Description */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-xs text-gray-500">
         <p>
-          Follow <strong>{publicationName}</strong> to get notified about new articles 
+          Follow <strong>{publicationName}</strong> to get notified about new articles
           and updates from this publication.
         </p>
       </div>

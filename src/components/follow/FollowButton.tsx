@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,8 +9,6 @@ interface FollowButtonProps {
   isLoading?: boolean;
   followerCount?: number;
   onToggleFollow: () => Promise<void>;
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
   showFollowerCount?: boolean;
   className?: string;
 }
@@ -21,8 +18,6 @@ export function FollowButton({
   isLoading = false,
   followerCount,
   onToggleFollow,
-  variant = 'default',
-  size = 'default',
   showFollowerCount = false,
   className,
 }: FollowButtonProps) {
@@ -41,42 +36,31 @@ export function FollowButton({
     }
   }, [onToggleFollow, isLoading, isProcessing]);
 
-  const buttonVariant = isFollowing 
-    ? (variant === 'default' ? 'outline' : variant)
-    : variant;
-
-  const sizeClasses = {
-    default: 'h-9 px-4 text-sm',
-    sm: 'h-8 px-3 text-xs',
-    lg: 'h-10 px-6 text-base',
-    icon: 'h-9 w-9',
-  };
-
   const isActionLoading = isLoading || isProcessing;
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant={buttonVariant}
-        size={size}
+      <button
         onClick={handleClick}
         disabled={isActionLoading}
         className={cn(
-          'flex items-center gap-2 transition-all duration-200',
-          sizeClasses[size],
-          isFollowing && 'hover:bg-red-50 hover:text-red-600 hover:border-red-200',
+          'flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200',
+          isFollowing 
+            ? 'bg-gray-50 text-gray-700 hover:bg-red-50 hover:text-red-600' 
+            : 'bg-blue-50 text-primary hover:bg-blue-100',
+          isActionLoading && 'opacity-50 cursor-not-allowed',
           className
         )}
       >
         {isActionLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-3 w-3 animate-spin" />
         ) : isFollowing ? (
-          <UserMinus className="h-4 w-4" />
+          <UserMinus className="h-3 w-3" />
         ) : (
-          <UserPlus className="h-4 w-4" />
+          <UserPlus className="h-3 w-3" />
         )}
         
-        <span className="font-medium">
+        <span>
           {isActionLoading 
             ? 'Loading...'
             : isFollowing 
@@ -84,10 +68,10 @@ export function FollowButton({
               : 'Follow'
           }
         </span>
-      </Button>
+      </button>
 
       {showFollowerCount && typeof followerCount === 'number' && (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-xs text-gray-500">
           {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
         </span>
       )}
