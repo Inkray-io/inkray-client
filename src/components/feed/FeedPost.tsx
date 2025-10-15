@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { HiDotsHorizontal } from "react-icons/hi"
+import { MoreHorizontal, ThumbsUp, MessageCircle, Link, Share } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -90,41 +90,41 @@ export function FeedPost({
   }
   
   return (
-    <div className="bg-white rounded-2xl p-6">
+    <div className="bg-white rounded-2xl p-5">
       {/* Author Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Avatar
             {...authorAvatarConfig}
           />
           <div>
-            <div className="font-semibold text-black">{author.name}</div>
-            <div className="text-sm text-black/50">
+            <div className="font-semibold text-black text-sm">{author.name}</div>
+            <div className="text-xs text-gray-500">
               Minted by <span className="font-semibold">{author.mintedBy}</span> • {author.date} • {author.readTime}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-blue-50 text-primary text-sm font-semibold rounded-lg">
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
             Support
           </div>
           <Button variant="ghost" size="icon">
-            <HiDotsHorizontal className="size-6" />
+            <MoreHorizontal className="size-5" />
           </Button>
         </div>
       </div>
       
       {/* Content */}
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div>
           <h2 
-            className="text-xl font-medium text-black cursor-pointer hover:text-primary transition-colors"
+            className="text-lg font-semibold text-black cursor-pointer hover:text-primary transition-colors"
             onClick={handleArticleClick}
           >
             {title}
           </h2>
           {publication && (
-            <div className="text-sm text-black/50 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               Published in{' '}
               <button
                 onClick={handlePublicationClick}
@@ -134,7 +134,7 @@ export function FeedPost({
               </button>
             </div>
           )}
-          <p className="text-black/80 mt-4">
+          <p className="text-gray-700 text-sm mt-3 leading-relaxed">
             {description}
           </p>
         </div>
@@ -153,10 +153,10 @@ export function FeedPost({
         )}
 
         {(hasReadMore || engagement) && (
-          <div className="space-y-5">
+          <div className="space-y-3">
             {hasReadMore && (
               <div 
-                className="text-primary font-medium cursor-pointer hover:underline"
+                className="text-primary text-sm font-medium cursor-pointer hover:underline"
                 onClick={handleArticleClick}
               >
                 Read more
@@ -165,24 +165,24 @@ export function FeedPost({
             
             {engagement && (
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-5">
-                  <div className="flex items-center gap-1">
-                    <div className="size-7 rounded-full bg-gray-100 flex items-center justify-center">
-                      <span className="text-sm">👍</span>
-                    </div>
-                    <span className="text-gray-600">{engagement.likes}</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
+                      <ThumbsUp className="size-4 text-gray-600" />
+                    </Button>
+                    <span className="text-gray-600 text-sm">{engagement.likes}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="size-7 rounded-full bg-gray-100 flex items-center justify-center">
-                      <span className="text-sm">💬</span>
-                    </div>
-                    <span className="text-gray-600">{engagement.comments}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
+                      <MessageCircle className="size-4 text-gray-600" />
+                    </Button>
+                    <span className="text-gray-600 text-sm">{engagement.comments}</span>
                   </div>
-                  <Button variant="ghost" size="icon" className="size-7">
-                    <span className="text-sm">🔗</span>
+                  <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
+                    <Link className="size-4 text-gray-600" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="size-7">
-                    <span className="text-sm">📤</span>
+                  <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
+                    <Share className="size-4 text-gray-600" />
                   </Button>
                 </div>
                 <div className="flex items-center gap-1.5">
