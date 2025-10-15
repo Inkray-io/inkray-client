@@ -20,22 +20,22 @@ export function ArticleContent({ title, description, body, expandable = false }:
   const paragraphs = body ? body.split('\n\n') : []
 
   return (
-    <div className="bg-white rounded-2xl p-6">
+    <div className="bg-white rounded-2xl p-5">
       <div className="space-y-4">
         {title && (
-          <h1 className="text-3xl lg:text-4xl font-bold text-black leading-tight">
+          <h1 className="text-2xl font-semibold text-black leading-tight">
             {title}
           </h1>
         )}
         
         {description && (
-          <p className="text-lg text-black/80 leading-relaxed">
+          <p className="text-gray-700 text-sm leading-relaxed">
             {description}
           </p>
         )}
         
         {body && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {paragraphs.map((paragraph, index) => {
               // Show first 2 paragraphs, then show/hide based on expanded state
               const shouldShow = index < 2 || isExpanded
@@ -43,7 +43,7 @@ export function ArticleContent({ title, description, body, expandable = false }:
               if (!shouldShow) return null
               
               return (
-                <p key={index} className="text-black/90 leading-relaxed">
+                <p key={index} className="text-gray-700 text-sm leading-relaxed">
                   {paragraph}
                 </p>
               )
@@ -52,7 +52,7 @@ export function ArticleContent({ title, description, body, expandable = false }:
             {expandable && paragraphs.length > 2 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-primary font-medium hover:underline focus:outline-none"
+                className="text-primary text-sm font-medium hover:underline focus:outline-none"
               >
                 {isExpanded ? "Show less" : "Show more"}
               </button>

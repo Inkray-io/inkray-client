@@ -10,9 +10,7 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
-  Calendar,
   User,
-  Eye,
   Lock,
   Unlock,
   RefreshCw,
@@ -86,7 +84,7 @@ function ArticlePageContent() {
   return (
     <RequireAuth redirectTo="/">
       <AppLayout currentPage="feed" showRightSidebar={false}>
-        <div className="py-6 space-y-6">
+        <div className="space-y-6">
           {/* Back Button */}
           <div className="flex items-center gap-4">
             <Button
@@ -151,68 +149,154 @@ function ArticlePageContent() {
           {/* Article Content */}
           {article && (
             <div className="space-y-6">
-              {/* Article Header */}
-              <div className="bg-white rounded-2xl p-8">
+              {/* Unified Article Container */}
+              <div className="bg-white rounded-2xl p-5">
                 <div className="space-y-6">
-                  {/* Article Meta */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>{article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
-                      </span>
-                    </div>
-                    {article.category && (
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-blue-600" />
-                        <span className="text-blue-600 font-medium">{article.category.name}</span>
+                  {/* Article Author */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <User className="size-10 text-gray-400 bg-gray-100 rounded-full p-2" />
+                      <div>
+                        <div className="font-semibold text-black text-sm">
+                          {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
+                          {content && ` • ${Math.ceil((content.length || 0) / 1000)} min read`}
+                        </div>
                       </div>
-                    )}
+                    </div>
                     <div className="flex items-center gap-2">
-                      {article.gated ? (
-                        <>
-                          <Lock className="h-4 w-4 text-orange-600" />
-                          <span className="text-orange-600">Premium Article</span>
-                        </>
-                      ) : (
-                        <>
-                          <Unlock className="h-4 w-4 text-green-600" />
-                          <span className="text-green-600">Free Article</span>
-                        </>
+                      <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
+                        Support
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Article Metadata */}
+                  <div className="space-y-4">
+                    {/* Article Title */}
+                    <h1 className="text-2xl font-semibold text-black leading-tight">
+                      {article.title || 'Untitled Article'}
+                    </h1>
+
+                    {/* Article Summary */}
+                    {article.summary && (
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        {article.summary}
+                      </p>
+                    )}
+
+                    {/* Article Meta Info */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                      {article.category && (
+                        <div className="flex items-center gap-1">
+                          <Tag className="size-3" />
+                          <span>{article.category.name}</span>
+                        </div>
                       )}
+                      <div className="flex items-center gap-1">
+                        {article.gated ? (
+                          <>
+                            <Lock className="size-3" />
+                            <span>Premium</span>
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="size-3" />
+                            <span>Free</span>
+                          </>
+                        )}
+                      </div>
                       {article.contentSealId && (
-                        <span className="text-xs text-blue-600 ml-2">
-                          🔒 Encrypted with Seal
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <Lock className="size-3" />
+                          <span>Encrypted</span>
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Article Title */}
-                  <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                    {article.title || 'Untitled Article'}
-                  </h1>
-
-                  {/* Article Summary */}
-                  {article.summary && (
-                    <p className="text-lg text-gray-600 leading-relaxed italic">
-                      {article.summary}
-                    </p>
-                  )}
-
-                  {/* Article Stats */}
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground border-t pt-4">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      <span>Reading time: ~{Math.ceil((content?.length || 0) / 1000)} min</span>
-                    </div>
-                    <div>
-                      {content?.length || 0} characters
-                    </div>
+                  {/* Article Body */}
+                  <div className="border-t border-gray-100 pt-6">
+                    {/* Show animated loader while loading content */}
+                    {(loadingStage !== 'idle' && !content) ? (
+                      <ArticleAnimatedLoader
+                        currentStage={loadingStage}
+                        isEncrypted={!!article.contentSealId}
+                      />
+                    ) : content ? (
+                      <div className="prose prose-lg max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            // Custom styling for markdown elements
+                            h1: ({ children }) => <h1 className="text-2xl font-semibold mb-4 text-black">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-6 text-black">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-lg font-semibold mb-2 mt-4 text-black">{children}</h3>,
+                            p: ({ children }) => <p className="mb-3 text-gray-700 text-sm leading-relaxed">{children}</p>,
+                            strong: ({ children }) => <strong className="font-semibold text-black">{children}</strong>,
+                            em: ({ children }) => <em className="italic text-gray-600">{children}</em>,
+                            code: ({ children }) => (
+                              <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">
+                                {children}
+                              </code>
+                            ),
+                            pre: ({ children }) => (
+                              <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto mb-3 text-sm">
+                                {children}
+                              </pre>
+                            ),
+                          }}
+                        >
+                          {content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : canLoadContent ? (
+                      <div className="text-center py-12 space-y-4">
+                        {article.contentSealId ? (
+                          <Lock className="h-12 w-12 text-blue-500 mx-auto" />
+                        ) : (
+                          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
+                        )}
+                        <div>
+                          <p className="font-medium">
+                            {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            {article.contentSealId ?
+                              'Click to decrypt and load the article content using Seal' :
+                              'Click to load the article content'
+                            }
+                          </p>
+                          {article.contentSealId && (
+                            <p className="text-xs text-blue-600 mt-2">
+                              Wallet connection required for decryption
+                            </p>
+                          )}
+                        </div>
+                        <Button onClick={reloadContent} className="gap-2">
+                          {article.contentSealId ? (
+                            <>
+                              <Lock className="h-4 w-4" />
+                              Decrypt Content
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="h-4 w-4" />
+                              Load Content
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 space-y-4">
+                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+                        <div>
+                          <p className="font-medium text-red-700">Content unavailable</p>
+                          <p className="text-muted-foreground text-sm">This article does not have content available for loading</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -242,110 +326,29 @@ function ArticlePageContent() {
 
               {/* Tip Section */}
               {article.articleId && article.publicationId && (
-                <div className="bg-white rounded-2xl p-6 mb-6">
+                <div className="bg-white rounded-2xl p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <h3 className="text-lg font-medium">Support this article</h3>
+                      <h3 className="text-sm font-semibold">Support this article</h3>
                       <TipDisplay amount={article.totalTips || 0} size="default" />
                     </div>
-                    <TipButton 
+                    <TipButton
                       articleId={article.articleId}
                       publicationId={article.publicationId}
                       articleTitle={article.title || 'Untitled Article'}
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs text-gray-500 mt-2">
                     Tips help support content creators on the platform
                   </p>
                 </div>
               )}
 
-              {/* Article Body */}
-              <div className="bg-white rounded-2xl p-8">
-                {/* Show animated loader while loading content */}
-                {(loadingStage !== 'idle' && !content) ? (
-                  <ArticleAnimatedLoader 
-                    currentStage={loadingStage}
-                    isEncrypted={!!article.contentSealId}
-                  />
-                ) : content ? (
-                  <div className="prose prose-lg max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        // Custom styling for markdown elements
-                        h1: ({ children }) => <h1 className="text-3xl font-bold mb-6 text-gray-900">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-2xl font-semibold mb-4 mt-8 text-gray-900">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-xl font-semibold mb-3 mt-6 text-gray-900">{children}</h3>,
-                        p: ({ children }) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
-                        strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                        em: ({ children }) => <em className="italic text-gray-800">{children}</em>,
-                        code: ({ children }) => (
-                          <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">
-                            {children}
-                          </code>
-                        ),
-                        pre: ({ children }) => (
-                          <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
-                            {children}
-                          </pre>
-                        ),
-                      }}
-                    >
-                      {content}
-                    </ReactMarkdown>
-                  </div>
-                ) : canLoadContent ? (
-                  <div className="text-center py-12 space-y-4">
-                    {article.contentSealId ? (
-                      <Lock className="h-12 w-12 text-blue-500 mx-auto" />
-                    ) : (
-                      <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
-                    )}
-                    <div>
-                      <p className="font-medium">
-                        {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        {article.contentSealId ?
-                          'Click to decrypt and load the article content using Seal' :
-                          'Click to load the article content'
-                        }
-                      </p>
-                      {article.contentSealId && (
-                        <p className="text-xs text-blue-600 mt-2">
-                          Wallet connection required for decryption
-                        </p>
-                      )}
-                    </div>
-                    <Button onClick={reloadContent} className="gap-2">
-                      {article.contentSealId ? (
-                        <>
-                          <Lock className="h-4 w-4" />
-                          Decrypt Content
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4" />
-                          Load Content
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 space-y-4">
-                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-                    <div>
-                      <p className="font-medium text-red-700">Content unavailable</p>
-                      <p className="text-muted-foreground text-sm">This article does not have content available for loading</p>
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Article Footer */}
-              <div className="bg-white rounded-2xl p-6">
+              <div className="bg-white rounded-2xl p-5">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xs text-gray-500">
                     <p>Published on Sui blockchain</p>
                     <p className="flex items-center gap-2">
                       Object ID:{' '}
