@@ -32,8 +32,8 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   if (isLoading && displayWriters.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
-        <div className="flex items-center h-[22px] mb-4">
-          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        <div className="mb-4">
+          <h3 className="font-semibold text-black text-lg">Top writers</h3>
         </div>
         
         <div className="space-y-4">
@@ -63,8 +63,8 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   if (error && displayWriters.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
-        <div className="flex items-center h-[22px] mb-4">
-          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        <div className="mb-4">
+          <h3 className="font-semibold text-black text-lg">Top writers</h3>
         </div>
         
         <div className="text-center py-4 space-y-3">
@@ -86,8 +86,8 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   if (displayWriters.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
-        <div className="flex items-center h-[22px] mb-4">
-          <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+        <div className="mb-4">
+          <h3 className="font-semibold text-black text-lg">Top writers</h3>
         </div>
         
         <div className="text-center py-4">
@@ -99,16 +99,16 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
 
   return (
     <div className="bg-white rounded-2xl p-5">
-      <div className="flex items-center h-[22px] mb-4">
-        <h3 className="font-medium text-black text-sm leading-[22px]">Top writers</h3>
+      <div className="mb-4">
+        <h3 className="font-semibold text-black text-lg">Top writers</h3>
       </div>
       
       <div className="space-y-4">
         {displayWriters.map((writer) => (
           <div key={writer.rank} className="flex items-center gap-3">
-            {/* Rank number with proper spacing */}
+            {/* Rank number */}
             <div className="w-6 text-center">
-              <span className="text-black font-normal text-sm leading-[22px] font-['Roboto'] font-variation-settings-wdth-100">
+              <span className="text-black font-medium text-sm">
                 {writer.rank}
               </span>
             </div>
@@ -117,11 +117,11 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
               {...writer.avatarConfig}
             />
             {/* Writer info */}
-            <div className="flex-1 space-y-px leading-[0]">
-              <div className="font-semibold text-black text-sm leading-[1.4]">
+            <div className="flex-1">
+              <div className="font-semibold text-black text-sm">
                 {writer.name}
               </div>
-              <div className="font-normal text-black text-xs leading-[1.3]">
+              <div className="text-gray-500 text-xs mt-0.5">
                 {writer.subscribers}
               </div>
             </div>
@@ -129,7 +129,7 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
         ))}
       </div>
       
-      <div className="text-[#005efc] font-medium cursor-pointer hover:underline text-base leading-[1.35] min-w-full pt-4" style={{width: "min-content"}}>
+      <div className="text-primary text-sm font-medium cursor-pointer hover:underline pt-4">
         View the entire list
       </div>
     </div>
