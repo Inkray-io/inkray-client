@@ -337,4 +337,6 @@ export interface PublicationArticle {
   gated: boolean;
   timeAgo: string;
   totalTips: number;
+  totalLikes: number;
+  isLiked?: boolean;
 }

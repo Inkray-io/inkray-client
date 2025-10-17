@@ -180,11 +180,7 @@ const PublicationPageContent: React.FC = () => {
                       },
                       title: article.title,
                       description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
-                      engagement: article.engagement || {
-                        likes: 0,
-                        comments: 0,
-                        views: 0,
-                      },
+                      engagement: article.engagement,
                       slug: article.slug,
                       publication: publication ? {
                         id: publication.id,

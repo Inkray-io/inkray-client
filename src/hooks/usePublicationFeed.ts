@@ -94,9 +94,10 @@ export const usePublicationFeed = (publicationId: string) => {
             mintedBy: 0,
           },
           engagement: {
-            likes: 0,
+            likes: article.totalLikes,
             comments: 0,
             views: 0,
+            isLiked: article.isLiked,
           },
         }));
 
