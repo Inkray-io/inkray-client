@@ -64,12 +64,14 @@ export const usersAPI = {
 
 export const feedAPI = {
   getArticles: (params: {
+    type?: 'fresh' | 'popular' | 'my';
     limit?: number;
     cursor?: string;
     author?: string;
     publicationId?: string;
     fromDate?: string;
     toDate?: string;
+    timeframe?: 'day' | 'week' | 'month'; // For popular feed
   }) => api.get('/feed/articles', { params }),
 
   getTrending: (params: {

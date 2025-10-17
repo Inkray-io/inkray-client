@@ -11,6 +11,8 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  * and error handling. It provides functions to load initial articles,
  * paginate through more articles, and refresh the feed.
  * 
+ * @param feedType - Type of feed to fetch ('fresh' | 'popular' | 'my')
+ * @param timeframe - Timeframe for popular feed ('day' | 'week' | 'month')
  * @returns Object containing feed state and management functions
  * 
  * @example
@@ -21,7 +23,7 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  *   hasMore, 
  *   loadMore, 
  *   refresh 
- * } = useFeedArticles();
+ * } = useFeedArticles('popular', 'week');
  * 
  * return (
  *   <div>
@@ -37,7 +39,10 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  * );
  * ```
  */
-export const useFeedArticles = () => {
+export const useFeedArticles = (
+  feedType: 'fresh' | 'popular' | 'my' = 'fresh',
+  timeframe: 'day' | 'week' | 'month' = 'week'
+) => {
   const [state, setState] = useState<FeedArticlesState>({
     articles: [],
     isLoading: true,
@@ -53,11 +58,17 @@ export const useFeedArticles = () => {
   const fetchArticles = useCallback(async (cursor?: string | null) => {
     try {
       const params: Parameters<typeof feedAPI.getArticles>[0] = {
+        type: feedType,
         limit: 20,
       };
 
       if (cursor) {
         params.cursor = cursor;
+      }
+
+      // Add timeframe for popular feed
+      if (feedType === 'popular') {
+        params.timeframe = timeframe;
       }
 
       const response = await feedAPI.getArticles(params);
@@ -73,7 +84,7 @@ export const useFeedArticles = () => {
       log.error('Failed to fetch articles', error, 'useFeedArticles');
       throw new Error(`Feed articles fetch failed: Could not fetch articles from backend. Ensure the backend service is running.`);
     }
-  }, []);
+  }, [feedType, timeframe]);
 
   /**
    * Load initial articles
@@ -180,14 +191,16 @@ export const useFeedArticles = () => {
     };
   }, []);
 
-  // Load articles on mount
+  // Load articles on mount or when feed type/timeframe changes
   useEffect(() => {
     loadArticles();
-  }, [loadArticles]);
+  }, [loadArticles, feedType, timeframe]);
 
   return {
     // State
     ...state,
+    feedType,
+    timeframe,
 
     // Actions
     loadMore,
