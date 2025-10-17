@@ -10,7 +10,6 @@ import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
-import { cn } from "@/lib/utils";
 
 interface PublicationTipButtonProps {
   publicationId: string;
@@ -63,7 +62,7 @@ export function PublicationTipButton({
       });
 
       // Execute transaction
-      const result = await signAndExecuteTransaction({
+      await signAndExecuteTransaction({
         transaction: tx,
       });
 

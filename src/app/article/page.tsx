@@ -22,6 +22,8 @@ import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
 import { TipButton } from "@/components/article/TipButton";
 import { TipDisplay } from "@/components/ui/TipDisplay";
+import { LikeButton } from "@/components/like/LikeButton";
+import { useLikes } from "@/hooks/useLikes";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -49,6 +51,15 @@ function ArticlePageContent() {
     loadingStage,
   } = useArticle(articleSlug);
 
+  // Initialize likes hook if article is available
+  const likesHook = useLikes(
+    article?.articleId || '',
+    article ? {
+      isLiked: false, // TODO: Get from article data when backend supports it
+      likeCount: 0, // TODO: Get from article data when backend supports it
+    } : undefined
+  );
+
   const handleBack = () => {
     router.push('/feed');
   };
@@ -56,6 +67,10 @@ function ArticlePageContent() {
   const handleRetry = () => {
     clearError();
     retry();
+  };
+
+  const handleLikeToggle = async () => {
+    await likesHook.toggleLike();
   };
 
   // Show loading state when no slug is available
@@ -360,6 +375,16 @@ function ArticlePageContent() {
                   </div>
 
                   <div className="flex gap-3">
+                    {article.articleId && (
+                      <LikeButton
+                        isLiked={likesHook.isLiked}
+                        isLoading={likesHook.isLoading}
+                        likeCount={likesHook.likeCount}
+                        onToggleLike={handleLikeToggle}
+                        showLikeCount={false}
+                        variant="button"
+                      />
+                    )}
                     <button className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors">
                       Share Article
                     </button>

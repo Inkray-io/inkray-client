@@ -57,6 +57,10 @@ export interface Article {
   };
   /** Total tip amount received for this article (in MIST) */
   totalTips: number;
+  /** Total like count for this article */
+  totalLikes: number;
+  /** Whether the current user has liked this article (only set when authenticated) */
+  isLiked?: boolean;
 }
 
 /**
@@ -84,6 +88,7 @@ export interface FeedArticle extends Article {
     likes: number;
     comments: number;
     views: number;
+    isLiked?: boolean;
   };
   /** Author display information for feed */
   authorInfo?: {

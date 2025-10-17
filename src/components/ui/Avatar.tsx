@@ -43,7 +43,7 @@ export function Avatar({
   onError,
 }: AvatarProps) {
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, _setIsLoading] = useState(true);
 
   // Size mappings for consistent sizing
   const sizeClasses = {
@@ -74,12 +74,12 @@ export function Avatar({
 
   const handleImageError = () => {
     setHasError(true);
-    setIsLoading(false);
+    _setIsLoading(false);
     onError?.();
   };
 
   const handleImageLoad = () => {
-    setIsLoading(false);
+    _setIsLoading(false);
   };
 
 

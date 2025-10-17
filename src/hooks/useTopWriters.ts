@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { publicationsAPI } from '@/lib/api';
-import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
+import { createPublicationAvatarConfig, AvatarSize } from '@/lib/utils/avatar';
 
 interface TopWriterData {
   id: string;
@@ -21,7 +21,7 @@ interface Writer {
     alt: string;
     fallbackText: string;
     gradientColors: string;
-    size: 'md';
+    size: AvatarSize;
   };
 }
 

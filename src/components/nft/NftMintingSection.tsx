@@ -15,7 +15,7 @@ interface NftMintingSectionProps {
 export function NftMintingSection({ 
   articleId, 
   articleTitle, 
-  authorAddress 
+  authorAddress: _authorAddress 
 }: NftMintingSectionProps) {
   const [mintCount, setMintCount] = useState<number>(0);
   const [loadingCount, setLoadingCount] = useState(true);
@@ -47,10 +47,6 @@ export function NftMintingSection({
   const handleMintSuccess = () => {
     // Refresh the mint count and recent mints
     setRefreshKey(prev => prev + 1);
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (

@@ -4,7 +4,7 @@ interface VerificationSectionProps {
   articleId: string;
 }
 
-export function VerificationSection({ articleId }: VerificationSectionProps) {
+export function VerificationSection({ articleId: _articleId }: VerificationSectionProps) {
   // Mock Arweave transaction data - in real implementation this would come from API
   const arweaveTransactions = [
     "drN98zM7FpVDPWO...KNgeobSJWu8YR9g",

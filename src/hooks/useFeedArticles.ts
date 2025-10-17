@@ -168,9 +168,10 @@ export const useFeedArticles = () => {
       slug: article.slug,
       description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
       engagement: {
-        likes: 0, // TODO: Implement real engagement metrics from backend
-        comments: 0,
-        views: 0,
+        likes: article.totalLikes,
+        comments: 0, // TODO: Implement comments count from backend
+        views: 0, // TODO: Implement views count from backend
+        isLiked: article.isLiked,
       },
       transactionHash: article.transactionHash,
       quiltBlobId: article.quiltBlobId,

@@ -232,3 +232,23 @@ export const tipsAPI = {
   // - getTipStats: (publicationId: string) => api.get(`/tips/publication/${publicationId}/stats`)  
   // - getTopTippers: () => api.get('/tips/analytics/top-tippers')
 } as const;
+
+export const likesAPI = {
+  likeArticle: (articleId: string) => 
+    api.post(`/likes/${articleId}`),
+  
+  unlikeArticle: (articleId: string) => 
+    api.delete(`/likes/${articleId}`),
+  
+  toggleLike: (articleId: string) => 
+    api.post(`/likes/${articleId}/toggle`),
+  
+  getLikeStatus: (articleId: string) => 
+    api.get(`/likes/${articleId}/status`),
+  
+  getArticleLikeCount: (articleId: string) => 
+    api.get(`/likes/${articleId}/count`),
+  
+  getMyLikedArticles: (params: { cursor?: string; limit?: number }) => 
+    api.get('/likes/my-likes', { params }),
+};

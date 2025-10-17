@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, ThumbsUp, MessageCircle, Link, Share } from "lucide-react"
+import { MoreHorizontal, MessageCircle, Link, Share } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -9,6 +9,8 @@ import { TipDisplay } from "@/components/ui/TipDisplay"
 import { Avatar } from "@/components/ui/Avatar"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { SuiIcon } from "@/components/ui/SuiIcon"
+import { LikeButton } from "@/components/like/LikeButton"
+import { useLikes } from "@/hooks/useLikes"
 import { useState } from "react"
 
 interface FeedPostProps {
@@ -28,6 +30,7 @@ interface FeedPostProps {
     likes: number
     comments: number
     views: number
+    isLiked?: boolean
   }
   // Optional slug for navigation - if not provided, will generate from title
   slug?: string
@@ -61,6 +64,15 @@ export function FeedPost({
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   
+  // Initialize likes hook if articleId is available
+  const likesHook = useLikes(
+    articleId || '',
+    articleId ? {
+      isLiked: engagement?.isLiked || false,
+      likeCount: engagement?.likes || 0,
+    } : undefined
+  )
+  
   // Create proper avatar config for the author
   const authorAvatarConfig = createUserAvatarConfig({
     publicKey: author.address || author.name, // Use full address if available, otherwise use name
@@ -90,6 +102,10 @@ export function FeedPost({
     if (publication?.id) {
       router.push(ROUTES.PUBLICATION_WITH_ID(publication.id))
     }
+  }
+
+  const handleLikeToggle = async () => {
+    await likesHook.toggleLike();
   }
   
   return (
@@ -178,10 +194,20 @@ export function FeedPost({
             {engagement && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
-                    <ThumbsUp className="size-4 text-gray-600 group-hover:text-gray-700" />
-                    <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.likes}</span>
-                  </button>
+                  {articleId ? (
+                    <LikeButton
+                      isLiked={likesHook.isLiked}
+                      isLoading={likesHook.isLoading}
+                      likeCount={likesHook.likeCount}
+                      onToggleLike={handleLikeToggle}
+                      showLikeCount={true}
+                      variant="engagement"
+                    />
+                  ) : (
+                    <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
+                      <span className="text-xs text-gray-500">{engagement.likes}</span>
+                    </button>
+                  )}
                   <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
                     <MessageCircle className="size-4 text-gray-600 group-hover:text-gray-700" />
                     <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.comments}</span>
