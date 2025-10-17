@@ -27,6 +27,7 @@ function ArticlePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [articleSlug, setArticleSlug] = useState<string | null>(null);
+  const [isTipDialogOpen, setIsTipDialogOpen] = useState(false);
 
   // Get article slug from query parameters
   useEffect(() => {
@@ -175,9 +176,18 @@ function ArticlePageContent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
-                        Support
-                      </div>
+                      {article?.articleId && article?.publicationId ? (
+                        <button 
+                          className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                          onClick={() => setIsTipDialogOpen(true)}
+                        >
+                          Support
+                        </button>
+                      ) : (
+                        <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
+                          Support
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -313,11 +323,12 @@ function ArticlePageContent() {
                       <h3 className="text-sm font-semibold">Support this article</h3>
                       <TipDisplay amount={article.totalTips || 0} size="default" />
                     </div>
-                    <TipButton
-                      articleId={article.articleId}
-                      publicationId={article.publicationId}
-                      articleTitle={article.title || 'Untitled Article'}
-                    />
+                    <button 
+                      className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                      onClick={() => setIsTipDialogOpen(true)}
+                    >
+                      Tip
+                    </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Tips help support content creators on the platform
@@ -349,9 +360,9 @@ function ArticlePageContent() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button variant="outline" size="sm">
+                    <button className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors">
                       Share Article
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -380,6 +391,17 @@ function ArticlePageContent() {
             </div>
           )}
         </div>
+
+        {/* Tip Dialog */}
+        {article?.articleId && article?.publicationId && isTipDialogOpen && (
+          <TipButton 
+            articleId={article.articleId}
+            publicationId={article.publicationId}
+            articleTitle={article.title || 'Untitled Article'}
+            isOpen={isTipDialogOpen}
+            onOpenChange={setIsTipDialogOpen}
+          />
+        )}
       </AppLayout>
     </RequireAuth>
   );
