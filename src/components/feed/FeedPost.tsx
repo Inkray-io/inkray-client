@@ -108,9 +108,18 @@ export function FeedPost({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
-            Support
-          </div>
+          {articleId && publicationId ? (
+            <button 
+              className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+              onClick={() => setIsTipDialogOpen(true)}
+            >
+              Support
+            </button>
+          ) : (
+            <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
+              Support
+            </div>
+          )}
           <Button variant="ghost" size="icon">
             <MoreHorizontal className="size-5" />
           </Button>
