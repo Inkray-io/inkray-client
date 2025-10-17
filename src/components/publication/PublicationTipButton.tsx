@@ -10,21 +10,18 @@ import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
+import { cn } from "@/lib/utils";
 
 interface PublicationTipButtonProps {
   publicationId: string;
   publicationName: string;
   onTipSuccess?: () => void;
-  variant?: "default" | "outline";
-  size?: "default" | "sm" | "lg";
 }
 
 export function PublicationTipButton({ 
   publicationId, 
   publicationName, 
-  onTipSuccess,
-  variant = "outline",
-  size = "default"
+  onTipSuccess
 }: PublicationTipButtonProps) {
   const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
@@ -103,14 +100,12 @@ export function PublicationTipButton({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant={variant} 
-          size={size} 
-          className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+        <button 
+          className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg transition-all duration-200 hover:bg-red-100"
         >
-          <Heart className="w-4 h-4" />
-          Tip Publication
-        </Button>
+          <Heart className="w-3 h-3" />
+          Tip
+        </button>
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-md">

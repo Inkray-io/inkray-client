@@ -6,6 +6,7 @@ import { PublicationTipButton } from '@/components/publication/PublicationTipBut
 import { TipDisplay } from '@/components/ui/TipDisplay';
 import { Avatar } from '@/components/ui/Avatar';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
+import { Image } from 'lucide-react';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -108,16 +109,11 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   return (
     <div className="bg-white rounded-t-2xl overflow-hidden">
       {/* Cover Image */}
-      <div className="relative h-40 sm:h-60 bg-neutral-200 rounded-tl-2xl rounded-tr-2xl overflow-hidden">
-        {/* Background cover image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop')`
-          }}
-        />
+      <div className="relative h-40 sm:h-60 bg-gray-100 rounded-tl-2xl rounded-tr-2xl overflow-hidden flex items-center justify-center">
+        {/* Placeholder Image */}
+        <Image className="w-16 h-16 text-gray-400" />
         
-        {/* Gradient overlay matching Figma */}
+        {/* Gradient overlay for avatar contrast */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20"></div>
         
         {/* Profile section overlaying the cover */}
@@ -146,68 +142,33 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
       </div>
       
       {/* Publication Info Section */}
-      <div className="px-3 sm:px-6 pb-6 pt-6">
-        {/* Mobile Layout */}
-        <div className="sm:hidden w-full">
-          <div className="space-y-3 w-full">
-            <div className="space-y-1.5 pl-3">
-              <h1 className="font-semibold text-lg text-black leading-[1.4] pr-4">
-                {publication.name}
-              </h1>
-            </div>
-            {/* Action Buttons - Mobile */}
-            <div className="px-3 flex gap-3">
-              <FollowButton
-                isFollowing={isFollowing}
-                isLoading={followLoading}
-                followerCount={followerCount}
-                onToggleFollow={handleToggleFollow}
-                variant="default"
-                size="default"
-                showFollowerCount={false}
-                className="bg-[#005efc] hover:bg-[#0052d9] text-white font-semibold text-sm"
-              />
-              <PublicationTipButton
-                publicationId={publication.id}
-                publicationName={publication.name}
-                size="default"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden sm:flex items-start justify-between w-full">
-          <div className="flex-shrink-0 min-w-0 flex-1">
-            <div className="pl-6 space-y-1.5 pr-4">
-              <h1 className="font-semibold text-lg text-black leading-[1.4] truncate">
-                {publication.name}
-              </h1>
-            </div>
+      <div className="px-5 pb-6 pt-6">
+        {/* Header with name and buttons */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="font-semibold text-sm text-black leading-[1.4] truncate">
+              {publication.name}
+            </h1>
           </div>
           
-          {/* Action Buttons - Desktop */}
-          <div className="flex-shrink-0 ml-4 flex gap-3">
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <FollowButton
               isFollowing={isFollowing}
               isLoading={followLoading}
               followerCount={followerCount}
               onToggleFollow={handleToggleFollow}
-              variant="default"
-              size="default"
               showFollowerCount={false}
-              className="bg-[#005efc] hover:bg-[#0052d9] text-white font-semibold text-base px-3 py-3 rounded-[10px]"
             />
             <PublicationTipButton
               publicationId={publication.id}
               publicationName={publication.name}
-              size="default"
             />
           </div>
         </div>
         
         {/* Subscriber Stats */}
-        <div className="flex gap-3 items-start px-3 sm:px-6 font-medium text-sm text-black leading-[1.3] mt-4.5">
+        <div className="flex gap-3 items-start text-xs text-gray-500 mt-4">
           <span>{followerCount || 0} subscribers</span>
           <span>{publication.articleCount || 0} posts</span>
           <TipDisplay amount={publication.totalTips || 0} size="sm" />
