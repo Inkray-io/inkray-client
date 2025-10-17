@@ -9,9 +9,10 @@ interface TipDisplayProps {
   className?: string;
   showIcon?: boolean;
   size?: "sm" | "default" | "lg";
+  inheritColor?: boolean; // If true, inherits parent color instead of using red
 }
 
-export function TipDisplay({ amount, className, showIcon = true, size = "default" }: TipDisplayProps) {
+export function TipDisplay({ amount, className, showIcon = true, size = "default", inheritColor = false }: TipDisplayProps) {
   // Convert MIST to SUI using constant
   const suiAmount = amount / MIST_PER_SUI;
   
@@ -40,12 +41,13 @@ export function TipDisplay({ amount, className, showIcon = true, size = "default
 
   return (
     <div className={cn(
-      "inline-flex items-center gap-1 text-red-600",
+      "inline-flex items-center gap-1",
+      !inheritColor && "text-red-600",
       sizeClasses[size],
       className
     )}>
       {showIcon && <Heart className={cn("fill-current", iconSizes[size])} />}
-      <span className="font-medium">
+      <span className={inheritColor ? "" : "font-medium"}>
         {formatAmount(suiAmount)} SUI
       </span>
     </div>

@@ -8,6 +8,8 @@ import { TipButton } from "@/components/article/TipButton"
 import { TipDisplay } from "@/components/ui/TipDisplay"
 import { Avatar } from "@/components/ui/Avatar"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
+import { SuiIcon } from "@/components/ui/SuiIcon"
+import { useState } from "react"
 
 interface FeedPostProps {
   author: {
@@ -57,6 +59,7 @@ export function FeedPost({
   totalTips
 }: FeedPostProps) {
   const router = useRouter()
+  const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   
   // Create proper avatar config for the author
   const authorAvatarConfig = createUserAvatarConfig({
@@ -166,18 +169,25 @@ export function FeedPost({
             {engagement && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
-                      <ThumbsUp className="size-4 text-gray-600" />
-                    </Button>
-                    <span className="text-gray-600 text-sm">{engagement.likes}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
-                      <MessageCircle className="size-4 text-gray-600" />
-                    </Button>
-                    <span className="text-gray-600 text-sm">{engagement.comments}</span>
-                  </div>
+                  <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
+                    <ThumbsUp className="size-4 text-gray-600 group-hover:text-gray-700" />
+                    <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.likes}</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
+                    <MessageCircle className="size-4 text-gray-600 group-hover:text-gray-700" />
+                    <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.comments}</span>
+                  </button>
+                  {articleId && publicationId && (
+                    <button 
+                      className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group"
+                      onClick={() => setIsTipDialogOpen(true)}
+                    >
+                      <SuiIcon className="size-4 text-gray-600 group-hover:text-gray-700" />
+                      <span className="text-gray-600 text-sm group-hover:text-gray-700">
+                        <TipDisplay amount={totalTips || 0} size="sm" showIcon={false} inheritColor={true} />
+                      </span>
+                    </button>
+                  )}
                   <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
                     <Link className="size-4 text-gray-600" />
                   </Button>
@@ -191,21 +201,20 @@ export function FeedPost({
                 </div>
               </div>
             )}
-
-            {/* Tip section */}
-            {articleId && publicationId && (
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <TipDisplay amount={totalTips || 0} size="sm" />
-                <TipButton 
-                  articleId={articleId}
-                  publicationId={publicationId}
-                  articleTitle={title}
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
+
+      {/* Tip Dialog */}
+      {articleId && publicationId && isTipDialogOpen && (
+        <TipButton 
+          articleId={articleId}
+          publicationId={publicationId}
+          articleTitle={title}
+          isOpen={isTipDialogOpen}
+          onOpenChange={setIsTipDialogOpen}
+        />
+      )}
     </div>
   )
 }
