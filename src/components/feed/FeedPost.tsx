@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, MessageCircle, Link, Share } from "lucide-react"
+import { MoreHorizontal, MessageCircle, Link, Share, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -12,6 +12,7 @@ import { SuiIcon } from "@/components/ui/SuiIcon"
 import { LikeButton } from "@/components/like/LikeButton"
 import { useLikes } from "@/hooks/useLikes"
 import { useState } from "react"
+import { copyToClipboard } from "@/utils/address"
 
 interface FeedPostProps {
   author: {
@@ -63,6 +64,7 @@ export function FeedPost({
 }: FeedPostProps) {
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   
   // Initialize likes hook if articleId is available
   const likesHook = useLikes(
@@ -106,6 +108,33 @@ export function FeedPost({
 
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
+  }
+
+  const handleCopyLink = async () => {
+    if (copied) return // Prevent multiple clicks while in copied state
+    
+    try {
+      // Generate article URL
+      const articleSlug = slug || title.toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+      
+      const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug)}`
+      
+      // Copy to clipboard
+      await copyToClipboard(articleUrl)
+      
+      // Show success state
+      setCopied(true)
+      
+      // Reset after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      // Silently fail - no toast needed as per requirement
+      console.error('Failed to copy link:', error)
+    }
   }
   
   return (
@@ -223,8 +252,17 @@ export function FeedPost({
                       </span>
                     </button>
                   )}
-                  <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
-                    <Link className="size-4 text-gray-600" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="size-8 hover:bg-gray-100 transition-colors"
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? (
+                      <Check className="size-4 text-green-600" />
+                    ) : (
+                      <Link className="size-4 text-gray-600" />
+                    )}
                   </Button>
                   <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
                     <Share className="size-4 text-gray-600" />
