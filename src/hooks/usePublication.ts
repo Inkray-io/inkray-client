@@ -78,6 +78,7 @@ export const usePublication = (publicationId: string) => {
           totalTips: publicationData.totalTips || 0,
           directTips: publicationData.directTips || 0,
           articleTips: publicationData.articleTips || 0,
+          subscriptionPrice: publicationData.subscriptionPrice || 0,
         };
 
         setState(prev => ({

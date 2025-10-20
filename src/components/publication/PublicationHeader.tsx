@@ -6,7 +6,13 @@ import { PublicationTipButton } from '@/components/publication/PublicationTipBut
 import { TipDisplay } from '@/components/ui/TipDisplay';
 import { Avatar } from '@/components/ui/Avatar';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants/routes';
+import { addressesEqual } from '@/utils/address';
 import { Image } from 'lucide-react';
+import { HiCog6Tooth } from 'react-icons/hi2';
+import Link from 'next/link';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -23,6 +29,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   publication,
   isLoading = false,
 }) => {
+  const { account } = useAuth();
   const {
     isFollowing,
     followerCount,
@@ -33,6 +40,9 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
     isFollowing: publication.isFollowing,
     followerCount: publication.followerCount,
   } : undefined);
+
+  // Check if current user is the publication owner using normalized address comparison
+  const isOwner = addressesEqual(account?.publicKey, publication?.owner);
 
   // Refresh follow status when publication data loads
   useEffect(() => {
@@ -153,17 +163,28 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
           
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <FollowButton
-              isFollowing={isFollowing}
-              isLoading={followLoading}
-              followerCount={followerCount}
-              onToggleFollow={handleToggleFollow}
-              showFollowerCount={false}
-            />
-            <PublicationTipButton
-              publicationId={publication.id}
-              publicationName={publication.name}
-            />
+            {isOwner ? (
+              <Link href={ROUTES.PUBLICATION_SETTINGS(publication.id)}>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <HiCog6Tooth className="size-4" />
+                  Settings
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <FollowButton
+                  isFollowing={isFollowing}
+                  isLoading={followLoading}
+                  followerCount={followerCount}
+                  onToggleFollow={handleToggleFollow}
+                  showFollowerCount={false}
+                />
+                <PublicationTipButton
+                  publicationId={publication.id}
+                  publicationName={publication.name}
+                />
+              </>
+            )}
           </div>
         </div>
         

@@ -55,6 +55,17 @@ export {
   type EnhancedTransactionResult,
 } from './useEnhancedTransaction';
 
+// Subscription Management Hooks
+export { 
+  useSubscription,
+  type UseSubscriptionReturn,
+} from './useSubscription';
+
+export { 
+  useUserSubscriptions,
+  type UseUserSubscriptionsReturn,
+} from './useUserSubscriptions';
+
 // UI Hooks
 export { useIsMobile as useMobile } from './use-mobile';
 export { useToast, toast } from './use-toast';

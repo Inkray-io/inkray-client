@@ -254,3 +254,21 @@ export const likesAPI = {
   getMyLikedArticles: (params: { cursor?: string; limit?: number }) => 
     api.get('/likes/my-likes', { params }),
 };
+
+export const subscriptionsAPI = {
+  // Get user's active subscriptions
+  getMySubscriptions: (params: { cursor?: string; limit?: number }) => 
+    api.get('/subscriptions/my-subscriptions', { params }),
+  
+  // Check subscription status for a publication
+  getSubscriptionStatus: (publicationId: string) => 
+    api.get(`/subscriptions/publications/${publicationId}/status`),
+  
+  // Get publication subscription info (price, requirements)
+  getPublicationSubscriptionInfo: (publicationId: string) => 
+    api.get(`/subscriptions/publications/${publicationId}/info`),
+  
+  // Get subscription stats for publication owners
+  getPublicationSubscriptionStats: (publicationId: string) => 
+    api.get(`/subscriptions/publications/${publicationId}/stats`),
+};

@@ -24,6 +24,7 @@ import { TipButton } from "@/components/article/TipButton";
 import { TipDisplay } from "@/components/ui/TipDisplay";
 import { LikeButton } from "@/components/like/LikeButton";
 import { useLikes } from "@/hooks/useLikes";
+import { SubscriptionPaywall } from "@/components/subscription";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -305,6 +306,33 @@ function ArticlePageContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Subscription Paywall - show if content is gated and user needs subscription */}
+              {article.requiresSubscription && !article.hasActiveSubscription && (
+                <SubscriptionPaywall
+                  publicationInfo={{
+                    id: article.publicationId,
+                    name: article.followInfo?.publicationName || 'Publication',
+                    description: article.followInfo?.publicationDescription,
+                    avatar: article.followInfo?.publicationAvatar || undefined,
+                    totalSubscribers: article.followInfo?.subscriberCount,
+                    totalArticles: article.followInfo?.articleCount,
+                  }}
+                  subscriptionInfo={{
+                    id: article.subscriptionInfo?.id || '',
+                    subscriptionPrice: article.subscriptionInfo?.subscriptionPrice || 0,
+                    subscriptionPeriod: article.subscriptionInfo?.subscriptionPeriod || 30,
+                    publicationName: article.followInfo?.publicationName,
+                  }}
+                  isSubscribed={article.hasActiveSubscription}
+                  subscriptionExpiresAt={article.subscriptionExpiresAt ? new Date(article.subscriptionExpiresAt) : undefined}
+                  onSubscriptionSuccess={() => {
+                    // Reload the article to access content
+                    retry();
+                  }}
+                  articleTitle={article.title}
+                />
+              )}
 
               {/* Follow Bar */}
               {article.followInfo && (

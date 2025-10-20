@@ -287,6 +287,8 @@ export interface Publication {
   directTips?: number;
   /** Tips from articles in MIST */
   articleTips?: number;
+  /** Monthly subscription price in MIST (0 = no subscription required) */
+  subscriptionPrice?: number;
 }
 
 /**

@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiUser } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiUser, HiPlus, HiCog6Tooth } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
+import { useUserPublications } from "@/hooks/useUserPublications"
 import { getDisplayName, copyToClipboard } from "@/utils/address"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { Avatar } from "@/components/ui/Avatar"
+import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
 
 interface UserProfileProps {
@@ -17,6 +19,7 @@ interface UserProfileProps {
 export function UserProfile({ className = "" }: UserProfileProps) {
   const { address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
   const { account, isAuthenticated, logout } = useAuth()
+  const { hasPublications, firstPublication, isLoading: publicationsLoading } = useUserPublications()
   const [isOpen, setIsOpen] = useState(false)
   const [copying, setCopying] = useState(false)
   
@@ -112,16 +115,30 @@ export function UserProfile({ className = "" }: UserProfileProps) {
             </div>
             
             <div className="p-2">
-              <Link href="/profile" onClick={() => setIsOpen(false)}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-sm"
-                >
-                  <HiUser className="size-4" />
-                  Edit Profile
-                </Button>
-              </Link>
+              {hasPublications && firstPublication ? (
+                <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.id)} onClick={() => setIsOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-2 text-sm"
+                  >
+                    <HiCog6Tooth className="size-4" />
+                    My Publication
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/create-publication" onClick={() => setIsOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-2 text-sm"
+                    disabled={publicationsLoading}
+                  >
+                    <HiPlus className="size-4" />
+                    {publicationsLoading ? 'Loading...' : 'Create Publication'}
+                  </Button>
+                </Link>
+              )}
               
               <Button
                 variant="ghost"

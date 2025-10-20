@@ -45,6 +45,7 @@ export interface DecryptionParams {
   encryptedData: Uint8Array;
   contentId: string; // hex string from database
   articleId: string;
+  publicationId: string; // publication ID for subscription verification
 }
 
 export interface EncryptionStatus {
@@ -297,13 +298,14 @@ export class SealService {
   /**
    * Build Move transaction for content access approval
    */
-  private buildApprovalTransaction(contentIdBytes: Uint8Array, articleId: string): Transaction {
+  private buildApprovalTransaction(contentIdBytes: Uint8Array, articleId: string, publicationId: string): Transaction {
     const tx = new Transaction();
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
       arguments: [
         tx.pure.vector('u8', contentIdBytes),
         tx.object(articleId),
+        tx.object(publicationId),
       ]
     });
 
@@ -456,10 +458,11 @@ export class SealService {
         target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
         contentIdBytesLength: contentIdBytes.length,
         contentIdBytesArray: Array.from(contentIdBytes),
-        articleId: params.articleId
+        articleId: params.articleId,
+        publicationId: params.publicationId
       });
 
-      const tx = this.buildApprovalTransaction(contentIdBytes, params.articleId);
+      const tx = this.buildApprovalTransaction(contentIdBytes, params.articleId, params.publicationId);
       console.log('✅ Transaction built');
 
       // Build transaction bytes for Seal

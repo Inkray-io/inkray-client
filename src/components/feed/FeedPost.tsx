@@ -13,6 +13,7 @@ import { LikeButton } from "@/components/like/LikeButton"
 import { useLikes } from "@/hooks/useLikes"
 import { useState } from "react"
 import { copyToClipboard } from "@/utils/address"
+import { SubscriptionButton } from "@/components/subscription"
 
 interface FeedPostProps {
   author: {
@@ -46,6 +47,15 @@ interface FeedPostProps {
   articleId?: string
   publicationId?: string
   totalTips?: number
+  // Subscription information
+  subscriptionInfo?: {
+    id: string
+    subscriptionPrice: number // in MIST
+    subscriptionPeriod: number // in days
+    publicationName?: string
+    isSubscribed?: boolean
+    subscriptionExpiresAt?: Date
+  }
 }
 
 export function FeedPost({ 
@@ -60,12 +70,14 @@ export function FeedPost({
   publication,
   articleId,
   publicationId,
-  totalTips
+  totalTips,
+  subscriptionInfo
 }: FeedPostProps) {
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false)
   
   // Initialize likes hook if articleId is available
   const likesHook = useLikes(
@@ -191,6 +203,22 @@ export function FeedPost({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Subscription Button - show only if subscription is available */}
+          {subscriptionInfo && publicationId && (
+            <SubscriptionButton
+              publicationId={publicationId}
+              subscriptionInfo={subscriptionInfo}
+              isSubscribed={subscriptionInfo.isSubscribed}
+              subscriptionExpiresAt={subscriptionInfo.subscriptionExpiresAt}
+              onSubscriptionSuccess={() => {
+                // Refresh feed or show success state
+                console.log('Subscription successful');
+              }}
+              variant="button"
+            />
+          )}
+
+          {/* Support/Tip Button */}
           {articleId && publicationId ? (
             <button 
               className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"

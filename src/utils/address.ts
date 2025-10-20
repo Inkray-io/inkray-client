@@ -55,6 +55,42 @@ export const getDisplayName = (suiNSName: string, address: string) => {
 }
 
 /**
+ * Normalize a Sui address for comparison
+ * Ensures addresses are in the same format for reliable comparison
+ * @param address - The address to normalize
+ * @returns Normalized address string
+ */
+export const normalizeSuiAddress = (address: string): string => {
+  if (!address) return address
+  
+  // Remove 0x prefix if present
+  let cleanAddress = address.replace(/^0x/, '')
+  
+  // Pad to full 64 characters (32 bytes) with leading zeros
+  cleanAddress = cleanAddress.padStart(64, '0')
+  
+  // Add 0x prefix
+  return `0x${cleanAddress}`
+}
+
+/**
+ * Compare two Sui addresses for equality after normalization
+ * @param address1 - First address to compare
+ * @param address2 - Second address to compare
+ * @returns true if addresses are equivalent
+ */
+export const addressesEqual = (address1: string | undefined, address2: string | undefined): boolean => {
+  if (!address1 || !address2) return false
+  
+  try {
+    return normalizeSuiAddress(address1) === normalizeSuiAddress(address2)
+  } catch (error) {
+    console.warn('Failed to normalize addresses for comparison:', { address1, address2, error })
+    return false
+  }
+}
+
+/**
  * Copy text to clipboard
  * @param text - Text to copy
  * @returns Promise that resolves when copy is complete

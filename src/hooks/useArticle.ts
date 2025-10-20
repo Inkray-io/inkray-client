@@ -234,6 +234,7 @@ export const useArticle = (articleSlug: string | null) => {
           encryptedData,
           contentId: article.contentSealId, // Pass as hex string directly from database
           articleId: article.articleId,
+          publicationId: article.publicationId, // Add publication ID for subscription verification
         });
 
         // Transform media URLs to include articleId parameter
@@ -439,6 +440,7 @@ export const useArticle = (articleSlug: string | null) => {
           encryptedData,
           contentId: article.contentSealId, // Pass as hex string directly from database
           articleId: article.articleId,
+          publicationId: article.publicationId, // Add publication ID for subscription verification
         });
 
         // Transform media URLs to include articleId parameter
