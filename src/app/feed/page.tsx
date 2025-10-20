@@ -6,25 +6,23 @@ import { TopWriters } from "@/components/widgets/TopWriters"
 import { PopularComments } from "@/components/widgets/PopularComments"
 import { Button } from "@/components/ui/button"
 import { useFeedArticles } from "@/hooks/useFeedArticles"
-import FeedTypeSelector, { FeedType, TimeFrame } from "@/components/feed/FeedTypeSelector"
+import { FeedType, TimeFrame } from "@/components/feed/FeedTypeSelector"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function FeedPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Extract feed type and timeframe from URL params
+  // Extract feed type from URL params
   const [feedType, setFeedType] = useState<FeedType>(() => {
     const typeParam = searchParams.get('type') as FeedType
     return ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
   })
   
-  const [timeframe, setTimeframe] = useState<TimeFrame>(() => {
-    const timeframeParam = searchParams.get('timeframe') as TimeFrame
-    return ['day', 'week', 'month'].includes(timeframeParam) ? timeframeParam : 'week'
-  })
+  // Popular feed always uses week timeframe (as requested)
+  const timeframe: TimeFrame = 'week'
 
   const { 
     articles, 
@@ -46,50 +44,16 @@ export default function FeedPage() {
     refresh()
   }
 
-  // Update URL when feed type or timeframe changes
-  const updateURL = useCallback((newFeedType: FeedType, newTimeframe: TimeFrame) => {
-    const params = new URLSearchParams()
-    
-    if (newFeedType !== 'fresh') {
-      params.set('type', newFeedType)
-    }
-    
-    if (newFeedType === 'popular' && newTimeframe !== 'week') {
-      params.set('timeframe', newTimeframe)
-    }
-    
-    const query = params.toString()
-    const newURL = query ? `/feed?${query}` : '/feed'
-    
-    router.replace(newURL, { scroll: false })
-  }, [router])
-
-  const handleFeedTypeChange = useCallback((newFeedType: FeedType) => {
-    setFeedType(newFeedType)
-    updateURL(newFeedType, timeframe)
-  }, [timeframe, updateURL])
-
-  const handleTimeframeChange = useCallback((newTimeframe: TimeFrame) => {
-    setTimeframe(newTimeframe)
-    updateURL(feedType, newTimeframe)
-  }, [feedType, updateURL])
 
   // Sync state with URL params when they change
   useEffect(() => {
     const typeParam = searchParams.get('type') as FeedType
-    const timeframeParam = searchParams.get('timeframe') as TimeFrame
-    
     const newType = ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
-    const newTimeframe = ['day', 'week', 'month'].includes(timeframeParam) ? timeframeParam : 'week'
     
     if (newType !== feedType) {
       setFeedType(newType)
     }
-    
-    if (newTimeframe !== timeframe) {
-      setTimeframe(newTimeframe)
-    }
-  }, [searchParams, feedType, timeframe])
+  }, [searchParams, feedType])
 
   return (
     <AppLayout 
@@ -102,28 +66,6 @@ export default function FeedPage() {
       }
     >
       <div className="space-y-5">
-        {/* Feed Type Selector */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Article Feed
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {feedType === 'fresh' && 'Latest articles from all publications'}
-                {feedType === 'popular' && `Trending articles from the ${timeframe}`}
-                {feedType === 'my' && 'Articles from publications you follow'}
-              </p>
-            </div>
-            <FeedTypeSelector
-              currentFeedType={feedType}
-              currentTimeframe={timeframe}
-              onFeedTypeChange={handleFeedTypeChange}
-              onTimeframeChange={handleTimeframeChange}
-              showTimeframe={true}
-            />
-          </div>
-        </div>
         {/* Loading State */}
         {isLoading && articles.length === 0 && (
           <div className="bg-white rounded-2xl p-8">
@@ -198,7 +140,7 @@ export default function FeedPage() {
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-gray-900">
                   {feedType === 'fresh' && 'No Articles Found'}
-                  {feedType === 'popular' && `No Popular Articles This ${timeframe === 'day' ? 'Day' : timeframe === 'week' ? 'Week' : 'Month'}`}
+                  {feedType === 'popular' && 'No Popular Articles This Week'}
                   {feedType === 'my' && 'No Articles in Your Feed'}
                 </h2>
                 <p className="text-muted-foreground">
@@ -219,8 +161,8 @@ export default function FeedPage() {
                   </Button>
                 )}
                 {feedType === 'popular' && (
-                  <Button onClick={() => setTimeframe('week')} variant="outline">
-                    Try Week View
+                  <Button onClick={() => router.push('/feed')} variant="outline">
+                    Browse Fresh Articles
                   </Button>
                 )}
               </div>

@@ -75,7 +75,7 @@ export const useFeedArticles = (
       const result = response.data;
 
       return {
-        articles: result.data || [],
+        articles: result.articles || [],
         hasMore: result.meta?.hasMore || false,
         nextCursor: result.meta?.nextCursor || null,
         total: result.meta?.total || 0,

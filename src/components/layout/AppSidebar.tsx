@@ -5,6 +5,7 @@ import { ROUTES } from "@/constants/routes"
 import { useSidebarMode } from "@/hooks/useSidebarMode"
 import { SidebarToggle } from "./SidebarToggle"
 import { ExpandableTooltip } from "./ExpandableTooltip"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface AppSidebarProps {
   currentPage?: string
@@ -13,6 +14,11 @@ interface AppSidebarProps {
 
 export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps) {
   const { isCompact, toggleMode, isHydrated } = useSidebarMode()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Determine current feed type from URL
+  const currentFeedType = searchParams.get('type') || 'fresh'
   const topics = [
     { name: "Protocols", color: "bg-purple-400" },
     { name: "DeFi", color: "bg-yellow-300" },
@@ -30,14 +36,14 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       id: "popular", 
       label: "Popular", 
       icon: "👑", 
-      active: currentPage === "popular",
+      active: currentPage === "feed" && currentFeedType === "popular",
       href: ROUTES.FEED_POPULAR
     },
     { 
       id: "fresh", 
       label: "Fresh", 
       icon: "⚡", 
-      active: currentPage === "fresh",
+      active: currentPage === "feed" && currentFeedType === "fresh",
       href: ROUTES.FEED_FRESH,
       hasNotification: true 
     },
@@ -45,7 +51,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       id: "my-feed", 
       label: "My feed", 
       icon: "🖱️", 
-      active: currentPage === "my-feed",
+      active: currentPage === "feed" && currentFeedType === "my",
       href: ROUTES.FEED_MY_FEED
     }
   ]
@@ -95,6 +101,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                 hasNotification={item.hasNotification}
               >
                 <button
+                  onClick={() => router.push(item.href)}
                   className={cn(
                     "flex items-center gap-2 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors text-sm",
                     item.active 

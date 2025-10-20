@@ -13,10 +13,10 @@ export const ROUTES = {
   RULES: '/rules',
   ADVERTISING: '/advertising',
   
-  // Feed filters
-  FEED_POPULAR: '/feed?filter=popular',
-  FEED_FRESH: '/feed?filter=fresh',
-  FEED_MY_FEED: '/feed?filter=my-feed',
+  // Feed types
+  FEED_POPULAR: '/feed?type=popular',
+  FEED_FRESH: '/feed',
+  FEED_MY_FEED: '/feed?type=my',
   
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
