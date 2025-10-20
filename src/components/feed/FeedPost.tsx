@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, MessageCircle, Link, Share, Check } from "lucide-react"
+import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -65,6 +65,7 @@ export function FeedPost({
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isShareOpen, setIsShareOpen] = useState(false)
   
   // Initialize likes hook if articleId is available
   const likesHook = useLikes(
@@ -135,6 +136,43 @@ export function FeedPost({
       // Silently fail - no toast needed as per requirement
       console.error('Failed to copy link:', error)
     }
+  }
+
+  const generateShareUrls = (articleUrl: string, title: string) => {
+    const encodedUrl = encodeURIComponent(articleUrl)
+    const encodedTitle = encodeURIComponent(title)
+    
+    return {
+      twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      reddit: `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+    }
+  }
+
+  const handleShareClick = () => {
+    setIsShareOpen(!isShareOpen)
+  }
+
+  const handleSharePlatform = (platform: string) => {
+    // Generate article URL
+    const articleSlug = slug || title.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+    
+    const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug)}`
+    const shareUrls = generateShareUrls(articleUrl, title)
+    
+    // Open sharing URL in new tab
+    const url = shareUrls[platform as keyof typeof shareUrls]
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+    
+    // Close popup
+    setIsShareOpen(false)
   }
   
   return (
@@ -264,9 +302,100 @@ export function FeedPost({
                       <Link className="size-4 text-gray-600" />
                     )}
                   </Button>
-                  <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100">
-                    <Share className="size-4 text-gray-600" />
-                  </Button>
+                  <div className="relative">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="size-8 hover:bg-gray-100 transition-colors"
+                      onClick={handleShareClick}
+                    >
+                      <Share className="size-4 text-gray-600" />
+                    </Button>
+                    
+                    {/* Share Popup */}
+                    {isShareOpen && (
+                      <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => handleSharePlatform('twitter')}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">𝕏</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Twitter</div>
+                              <div className="text-xs text-gray-500">Share on Twitter</div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSharePlatform('linkedin')}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">in</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">LinkedIn</div>
+                              <div className="text-xs text-gray-500">Share on LinkedIn</div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSharePlatform('facebook')}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">f</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Facebook</div>
+                              <div className="text-xs text-gray-500">Share on Facebook</div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSharePlatform('reddit')}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">r</span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Reddit</div>
+                              <div className="text-xs text-gray-500">Share on Reddit</div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                          </button>
+                          
+                          <hr className="my-1" />
+                          
+                          <button
+                            onClick={handleCopyLink}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              {copied ? (
+                                <Check className="w-4 h-4 text-white" />
+                              ) : (
+                                <Link className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {copied ? 'Copied!' : 'Copy Link'}
+                              </div>
+                              <div className="text-xs text-gray-500">Copy article link</div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="size-2 bg-primary rounded"></div>
@@ -277,6 +406,14 @@ export function FeedPost({
           </div>
         )}
       </div>
+
+      {/* Click outside to close share popup */}
+      {isShareOpen && (
+        <div 
+          className="fixed inset-0 z-0" 
+          onClick={() => setIsShareOpen(false)}
+        />
+      )}
 
       {/* Tip Dialog */}
       {articleId && publicationId && isTipDialogOpen && (
