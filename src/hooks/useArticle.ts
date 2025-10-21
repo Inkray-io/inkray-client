@@ -108,7 +108,8 @@ export const useArticle = (articleSlug: string | null) => {
   const {
     subscriptionStatus,
     subscriptionInfo,
-    isLoading: isLoadingSubscription
+    isLoading: isLoadingSubscription,
+    refetch: refetchSubscription
   } = useSubscription({
     publicationId: currentPublicationId || '',
     enabled: !!currentPublicationId
@@ -1050,6 +1051,7 @@ export const useArticle = (articleSlug: string | null) => {
     },
     retry,
     reloadContent,
+    refetchSubscription,
 
     // Computed properties
     hasContent: !!state.content,

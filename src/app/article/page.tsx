@@ -51,6 +51,7 @@ function ArticlePageContent() {
     needsWalletForContent,
     loadingStage,
     hasDecryptionAccess,
+    refetchSubscription,
   } = useArticle(articleSlug);
 
   // Initialize likes hook if article is available
@@ -318,8 +319,9 @@ function ArticlePageContent() {
                             isSubscribed={article.hasActivePublicationSubscription}
                             subscriptionExpiresAt={article.publicationSubscriptionExpiresAt ? new Date(article.publicationSubscriptionExpiresAt) : undefined}
                             onSubscriptionSuccess={() => {
-                              // Reload the article to access content
+                              // Reload both article data and subscription status
                               retry();
+                              refetchSubscription();
                             }}
                             articleTitle={article.title}
                           />
