@@ -215,13 +215,37 @@ export const useArticle = (articleSlug: string | null) => {
         throw new Error('Article has no quilt blob ID');
       }
 
-      // Simple subscription check - if publication requires subscription and user doesn't have one, don't load content
+      // Smart subscription/owner check - avoid race conditions for publication owners
       const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
         !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
       const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
       
+      // Check if user might be the publication owner (using stable owner data)
+      const mightBeOwner = stableOwnerData.current?.publicationId === article.publicationId;
+      
+      // If this publication requires subscription and user doesn't have one
       if (requiresSubscription && !hasActiveSubscription) {
-        throw new Error('This article requires an active subscription to view');
+        // If user might be the owner but owner data is still loading, defer to data-driven decryption
+        if (mightBeOwner || isLoadingUserPublications) {
+          log.debug('Potential owner or owner data loading - deferring subscription check to data-driven decryption', {
+            articleId: article.articleId,
+            mightBeOwner,
+            isLoadingUserPublications,
+            requiresSubscription,
+            hasActiveSubscription
+          }, 'useArticle');
+          
+          // For encrypted content, this will be handled by data-driven decryption
+          // For unencrypted content, we'll let it through (owner should access their own content)
+          if (article.contentSealId) {
+            // Return null to signal that data-driven decryption should handle this
+            return null;
+          }
+          // For unencrypted content, continue loading (owners should access their own content)
+        } else {
+          // User is definitely not the owner and has no subscription
+          throw new Error('This article requires an active subscription to view');
+        }
       }
 
       // All content is encrypted - check if we have a content seal ID
@@ -381,6 +405,8 @@ export const useArticle = (articleSlug: string | null) => {
     // Clear wallet waiting state when starting fresh
     setIsWaitingForWallet(false);
     setLoadingStage('metadata');
+    
+    let hasEncryptedContent = false;
 
     try {
       // 1. Load article metadata from backend (doesn't require wallet)
@@ -400,13 +426,51 @@ export const useArticle = (articleSlug: string | null) => {
 
       // 2. Load content directly if available
       if (article.quiltBlobId) {
+        const isEncrypted = !!article.contentSealId;
+        
+        // For encrypted content, skip direct loading to avoid race conditions
+        // Let the data-driven decryption useEffect handle it when all policy data is ready
+        if (isEncrypted) {
+          log.debug('Encrypted content detected - deferring to data-driven decryption', {
+            articleId: article.articleId,
+            contentSealId: article.contentSealId?.substring(0, 20) + '...'
+          }, 'useArticle');
+          
+          // Download encrypted content and store for data-driven decryption
+          try {
+            const response = await articlesAPI.getRawContent(article.quiltBlobId);
+            const encryptedData = new Uint8Array(response.data);
+            
+            // Store encrypted content data for data-driven decryption
+            setEncryptedContentData({ encryptedData, article });
+            
+            // Set loading stage to indicate we're waiting for decryption data
+            setLoadingStage('waiting-wallet');
+            hasEncryptedContent = true;
+            
+            log.debug('Encrypted content downloaded, stored for data-driven decryption', {
+              articleId: article.articleId,
+              encryptedSize: encryptedData.length
+            }, 'useArticle');
+            
+          } catch (encryptedError) {
+            log.error('Failed to download encrypted content', encryptedError, 'useArticle');
+            setState(prev => ({
+              ...prev,
+              error: `Failed to download encrypted content: ${encryptedError instanceof Error ? encryptedError.message : 'Unknown error'}`
+            }));
+          }
+          
+          return; // Exit early, let useEffect handle encrypted content
+        }
+        
+        // For unencrypted content, load directly
         try {
-          const isEncrypted = !!article.contentSealId;
-          const content = await loadArticleContent(article, isEncrypted);
+          const content = await loadArticleContent(article, false);
           
           if (content !== null) {
             setState(prev => ({ ...prev, content }));
-            log.debug('Content loaded successfully', { articleId: article.articleId }, 'useArticle');
+            log.debug('Unencrypted content loaded successfully', { articleId: article.articleId }, 'useArticle');
           }
         } catch (contentError) {
           // If content loading fails, still show the article metadata
@@ -428,7 +492,12 @@ export const useArticle = (articleSlug: string | null) => {
       setState(prev => ({ ...prev, error: errorMessage }));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
-      setLoadingStage('idle');
+      
+      // Only reset loading stage if we don't have encrypted content waiting for decryption
+      if (!hasEncryptedContent) {
+        setLoadingStage('idle');
+      }
+      // For encrypted content, the data-driven decryption useEffect will manage the loading stage
     }
   }, [loadArticleMetadata, loadArticleContent]);
 
