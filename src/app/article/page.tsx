@@ -50,6 +50,7 @@ function ArticlePageContent() {
     isWaitingForWallet,
     needsWalletForContent,
     loadingStage,
+    hasDecryptionAccess,
   } = useArticle(articleSlug);
 
   // Initialize likes hook if article is available
@@ -115,8 +116,8 @@ function ArticlePageContent() {
           </div>
 
 
-          {/* Error State */}
-          {error && !isWaitingForWallet && (
+          {/* Error State - but don't show access denied errors when user lacks subscription access */}
+          {error && !isWaitingForWallet && !(hasDecryptionAccess === false && error.includes('access')) && (
             <div className="bg-white rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
@@ -258,42 +259,72 @@ function ArticlePageContent() {
                         </ReactMarkdown>
                       </div>
                     ) : canLoadContent ? (
-                      <div className="text-center py-12 space-y-4">
-                        {article.contentSealId ? (
-                          <Lock className="h-12 w-12 text-blue-500 mx-auto" />
-                        ) : (
-                          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
-                        )}
-                        <div>
-                          <p className="font-medium">
-                            {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            {article.contentSealId ?
-                              'Click to decrypt and load the article content using Seal' :
-                              'Click to load the article content'
-                            }
-                          </p>
-                          {article.contentSealId && (
-                            <p className="text-xs text-blue-600 mt-2">
-                              Wallet connection required for decryption
-                            </p>
-                          )}
-                        </div>
-                        <Button onClick={reloadContent} className="gap-2">
+                      // Only show manual decryption controls if user has decryption access
+                      hasDecryptionAccess !== false ? (
+                        <div className="text-center py-12 space-y-4">
                           {article.contentSealId ? (
-                            <>
-                              <Lock className="h-4 w-4" />
-                              Decrypt Content
-                            </>
+                            <Lock className="h-12 w-12 text-blue-500 mx-auto" />
                           ) : (
-                            <>
-                              <RefreshCw className="h-4 w-4" />
-                              Load Content
-                            </>
+                            <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto" />
                           )}
-                        </Button>
-                      </div>
+                          <div>
+                            <p className="font-medium">
+                              {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {article.contentSealId ?
+                                'Click to decrypt and load the article content using Seal' :
+                                'Click to load the article content'
+                              }
+                            </p>
+                            {article.contentSealId && (
+                              <p className="text-xs text-blue-600 mt-2">
+                                Wallet connection required for decryption
+                              </p>
+                            )}
+                          </div>
+                          <Button onClick={reloadContent} className="gap-2">
+                            {article.contentSealId ? (
+                              <>
+                                <Lock className="h-4 w-4" />
+                                Decrypt Content
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="h-4 w-4" />
+                                Load Content
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        // For subscription-gated content without access, show subscription paywall inline
+                        <div className="py-8">
+                          <SubscriptionPaywall
+                            publicationInfo={{
+                              id: article.publicationId,
+                              name: article.followInfo?.publicationName || 'Publication',
+                              description: article.followInfo?.publicationDescription,
+                              avatar: article.followInfo?.publicationAvatar || undefined,
+                              totalSubscribers: article.followInfo?.subscriberCount,
+                              totalArticles: article.followInfo?.articleCount,
+                            }}
+                            subscriptionInfo={{
+                              id: article.publicationSubscriptionInfo?.id || '',
+                              subscriptionPrice: article.publicationSubscriptionInfo?.subscriptionPrice || 0,
+                              subscriptionPeriod: article.publicationSubscriptionInfo?.subscriptionPeriod || 30,
+                              publicationName: article.followInfo?.publicationName,
+                            }}
+                            isSubscribed={article.hasActivePublicationSubscription}
+                            subscriptionExpiresAt={article.publicationSubscriptionExpiresAt ? new Date(article.publicationSubscriptionExpiresAt) : undefined}
+                            onSubscriptionSuccess={() => {
+                              // Reload the article to access content
+                              retry();
+                            }}
+                            articleTitle={article.title}
+                          />
+                        </div>
+                      )
                     ) : (
                       <div className="text-center py-12 space-y-4">
                         <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
@@ -307,32 +338,6 @@ function ArticlePageContent() {
                 </div>
               </div>
 
-              {/* Publication Subscription Paywall - show if content requires publication subscription and user doesn't have one */}
-              {article.requiresPublicationSubscription && !article.hasActivePublicationSubscription && (
-                <SubscriptionPaywall
-                  publicationInfo={{
-                    id: article.publicationId,
-                    name: article.followInfo?.publicationName || 'Publication',
-                    description: article.followInfo?.publicationDescription,
-                    avatar: article.followInfo?.publicationAvatar || undefined,
-                    totalSubscribers: article.followInfo?.subscriberCount,
-                    totalArticles: article.followInfo?.articleCount,
-                  }}
-                  subscriptionInfo={{
-                    id: article.publicationSubscriptionInfo?.id || '',
-                    subscriptionPrice: article.publicationSubscriptionInfo?.subscriptionPrice || 0,
-                    subscriptionPeriod: article.publicationSubscriptionInfo?.subscriptionPeriod || 30,
-                    publicationName: article.followInfo?.publicationName,
-                  }}
-                  isSubscribed={article.hasActivePublicationSubscription}
-                  subscriptionExpiresAt={article.publicationSubscriptionExpiresAt ? new Date(article.publicationSubscriptionExpiresAt) : undefined}
-                  onSubscriptionSuccess={() => {
-                    // Reload the article to access content
-                    retry();
-                  }}
-                  articleTitle={article.title}
-                />
-              )}
 
               {/* Follow Bar */}
               {article.followInfo && (

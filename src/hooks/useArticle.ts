@@ -96,6 +96,7 @@ export const useArticle = (articleSlug: string | null) => {
     return decryptContent(params);
   }, [decryptContent]);
 
+
   // Get user's publication info for owner cap ID
   const { firstPublication, isLoading: isLoadingUserPublications } = useUserPublications();
 
@@ -112,6 +113,67 @@ export const useArticle = (articleSlug: string | null) => {
     publicationId: currentPublicationId || '',
     enabled: !!currentPublicationId
   });
+
+  /**
+   * Determine if we should attempt decryption based on access control policies
+   */
+  const shouldAttemptDecryption = useCallback((article: Article): { shouldAttempt: boolean; reason: string; hasAccess: boolean } => {
+    // For free content (no subscription price), always allow decryption
+    const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
+      !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
+    
+    if (!requiresSubscription) {
+      return { 
+        shouldAttempt: true, 
+        reason: 'Free content - no access control required',
+        hasAccess: true 
+      };
+    }
+
+    // Check if user is the publication owner
+    const isOwner = stableOwnerData.current?.publicationId === article.publicationId;
+    if (isOwner) {
+      return { 
+        shouldAttempt: true, 
+        reason: 'User owns the publication',
+        hasAccess: true 
+      };
+    }
+
+    // Check subscription access
+    const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
+    if (hasActiveSubscription) {
+      return { 
+        shouldAttempt: true, 
+        reason: 'User has active subscription',
+        hasAccess: true 
+      };
+    }
+
+    // If we're still loading data, allow attempt (let decryption handle it)
+    if (isLoadingUserPublications || isLoadingPublication || isLoadingSubscription) {
+      return { 
+        shouldAttempt: true, 
+        reason: 'Still loading access control data',
+        hasAccess: true 
+      };
+    }
+
+    // User lacks access - don't attempt decryption
+    return { 
+      shouldAttempt: false, 
+      reason: 'User lacks subscription access to gated content',
+      hasAccess: false 
+    };
+  }, [
+    subscriptionStatus?.publicationRequiresSubscription,
+    subscriptionStatus?.hasActiveSubscription,
+    currentPublication?.subscriptionPrice,
+    stableOwnerData,
+    isLoadingUserPublications,
+    isLoadingPublication,
+    isLoadingSubscription
+  ]);
 
   // Get loading state information based on current stage
   const getLoadingStateInfo = useCallback((): LoadingStateInfo => {
@@ -436,22 +498,40 @@ export const useArticle = (articleSlug: string | null) => {
             contentSealId: article.contentSealId?.substring(0, 20) + '...'
           }, 'useArticle');
           
-          // Download encrypted content and store for data-driven decryption
+          // Download encrypted content and check access before attempting decryption
           try {
             const response = await articlesAPI.getRawContent(article.quiltBlobId);
             const encryptedData = new Uint8Array(response.data);
             
-            // Store encrypted content data for data-driven decryption
-            setEncryptedContentData({ encryptedData, article });
+            // Check if user should attempt decryption based on access control
+            const accessCheck = shouldAttemptDecryption(article);
             
-            // Set loading stage to indicate we're waiting for decryption data
-            setLoadingStage('waiting-wallet');
-            hasEncryptedContent = true;
-            
-            log.debug('Encrypted content downloaded, stored for data-driven decryption', {
-              articleId: article.articleId,
-              encryptedSize: encryptedData.length
-            }, 'useArticle');
+            if (accessCheck.shouldAttempt) {
+              // Store encrypted content data for data-driven decryption
+              setEncryptedContentData({ encryptedData, article });
+              
+              // Set loading stage to indicate we're waiting for decryption data
+              setLoadingStage('waiting-wallet');
+              hasEncryptedContent = true;
+              
+              log.debug('Encrypted content downloaded, stored for data-driven decryption', {
+                articleId: article.articleId,
+                encryptedSize: encryptedData.length,
+                accessReason: accessCheck.reason
+              }, 'useArticle');
+            } else {
+              // User lacks access - don't attempt decryption, show subscription paywall instead
+              log.debug('Encrypted content downloaded but user lacks access - showing subscription paywall', {
+                articleId: article.articleId,
+                reason: accessCheck.reason
+              }, 'useArticle');
+              
+              // Don't set loading stage, let UI show subscription paywall
+              setState(prev => ({
+                ...prev,
+                error: null // Clear any existing errors to show clean subscription paywall
+              }));
+            }
             
           } catch (encryptedError) {
             log.error('Failed to download encrypted content', encryptedError, 'useArticle');
@@ -499,7 +579,7 @@ export const useArticle = (articleSlug: string | null) => {
       }
       // For encrypted content, the data-driven decryption useEffect will manage the loading stage
     }
-  }, [loadArticleMetadata, loadArticleContent]);
+  }, [loadArticleMetadata, loadArticleContent, shouldAttemptDecryption]);
 
   /**
    * Load article when slug changes
@@ -924,6 +1004,9 @@ export const useArticle = (articleSlug: string | null) => {
     }
   }, [state.article, loadArticleContent, manualDecryptContent]);
 
+  // Calculate if user has decryption access for current article
+  const hasDecryptionAccess = state.article ? shouldAttemptDecryption(state.article).hasAccess : true;
+
   return {
     // State
     ...state,
@@ -950,5 +1033,6 @@ export const useArticle = (articleSlug: string | null) => {
     hasArticle: !!state.article,
     canLoadContent: !!state.article?.quiltBlobId,
     needsWalletForContent: !!(state.article?.contentSealId && !isWalletReady),
+    hasDecryptionAccess,
   };
 };
