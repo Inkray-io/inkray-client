@@ -325,7 +325,7 @@ export class SealService {
 
     // Case 3: Free Content (fallback)
     console.log('✅ Selected FREE POLICY: seal_approve_free (fallback)');
-    return this.buildFreeApprovalTransaction(contentIdBytes, params.articleId, params.publicationId);
+    return this.buildFreeApprovalTransaction(contentIdBytes, params.publicationId);
   }
 
   /**
@@ -365,13 +365,12 @@ export class SealService {
   /**
    * Build transaction for free content access
    */
-  private buildFreeApprovalTransaction(contentIdBytes: Uint8Array, articleId: string, publicationId: string): Transaction {
+  private buildFreeApprovalTransaction(contentIdBytes: Uint8Array, publicationId: string): Transaction {
     const tx = new Transaction();
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
       arguments: [
         tx.pure.vector('u8', contentIdBytes),
-        tx.object(articleId),
         tx.object(publicationId),
       ]
     });
