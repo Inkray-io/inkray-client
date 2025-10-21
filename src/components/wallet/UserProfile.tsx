@@ -116,7 +116,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
             
             <div className="p-2">
               {hasPublications && firstPublication ? (
-                <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.id)} onClick={() => setIsOpen(false)}>
+                <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
                   <Button
                     variant="ghost"
                     size="sm"

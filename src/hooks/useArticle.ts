@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { articlesAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
+import { useUserPublications } from './useUserPublications';
+import { usePublication } from './usePublication';
 import { EncryptedObject } from '@mysten/seal';
 import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
@@ -68,10 +70,21 @@ export const useArticle = (articleSlug: string | null) => {
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [isWaitingForWallet, setIsWaitingForWallet] = useState(false);
   const [loadingStage, setLoadingStage] = useState<LoadingStage>('idle');
+  const [encryptedContentData, setEncryptedContentData] = useState<{
+    encryptedData: Uint8Array;
+    article: Article;
+  } | null>(null);
 
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const { decryptContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
+  
+  // Get user's publication info for owner cap ID
+  const { firstPublication, isLoading: isLoadingUserPublications } = useUserPublications();
+  
+  // Get publication info for subscription price (we'll need the article's publicationId for this)
+  const [currentPublicationId, setCurrentPublicationId] = useState<string | null>(null);
+  const { publication: currentPublication, isLoading: isLoadingPublication } = usePublication(currentPublicationId || '');
 
   // Get loading state information based on current stage
   const getLoadingStateInfo = useCallback((): LoadingStateInfo => {
@@ -200,13 +213,63 @@ export const useArticle = (articleSlug: string | null) => {
             throw new Error('Wallet connection required to decrypt content');
           }
         }
+        
+        // Enhanced data availability checks
+        const isOwnerOfPublication = firstPublication?.publicationId === article.publicationId;
+        const hasOwnerCapData = isOwnerOfPublication && !!firstPublication?.ownerCapId;
+        const hasSubscriptionData = !!currentPublication?.subscriptionPrice;
+        
+        // If user owns publication but we don't have owner cap data, wait for it
+        if (isOwnerOfPublication && !hasOwnerCapData && !isLoadingUserPublications) {
+          console.warn('⚠️ Owner publication detected but no ownerCapId available');
+          if (forceWait) {
+            setIsWaitingForWallet(true);
+            setLoadingStage('waiting-wallet');
+            setState(prev => ({ 
+              ...prev, 
+              isLoadingContent: false,
+              error: 'Waiting for publication ownership data...'
+            }));
+            return null;
+          } else {
+            throw new Error('Publication ownership data missing');
+          }
+        }
+        
+        // Check if we're still loading user publications
+        if (isLoadingUserPublications) {
+          if (forceWait) {
+            setIsWaitingForWallet(true);
+            setLoadingStage('waiting-wallet');
+            setState(prev => ({ 
+              ...prev, 
+              isLoadingContent: false,
+              error: 'Loading user publication data...'
+            }));
+            return null;
+          } else {
+            throw new Error('User publication data still loading');
+          }
+        }
+        
+        // Check if publication subscription data is still loading
+        if (isLoadingPublication && currentPublicationId) {
+          if (forceWait) {
+            setIsWaitingForWallet(true);
+            setLoadingStage('waiting-wallet');
+            setState(prev => ({ 
+              ...prev, 
+              isLoadingContent: false,
+              error: 'Loading subscription data for decryption...'
+            }));
+            return null;
+          } else {
+            throw new Error('Subscription data still loading');
+          }
+        }
 
         // Download encrypted content from backend
         const response = await articlesAPI.getRawContent(article.quiltBlobId);
-
-        // Debug: Log response structure to understand the issue
-
-        // Handle different response formats
         const encryptedData = new Uint8Array(response.data);
 
         // Validate that the encrypted data is a valid BCS-encoded EncryptedObject
@@ -226,21 +289,13 @@ export const useArticle = (articleSlug: string | null) => {
           throw new Error('Invalid encrypted content: BCS parsing failed. The stored data may be corrupted.');
         }
 
-        // Update to decrypting stage
-        setLoadingStage('decrypting');
+        // Store encrypted data and article for later decryption
+        // Decryption will be triggered by useEffect when all data is ready
+        console.log('📦 Storing encrypted content for data-driven decryption');
+        setEncryptedContentData({ encryptedData, article });
+        setLoadingStage('waiting-wallet'); // Will be updated when decryption starts
         
-        // Decrypt using the new decryption hook (pass contentSealId as hex string directly)
-        const decryptedContent = await decryptContent({
-          encryptedData,
-          contentId: article.contentSealId, // Pass as hex string directly from database
-          articleId: article.articleId,
-          publicationId: article.publicationId, // Add publication ID for subscription verification
-        });
-
-        // Transform media URLs to include articleId parameter
-        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
-
-        return transformedContent;
+        return null; // Content will be set by the decryption useEffect
 
       } else {
         // Fallback: if no content seal ID, try to get parsed content from backend
@@ -285,6 +340,9 @@ export const useArticle = (articleSlug: string | null) => {
       log.debug('Loading article metadata', { slug }, 'useArticle');
       const article = await loadArticleMetadata(slug);
       setState(prev => ({ ...prev, article }));
+      
+      // Set current publication ID for subscription price lookup
+      setCurrentPublicationId(article.publicationId);
 
       // 2. Progressive content loading based on encryption status
       if (article.quiltBlobId) {
@@ -338,44 +396,139 @@ export const useArticle = (articleSlug: string | null) => {
       });
       setIsWaitingForWallet(false);
       setLoadingStage('idle');
+      setEncryptedContentData(null);
     }
   }, [articleSlug, loadArticle]);
 
   /**
-   * Auto-retry content loading when wallet becomes ready
+   * Data-driven decryption trigger: Decrypt when all required data is available
    */
   useEffect(() => {
-    const shouldRetryContent = isWalletReady && 
-                              isWaitingForWallet && 
-                              state.article && 
-                              state.article.contentSealId && 
-                              !state.content;
-
-    if (shouldRetryContent) {
-      log.debug('Wallet ready, automatically retrying content decryption', {
-        articleId: state.article?.articleId,
-        slug: articleSlug
-      }, 'useArticle');
-
-      // Clear waiting state and error, then retry content loading
-      setIsWaitingForWallet(false);
-      setLoadingStage('content');
-      setState(prev => ({ ...prev, error: null }));
-      
-      if (state.article) {
-        loadArticleContent(state.article, false)
-        .then(content => {
-          if (content) {
-            setState(prev => ({ ...prev, content }));
-          }
-        })
-        .catch(error => {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to decrypt content';
-          setState(prev => ({ ...prev, error: errorMessage }));
-        });
-      }
+    // Only proceed if we have encrypted content waiting for decryption
+    if (!encryptedContentData || state.content) {
+      return;
     }
-  }, [isWalletReady, isWaitingForWallet, state.article, state.content, articleSlug, loadArticleContent]);
+
+    const { encryptedData, article } = encryptedContentData;
+    
+    // Check if wallet is ready
+    if (!isWalletReady || !currentAccount) {
+      console.log('⏳ Waiting for wallet connection');
+      return;
+    }
+
+    // Check if we're still loading publication data
+    if (isLoadingUserPublications || isLoadingPublication) {
+      console.log('⏳ Waiting for publication data to load');
+      return;
+    }
+
+    const isOwnerOfPublication = firstPublication?.publicationId === article.publicationId;
+    const hasOwnerCapData = isOwnerOfPublication ? !!firstPublication?.ownerCapId : true;
+    const hasSubscriptionData = currentPublicationId ? !!currentPublication : true;
+
+    // Ensure we have all required data
+    if (!hasOwnerCapData || !hasSubscriptionData) {
+      console.log('⏳ Waiting for complete publication data', {
+        isOwnerOfPublication,
+        hasOwnerCapData,
+        hasSubscriptionData,
+        firstPublication: !!firstPublication,
+        currentPublication: !!currentPublication
+      });
+      return;
+    }
+
+    // All data is ready - trigger decryption
+    const performDecryption = async () => {
+      try {
+        console.log('🚀 ALL DATA READY - Starting decryption');
+        setLoadingStage('decrypting');
+        setState(prev => ({ ...prev, isLoadingContent: true, error: null }));
+        
+        // Debug: Check data availability before creating decryption params
+        console.log('🔍 FINAL DATA CHECK:', {
+          firstPublication,
+          hasFirstPub: !!firstPublication,
+          firstPubId: firstPublication?.publicationId,
+          ownerCapId: firstPublication?.ownerCapId,
+          currentPublication,
+          hasCurrentPub: !!currentPublication,
+          subscriptionPrice: currentPublication?.subscriptionPrice,
+          articlePubId: article.publicationId,
+          isLoadingUserPubs: isLoadingUserPublications,
+          isLoadingPub: isLoadingPublication
+        });
+        
+        // Create decryption parameters with all available data
+        const decryptionParams = {
+          encryptedData,
+          contentId: article.contentSealId!,
+          articleId: article.articleId,
+          publicationId: article.publicationId,
+          // Policy selection fields for smart access control
+          ownerCapId: firstPublication?.ownerCapId && firstPublication.publicationId === article.publicationId 
+            ? firstPublication.ownerCapId 
+            : undefined,
+          subscriptionPrice: currentPublication?.subscriptionPrice,
+          // TODO: Add subscriptionId when subscription system is implemented
+          // subscriptionId: userSubscription?.id
+        };
+        
+        console.log('🎯 FINAL POLICY SELECTION INPUT:', {
+          ownerCapId: decryptionParams.ownerCapId,
+          subscriptionPrice: decryptionParams.subscriptionPrice,
+          publicationId: decryptionParams.publicationId
+        });
+        
+        // Decrypt content
+        const decryptedContent = await decryptContent(decryptionParams);
+        
+        // Transform media URLs to include articleId parameter
+        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
+        
+        // Update state with decrypted content
+        setState(prev => ({ 
+          ...prev, 
+          content: transformedContent,
+          isLoadingContent: false,
+          error: null
+        }));
+        
+        // Clear encrypted data since we're done
+        setEncryptedContentData(null);
+        setLoadingStage('idle');
+        
+        console.log('✅ Decryption completed successfully');
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to decrypt content';
+        console.error('❌ Decryption failed:', errorMessage);
+        
+        setState(prev => ({
+          ...prev,
+          isLoadingContent: false,
+          error: errorMessage
+        }));
+        setLoadingStage('idle');
+      }
+    };
+
+    performDecryption();
+  }, [
+    encryptedContentData,
+    state.content,
+    isWalletReady,
+    currentAccount,
+    isLoadingUserPublications,
+    isLoadingPublication,
+    firstPublication?.publicationId,
+    firstPublication?.ownerCapId,
+    currentPublication?.subscriptionPrice,
+    currentPublicationId,
+    currentPublication,
+    decryptContent
+  ]);
 
 
   /**
@@ -436,12 +589,29 @@ export const useArticle = (articleSlug: string | null) => {
         // Manual decryption - bypasses auto-decryption flag
         setLoadingStage('decrypting');
         log.info('MANUAL DECRYPTION - Starting Seal decryption process', null, 'useArticle');
-        const decryptedContent = await decryptContent({
+        
+        // Log manual decryption parameters for debugging
+        const manualDecryptionParams = {
           encryptedData,
           contentId: article.contentSealId, // Pass as hex string directly from database
           articleId: article.articleId,
           publicationId: article.publicationId, // Add publication ID for subscription verification
+          // Policy selection fields for smart access control
+          ownerCapId: firstPublication?.ownerCapId && firstPublication.publicationId === article.publicationId 
+            ? firstPublication.ownerCapId 
+            : undefined,
+          subscriptionPrice: currentPublication?.subscriptionPrice,
+          // TODO: Add subscriptionId when subscription system is implemented
+          // subscriptionId: userSubscription?.id
+        };
+        
+        console.log('🎯 MANUAL POLICY SELECTION INPUT:', {
+          ownerCapId: manualDecryptionParams.ownerCapId,
+          subscriptionPrice: manualDecryptionParams.subscriptionPrice,
+          publicationId: manualDecryptionParams.publicationId
         });
+        
+        const decryptedContent = await decryptContent(manualDecryptionParams);
 
         // Transform media URLs to include articleId parameter
         const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
