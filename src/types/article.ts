@@ -61,6 +61,18 @@ export interface Article {
   totalLikes: number;
   /** Whether the current user has liked this article (only set when authenticated) */
   isLiked?: boolean;
+  /** Whether this article requires a publication subscription to access */
+  requiresPublicationSubscription?: boolean;
+  /** Whether the current user has an active publication subscription for this publication */
+  hasActivePublicationSubscription?: boolean;
+  /** Publication subscription information if available */
+  publicationSubscriptionInfo?: {
+    id: string;
+    subscriptionPrice: number; // in MIST
+    subscriptionPeriod: number; // in days
+  };
+  /** When the user's publication subscription expires (if they have one) */
+  publicationSubscriptionExpiresAt?: string;
 }
 
 /**

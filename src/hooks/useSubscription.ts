@@ -4,14 +4,52 @@ import { useState, useEffect } from 'react';
 import { subscriptionsAPI } from '@/lib/api';
 import { useWalletConnection } from './useWalletConnection';
 
-interface SubscriptionInfo {
+/**
+ * Publication Subscription Management Hook
+ * 
+ * This hook manages publication-specific subscriptions (NOT general platform subscriptions).
+ * Users can subscribe to individual publications to access their premium content.
+ * 
+ * Features:
+ * - Check if user has an active subscription to a specific publication
+ * - Get publication subscription pricing and requirements
+ * - Track subscription expiry and renewal needs
+ * - Format pricing and dates for display
+ * 
+ * Smart Contract Integration:
+ * - Connects to `publication_subscription.move` contract
+ * - Validates `PublicationSubscription` objects on-chain
+ * - Supports time-based subscription expiry using Sui Clock
+ * 
+ * @param publicationId - The publication ID to check subscription for
+ * @param enabled - Whether to actively fetch subscription data
+ * @returns Publication subscription status and management functions
+ * 
+ * @example
+ * ```tsx
+ * const { 
+ *   subscriptionStatus, 
+ *   isSubscribed, 
+ *   isExpiringSoon 
+ * } = useSubscription({ 
+ *   publicationId: 'pub_123',
+ *   enabled: !!publicationId 
+ * });
+ * 
+ * if (subscriptionStatus?.publicationRequiresSubscription && !isSubscribed) {
+ *   // Show publication subscription paywall
+ * }
+ * ```
+ */
+
+interface PublicationSubscriptionInfo {
   id: string;
   subscriptionPrice: number; // in MIST
   subscriptionPeriod: number; // in days
   publicationName?: string;
 }
 
-interface SubscriptionStatus {
+interface PublicationSubscriptionStatus {
   hasActiveSubscription: boolean;
   subscription?: {
     subscriptionId: string;
@@ -27,14 +65,14 @@ interface SubscriptionStatus {
   subscriptionPrice?: string; // in MIST
 }
 
-interface UseSubscriptionProps {
+interface UsePublicationSubscriptionProps {
   publicationId: string;
   enabled?: boolean;
 }
 
-interface UseSubscriptionReturn {
-  subscriptionStatus: SubscriptionStatus | null;
-  subscriptionInfo: SubscriptionInfo | null;
+interface UsePublicationSubscriptionReturn {
+  subscriptionStatus: PublicationSubscriptionStatus | null;
+  subscriptionInfo: PublicationSubscriptionInfo | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -46,13 +84,19 @@ interface UseSubscriptionReturn {
 
 const MIST_PER_SUI = 1_000_000_000;
 
+/**
+ * Publication Subscription Hook Implementation
+ * 
+ * NOTE: This hook is specifically for publication subscriptions, not general platform subscriptions.
+ * It manages subscriptions to individual publications for accessing their premium content.
+ */
 export function useSubscription({
   publicationId,
   enabled = true,
-}: UseSubscriptionProps): UseSubscriptionReturn {
+}: UsePublicationSubscriptionProps): UsePublicationSubscriptionReturn {
   const { isConnected, account } = useWalletConnection();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
-  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<PublicationSubscriptionStatus | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<PublicationSubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,25 +111,64 @@ export function useSubscription({
 
       const response = await subscriptionsAPI.getSubscriptionStatus(publicationId);
       
-      if (response.data) {
+      console.log('📊 SUBSCRIPTION API RESPONSE:', {
+        publicationId,
+        rawResponse: response.data,
+        success: response.data?.success,
+        subscriptionPrice: response.data?.data?.subscriptionPrice,
+        subscriptionPriceType: typeof response.data?.data?.subscriptionPrice,
+        hasActiveSubscription: response.data?.data?.hasActiveSubscription,
+        publicationRequiresSubscription: response.data?.data?.publicationRequiresSubscription,
+      });
+      
+      // Handle wrapped API response: { success: true, data: {...} }
+      if (!response.data || !response.data.success) {
+        throw new Error('API returned unsuccessful response');
+      }
+
+      const subscriptionData = response.data.data;
+      if (subscriptionData) {
         setSubscriptionStatus({
-          ...response.data,
-          subscription: response.data.subscription ? {
-            ...response.data.subscription,
-            expiresAt: new Date(response.data.subscription.expiresAt),
-            createdAt: new Date(response.data.subscription.createdAt),
+          ...subscriptionData,
+          subscription: subscriptionData.subscription ? {
+            ...subscriptionData.subscription,
+            expiresAt: new Date(subscriptionData.subscription.expiresAt),
+            createdAt: new Date(subscriptionData.subscription.createdAt),
           } : undefined,
         });
 
         // Build subscription info if publication requires subscription
-        if (response.data.publicationRequiresSubscription && response.data.subscriptionPrice) {
+        if (subscriptionData.publicationRequiresSubscription && subscriptionData.subscriptionPrice) {
+          // Use Number() for better conversion than parseInt() - handles edge cases better
+          const parsedPrice = Number(subscriptionData.subscriptionPrice);
+          
+          console.log('💰 BUILDING SUBSCRIPTION INFO:', {
+            originalPrice: subscriptionData.subscriptionPrice,
+            originalType: typeof subscriptionData.subscriptionPrice,
+            parsedPrice: parsedPrice,
+            parseSuccessful: !isNaN(parsedPrice) && isFinite(parsedPrice),
+            priceInSUI: parsedPrice / 1_000_000_000,
+          });
+          
+          // Validate the parsed price is a valid positive number
+          if (isNaN(parsedPrice) || !isFinite(parsedPrice) || parsedPrice < 0) {
+            console.error('❌ Invalid subscription price:', subscriptionData.subscriptionPrice);
+            setSubscriptionInfo(null);
+            return;
+          }
+          
           setSubscriptionInfo({
             id: publicationId,
-            subscriptionPrice: parseInt(response.data.subscriptionPrice),
+            subscriptionPrice: parsedPrice,
             subscriptionPeriod: 30, // Default - should come from smart contract
             publicationName: undefined, // Will be filled by parent component
           });
         } else {
+          console.log('❌ NOT BUILDING SUBSCRIPTION INFO:', {
+            publicationRequiresSubscription: subscriptionData.publicationRequiresSubscription,
+            subscriptionPrice: subscriptionData.subscriptionPrice,
+            hasSubscriptionPrice: !!subscriptionData.subscriptionPrice,
+          });
           setSubscriptionInfo(null);
         }
       }

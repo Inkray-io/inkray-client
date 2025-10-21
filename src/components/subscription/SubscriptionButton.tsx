@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { Transaction } from "@mysten/sui/transactions";
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Lock, Loader2, Clock, Check } from "lucide-react";
 import { MIST_PER_SUI } from "@/constants/tipping";
@@ -67,14 +68,18 @@ export function SubscriptionButton({
       // Create payment coin
       const [coin] = tx.splitCoins(tx.gas, [subscriptionInfo.subscriptionPrice]);
       
-      // Call subscribe_to_publication function
-      tx.moveCall({
+      // Call subscribe_to_publication function and capture the returned subscription object
+      const subscription = tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::publication_subscription::subscribe_to_publication`,
         arguments: [
           publication,  // &mut Publication
           coin,         // Coin<SUI> - payment amount
+          tx.object(SUI_CLOCK_OBJECT_ID), // &Clock - for timestamp
         ],
       });
+
+      // Transfer the subscription object to the user's wallet
+      tx.transferObjects([subscription], tx.pure.address(account.address));
 
       // Execute transaction
       const result = await signAndExecuteTransaction({
@@ -103,7 +108,11 @@ export function SubscriptionButton({
       setIsSubscribing(true);
       setSubscriptionError(null);
 
-      // Build extend subscription transaction
+      // TODO: Implement proper extend functionality
+      // For now, we'll use subscribe_to_publication which handles both new subscriptions and extensions
+      // The smart contract will calculate additional duration based on existing subscription
+      
+      // Build subscription transaction (same as new subscription for now)
       const tx = new Transaction();
       
       // Reference publication object
@@ -112,14 +121,18 @@ export function SubscriptionButton({
       // Create payment coin
       const [coin] = tx.splitCoins(tx.gas, [subscriptionInfo.subscriptionPrice]);
       
-      // Call extend_subscription function (assuming subscription exists)
-      tx.moveCall({
-        target: `${INKRAY_CONFIG.PACKAGE_ID}::publication_subscription::extend_subscription`,
+      // Call subscribe_to_publication function and capture the returned subscription object
+      const subscription = tx.moveCall({
+        target: `${INKRAY_CONFIG.PACKAGE_ID}::publication_subscription::subscribe_to_publication`,
         arguments: [
           publication,  // &mut Publication
           coin,         // Coin<SUI> - payment amount
+          tx.object(SUI_CLOCK_OBJECT_ID), // &Clock - for timestamp
         ],
       });
+
+      // Transfer the subscription object to the user's wallet
+      tx.transferObjects([subscription], tx.pure.address(account.address));
 
       // Execute transaction
       const result = await signAndExecuteTransaction({
@@ -288,7 +301,7 @@ export function SubscriptionButton({
               Subscription Status
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              You're subscribed to {subscriptionInfo.publicationName || "this publication"}
+              You&apos;re subscribed to {subscriptionInfo.publicationName || "this publication"}
             </p>
           </DialogHeader>
 

@@ -307,8 +307,8 @@ function ArticlePageContent() {
                 </div>
               </div>
 
-              {/* Subscription Paywall - show if content is gated and user needs subscription */}
-              {article.requiresSubscription && !article.hasActiveSubscription && (
+              {/* Publication Subscription Paywall - show if content requires publication subscription and user doesn't have one */}
+              {article.requiresPublicationSubscription && !article.hasActivePublicationSubscription && (
                 <SubscriptionPaywall
                   publicationInfo={{
                     id: article.publicationId,
@@ -319,13 +319,13 @@ function ArticlePageContent() {
                     totalArticles: article.followInfo?.articleCount,
                   }}
                   subscriptionInfo={{
-                    id: article.subscriptionInfo?.id || '',
-                    subscriptionPrice: article.subscriptionInfo?.subscriptionPrice || 0,
-                    subscriptionPeriod: article.subscriptionInfo?.subscriptionPeriod || 30,
+                    id: article.publicationSubscriptionInfo?.id || '',
+                    subscriptionPrice: article.publicationSubscriptionInfo?.subscriptionPrice || 0,
+                    subscriptionPeriod: article.publicationSubscriptionInfo?.subscriptionPeriod || 30,
                     publicationName: article.followInfo?.publicationName,
                   }}
-                  isSubscribed={article.hasActiveSubscription}
-                  subscriptionExpiresAt={article.subscriptionExpiresAt ? new Date(article.subscriptionExpiresAt) : undefined}
+                  isSubscribed={article.hasActivePublicationSubscription}
+                  subscriptionExpiresAt={article.publicationSubscriptionExpiresAt ? new Date(article.publicationSubscriptionExpiresAt) : undefined}
                   onSubscriptionSuccess={() => {
                     // Reload the article to access content
                     retry();
@@ -422,8 +422,8 @@ function ArticlePageContent() {
             </div>
           )}
 
-          {/* Empty state when no content but no error */}
-          {!isProcessing && !error && !content && (
+          {/* Empty state when no content but no error AND no article metadata */}
+          {!isProcessing && !error && !content && !article && (
             <div className="bg-white rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">

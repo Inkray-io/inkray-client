@@ -46,8 +46,30 @@ export function SubscriptionPaywall({
 }: SubscriptionPaywallProps) {
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
 
+  console.log('💳 SUBSCRIPTION PAYWALL PROPS:', {
+    publicationInfo: {
+      id: publicationInfo.id,
+      name: publicationInfo.name,
+    },
+    subscriptionInfo: {
+      id: subscriptionInfo.id,
+      subscriptionPrice: subscriptionInfo.subscriptionPrice,
+      subscriptionPriceType: typeof subscriptionInfo.subscriptionPrice,
+      subscriptionPeriod: subscriptionInfo.subscriptionPeriod,
+    },
+    isSubscribed,
+    formattedPrice: subscriptionInfo.subscriptionPrice ? (subscriptionInfo.subscriptionPrice / 1_000_000_000).toFixed(2) : 'N/A',
+  });
+
   const formatPrice = (priceInMist: number) => {
-    return (priceInMist / 1_000_000_000).toFixed(2); // Convert MIST to SUI
+    const suiPrice = (priceInMist / 1_000_000_000).toFixed(2);
+    console.log('🎯 FORMATTING PRICE:', {
+      input: priceInMist,
+      inputType: typeof priceInMist,
+      output: suiPrice,
+      calculation: `${priceInMist} / 1_000_000_000 = ${priceInMist / 1_000_000_000}`,
+    });
+    return suiPrice;
   };
 
   return (
@@ -114,7 +136,7 @@ export function SubscriptionPaywall({
 
         {/* Subscription Benefits */}
         <div className="max-w-md mx-auto">
-          <h4 className="font-semibold text-gray-900 mb-3">What you'll get:</h4>
+          <h4 className="font-semibold text-gray-900 mb-3">What you&apos;ll get:</h4>
           <div className="space-y-2">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-center gap-3 text-sm text-gray-700">

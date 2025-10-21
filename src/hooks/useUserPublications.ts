@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useArticleCreation } from '@/hooks/useArticleCreation';
 import { log } from '@/lib/utils/Logger';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,16 +34,32 @@ export const useUserPublications = () => {
     error: null,
   });
 
+  // Track if we've already loaded publication to prevent unnecessary re-queries
+  const hasLoaded = useRef(false);
+  
+  // Store the last successful publication to prevent refetching the same data
+  const lastPublication = useRef<UserPublicationInfo | null>(null);
+
   /**
    * Load user's publication from blockchain
    */
-  const loadPublication = useCallback(async () => {
+  const loadPublication = useCallback(async (force = false) => {
     if (!isAuthenticated) {
       setState({
         publication: null,
         isLoading: false,
         error: null,
       });
+      hasLoaded.current = false;
+      lastPublication.current = null;
+      return;
+    }
+
+    // Prevent unnecessary re-queries if we've already loaded and it's not forced
+    if (hasLoaded.current && !force && lastPublication.current) {
+      log.debug('Skipping publication load - already loaded', {
+        publicationId: lastPublication.current.publicationId,
+      }, 'useUserPublications');
       return;
     }
 
@@ -51,6 +67,10 @@ export const useUserPublications = () => {
 
     try {
       const publication = await getUserPublication();
+      
+      // Update refs for stability
+      hasLoaded.current = true;
+      lastPublication.current = publication;
       
       setState({
         publication,
@@ -75,6 +95,9 @@ export const useUserPublications = () => {
         isLoading: false,
         error: errorMessage,
       });
+      
+      hasLoaded.current = true; // Mark as attempted even if failed
+      lastPublication.current = null;
     }
   }, [isAuthenticated, getUserPublication]);
 
@@ -82,7 +105,7 @@ export const useUserPublications = () => {
    * Refresh publication data
    */
   const refresh = useCallback(() => {
-    loadPublication();
+    loadPublication(true); // Force reload
   }, [loadPublication]);
 
   /**
