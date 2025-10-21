@@ -13,6 +13,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { CacheProvider } from '@/components/providers/CacheProvider'
 import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
+import { OnboardingModal } from '@/components/onboarding'
 
 export const metadata: Metadata = {
   title: 'Inkray – True Digital Ownership for Creators',
@@ -79,6 +80,7 @@ export default function RootLayout({
               <AuthProvider>
                 {children}
                 <Toaster />
+                <OnboardingModal />
               </AuthProvider>
             </WalletChangeProvider>
           </WalletProviders>
