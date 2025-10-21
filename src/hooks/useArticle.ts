@@ -150,13 +150,25 @@ export const useArticle = (articleSlug: string | null) => {
       };
     }
 
-    // If we're still loading data, allow attempt (let decryption handle it)
+    // If we're still loading data, be conservative - only allow if user might be the owner
     if (isLoadingUserPublications || isLoadingPublication || isLoadingSubscription) {
-      return { 
-        shouldAttempt: true, 
-        reason: 'Still loading access control data',
-        hasAccess: true 
-      };
+      // Check if user might be the publication owner (using stable owner data)
+      const mightBeOwner = stableOwnerData.current?.publicationId === article.publicationId;
+      
+      if (mightBeOwner) {
+        return { 
+          shouldAttempt: true, 
+          reason: 'Still loading data but user might be owner',
+          hasAccess: true 
+        };
+      } else {
+        // For non-owners, don't attempt decryption during loading to avoid unnecessary popups
+        return { 
+          shouldAttempt: false, 
+          reason: 'Still loading access control data for non-owner',
+          hasAccess: false 
+        };
+      }
     }
 
     // User lacks access - don't attempt decryption
@@ -625,6 +637,16 @@ export const useArticle = (articleSlug: string | null) => {
     }
 
     const { encryptedData, article } = encryptedContentData;
+
+    // Check access control before attempting decryption
+    const accessCheck = shouldAttemptDecryption(article);
+    if (!accessCheck.shouldAttempt || !accessCheck.hasAccess) {
+      console.log('🚫 Data-driven decryption blocked:', accessCheck.reason);
+      // Clear encrypted content data to prevent retries and show subscription paywall instead
+      setEncryptedContentData(null);
+      setLoadingStage('idle');
+      return;
+    }
     const decryptionKey = `${article.articleId}-${article.contentSealId}`;
 
     // Check if decryption is already in progress for this article
@@ -761,7 +783,8 @@ export const useArticle = (articleSlug: string | null) => {
     subscriptionInfo?.subscriptionPrice,
     subscriptionStatus?.hasActiveSubscription,
     subscriptionStatus?.subscription?.subscriptionId,
-    stableDecryptContent
+    stableDecryptContent,
+    shouldAttemptDecryption
   ]);
 
   /**
