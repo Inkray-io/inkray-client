@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { AuthState, Account } from '@/types/auth';
 import { usersAPI } from '@/lib/api';
+import { clearUserSpecificCache } from '@/lib/cache-manager';
 
 interface AuthContextType extends AuthState {
   login: (accessToken: string, account: Account) => void;
@@ -81,8 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         } catch (error) {
           console.warn('❌ Token validation failed, clearing stored token:', error);
-          // Token is invalid, clear it
+          // Token is invalid, clear it and user-specific cache
           Cookies.remove('access_token');
+          clearUserSpecificCache();
           setState({
             account: null,
             accessToken: null,
@@ -165,13 +167,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    // Clear authentication cookie
     Cookies.remove('access_token');
+    
+    // Clear user-specific cached data
+    clearUserSpecificCache();
+    
     setState({
       account: null,
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
     });
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🚪 User logged out and cache cleared');
+    }
   };
 
   const updateAccount = (account: Account) => {

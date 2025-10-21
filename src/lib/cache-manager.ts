@@ -330,6 +330,56 @@ export function clearSessionKeyCache(): void {
 }
 
 /**
+ * Clear user-specific cache data (publications, drafts, session keys)
+ * Preserves non-user-specific data like package ID
+ */
+export function clearUserSpecificCache(): void {
+  console.log('🧹 Clearing user-specific cache data...');
+  
+  const userSpecificKeys = [
+    CACHE_KEYS.PUBLICATION,
+    CACHE_KEYS.ARTICLE_DRAFT,
+    CACHE_KEYS.SESSION_KEY,
+  ];
+  
+  userSpecificKeys.forEach(key => {
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+      console.log(`  ✅ Cleared: ${key}`);
+    }
+  });
+  
+  console.log('🧹 User-specific cache clearing completed');
+}
+
+/**
+ * Clear cache when wallet address changes (account switch)
+ */
+export function clearOnWalletChange(previousAddress: string | null, newAddress: string): void {
+  console.log('🔄 Clearing cache due to wallet address change', {
+    previous: previousAddress ? previousAddress.substring(0, 8) + '...' : 'none',
+    new: newAddress.substring(0, 8) + '...'
+  });
+  
+  // Clear all user-specific data since it belongs to the previous account
+  clearUserSpecificCache();
+  
+  console.log('✅ Cache cleared for wallet address change');
+}
+
+/**
+ * Clear cache when wallet disconnects
+ */
+export function clearOnDisconnect(): void {
+  console.log('🔌 Clearing cache due to wallet disconnect');
+  
+  // Clear all cache except package ID (non-user-specific)
+  clearUserSpecificCache();
+  
+  console.log('✅ Cache cleared for wallet disconnect');
+}
+
+/**
  * Check if the current package ID has changed since last app usage
  * This can be used to detect contract redeployments
  */

@@ -11,6 +11,7 @@ import '@mysten/dapp-kit/dist/index.css'
 import { WalletProviders } from '@/components/providers/WalletProviders'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CacheProvider } from '@/components/providers/CacheProvider'
+import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
@@ -74,10 +75,12 @@ export default function RootLayout({
       <body className={`font-sans ${inter.variable}`}>
         <CacheProvider>
           <WalletProviders>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
+            <WalletChangeProvider>
+              <AuthProvider>
+                {children}
+                <Toaster />
+              </AuthProvider>
+            </WalletChangeProvider>
           </WalletProviders>
         </CacheProvider>
       </body>
