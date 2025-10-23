@@ -16,6 +16,7 @@ interface CategorySelectorProps {
   placeholder?: string
   disabled?: boolean
   required?: boolean
+  className?: string
 }
 
 export function CategorySelector({
@@ -24,7 +25,8 @@ export function CategorySelector({
   categories,
   placeholder = "Select a category...",
   disabled = false,
-  required = false
+  required = false,
+  className
 }: CategorySelectorProps) {
   return (
     <Select
@@ -32,7 +34,7 @@ export function CategorySelector({
       onChange={(e) => onValueChange?.(e.target.value)}
       disabled={disabled}
       required={required}
-      className="w-full"
+      className={className || "w-full"}
     >
       <option value="" disabled>
         {placeholder}

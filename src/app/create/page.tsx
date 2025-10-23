@@ -247,106 +247,103 @@ export default function CreateArticlePage() {
               )}
             </div>
 
-            {/* Main Editor Container */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              {/* Title Section */}
-              <div className="p-8 pb-6">
-                <input
-                  type="text"
-                  placeholder="Add a Title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black"
-                />
-              </div>
-
-              {/* Metadata Section */}
-              <div className="px-8 pb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <SummaryInput
-                      value={summary}
-                      onChange={setSummary}
-                      placeholder="Add a short description..."
-                      label="Summary"
-                      maxLength={280}
-                      minLength={10}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
-                    </label>
-                    {categoriesError ? (
-                      <div className="text-red-600 text-sm">
-                        Failed to load categories: {categoriesError}
-                      </div>
-                    ) : (
-                      <CategorySelector
-                        value={categoryId}
-                        onValueChange={setCategoryId}
-                        categories={categories}
-                        placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
-                        disabled={categoriesLoading}
-                        required
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-gray-100" />
-
-              {/* Editor Section */}
-              <div className="p-8">
-                <MilkdownEditorWrapper>
-                  <ArticleEditor
-                    ref={editorRef}
-                    initialValue={content}
-                    onChange={setContent}
-                    onTempImagesChange={setTempImages}
-                    placeholder="What's on your mind?"
-                    className="min-h-[600px]"
+            {/* Main Editor Container - Fluid Vertical Structure */}
+            <div className="bg-white rounded-2xl overflow-hidden">
+              <div className="p-8 space-y-8">
+                {/* Title */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Add a Title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black focus:outline-none"
                   />
-                </MilkdownEditorWrapper>
-              </div>
-
-              {/* Image Upload Status - Integrated */}
-              {tempImages.length > 0 && (
-                <div className="mx-8 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-700">
-                    <HiDocumentText className="size-4" />
-                    <span className="text-sm font-medium">
-                      {tempImages.length} image{tempImages.length > 1 ? 's' : ''} ready for upload
-                    </span>
-                  </div>
-                  <div className="text-xs text-blue-600 mt-1">
-                    Images will be uploaded when you publish the article
-                  </div>
                 </div>
-              )}
 
-              {/* Footer Section - Integrated */}
-              <div className="border-t border-gray-100 px-8 py-4 bg-gray-50/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                    <span className="text-xs text-gray-500">
-                      {getPlainTextFromMarkdown(content).length} characters
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      ~{calculateReadingTime(getPlainTextFromMarkdown(content))} min read
-                    </span>
+                {/* Summary */}
+                <div>
+                  <SummaryInput
+                    value={summary}
+                    onChange={setSummary}
+                    placeholder="Add a short description..."
+                    label=""
+                    maxLength={280}
+                    minLength={10}
+                    showOverlayCounter={true}
+                    className="border-0 border-b border-gray-200 bg-transparent shadow-none rounded-none focus-visible:ring-0 focus-visible:border-b focus-visible:border-gray-400 focus:border-gray-400 hover:border-gray-300 min-h-[100px] px-0 pb-4"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  {categoriesError ? (
+                    <div className="text-red-600 text-sm pb-4 border-b border-gray-200">
+                      Failed to load categories: {categoriesError}
+                    </div>
+                  ) : (
+                    <CategorySelector
+                      value={categoryId}
+                      onValueChange={setCategoryId}
+                      categories={categories}
+                      placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
+                      disabled={categoriesLoading}
+                      required
+                      className="w-full border-0 border-b border-gray-200 bg-transparent shadow-none rounded-none focus-visible:ring-0 focus-visible:border-b focus-visible:border-gray-400 focus:border-gray-400 hover:border-gray-300 px-0 pb-3"
+                    />
+                  )}
+                </div>
+
+                {/* Content Editor */}
+                <div>
+                  <MilkdownEditorWrapper>
+                    <ArticleEditor
+                      ref={editorRef}
+                      initialValue={content}
+                      onChange={setContent}
+                      onTempImagesChange={setTempImages}
+                      placeholder="What's on your mind?"
+                      className="min-h-[600px]"
+                    />
+                  </MilkdownEditorWrapper>
+                </div>
+
+                {/* Image Upload Status */}
+                {tempImages.length > 0 && (
+                  <div className="p-4 bg-blue-50/50 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <HiDocumentText className="size-4" />
+                      <span className="text-sm font-medium">
+                        {tempImages.length} image{tempImages.length > 1 ? 's' : ''} ready for upload
+                      </span>
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Images will be uploaded when you publish the article
+                    </div>
                   </div>
+                )}
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearDraft}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                  >
-                    Clear Draft
-                  </Button>
+                {/* Footer Stats and Actions */}
+                <div className="pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      <span className="text-xs text-gray-500">
+                        {getPlainTextFromMarkdown(content).length} characters
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ~{calculateReadingTime(getPlainTextFromMarkdown(content))} min read
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearDraft}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                    >
+                      Clear Draft
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

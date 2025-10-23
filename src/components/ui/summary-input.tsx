@@ -9,6 +9,7 @@ interface SummaryInputProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAr
   label?: string
   maxLength?: number
   minLength?: number
+  showOverlayCounter?: boolean
 }
 
 export function SummaryInput({
@@ -17,6 +18,7 @@ export function SummaryInput({
   label = "Summary",
   maxLength = 280,
   minLength = 10,
+  showOverlayCounter = false,
   className,
   ...props
 }: SummaryInputProps) {
@@ -51,13 +53,51 @@ export function SummaryInput({
             "dark:bg-input/30 md:text-sm",
             isOverLimit && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20",
             isUnderMinimum && "border-amber-500 focus-visible:border-amber-500 focus-visible:ring-amber-500/20",
+            showOverlayCounter && "pr-16", // Add padding for overlay counter
             className
           )}
           {...props}
         />
+        
+        {/* Overlay Counter */}
+        {showOverlayCounter && (
+          <div className="absolute bottom-1 right-1 bg-white/70 px-1.5 py-0.5 text-xs">
+            <span className={cn(isOverLimit ? "text-destructive" : "text-gray-400")}>
+              {characterCount}/{maxLength}
+            </span>
+          </div>
+        )}
       </div>
-      <div className="flex justify-between items-center mt-1">
-        <div className="text-xs text-gray-500">
+      
+      {/* Standard Counter and Validation (only when not using overlay) */}
+      {!showOverlayCounter && (
+        <div className="flex justify-between items-center mt-1">
+          <div className="text-xs text-gray-500">
+            {isUnderMinimum && (
+              <span className="text-amber-600">
+                At least {minLength} characters required
+              </span>
+            )}
+            {isOverLimit && (
+              <span className="text-destructive">
+                Character limit exceeded
+              </span>
+            )}
+          </div>
+          <div
+            className={cn(
+              "text-xs",
+              isOverLimit ? "text-destructive" : "text-gray-500"
+            )}
+          >
+            {characterCount}/{maxLength}
+          </div>
+        </div>
+      )}
+      
+      {/* Validation messages for overlay mode */}
+      {showOverlayCounter && (isUnderMinimum || isOverLimit) && (
+        <div className="text-xs mt-1">
           {isUnderMinimum && (
             <span className="text-amber-600">
               At least {minLength} characters required
@@ -69,15 +109,7 @@ export function SummaryInput({
             </span>
           )}
         </div>
-        <div
-          className={cn(
-            "text-xs",
-            isOverLimit ? "text-destructive" : "text-gray-500"
-          )}
-        >
-          {characterCount}/{maxLength}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
