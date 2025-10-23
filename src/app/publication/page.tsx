@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 import { useSearchParams } from 'next/navigation';
 import { usePublication } from '@/hooks/usePublication';
 import { usePublicationFeed } from '@/hooks/usePublicationFeed';
@@ -253,18 +254,20 @@ const PublicationPageContent: React.FC = () => {
  */
 const PublicationPage: React.FC = () => {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-muted-foreground">Loading publication...</span>
+    <RequireAuth>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="text-muted-foreground">Loading publication...</span>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <PublicationPageContent />
-    </Suspense>
+        }
+      >
+        <PublicationPageContent />
+      </Suspense>
+    </RequireAuth>
   );
 };
 

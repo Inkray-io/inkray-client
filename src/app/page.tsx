@@ -8,6 +8,7 @@ import { ConnectButton } from "@mysten/dapp-kit"
 import { HiFolderOpen, HiCurrencyDollar, HiLink } from "react-icons/hi2"
 import { motion } from "framer-motion"
 import { RiQuillPenAiFill } from "react-icons/ri"
+import { FaXTwitter } from "react-icons/fa6"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
 import { ROUTES } from "@/constants/routes"
@@ -15,21 +16,15 @@ import { ROUTES } from "@/constants/routes"
 export default function InkrayLanding() {
   const router = useRouter()
   const { isConnected } = useWalletConnection()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
-  // Redirect to feed if user is authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/feed')
-    }
-  }, [isAuthenticated, router])
 
-  // Redirect to auth page after wallet connects
+  // Redirect to auth page after wallet connects (but wait for auth loading to complete)
   useEffect(() => {
-    if (isConnected && !isAuthenticated) {
+    if (isConnected && !isAuthenticated && !isLoading) {
       router.push('/auth')
     }
-  }, [isConnected, isAuthenticated, router])
+  }, [isConnected, isAuthenticated, isLoading, router])
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
@@ -87,7 +82,21 @@ export default function InkrayLanding() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <img src="/logo.svg" alt="Inkray" />
           <div className="flex items-center gap-4">
-            {!isAuthenticated && <ConnectButton />}
+            <a
+              href={ROUTES.EXTERNAL.TWITTER}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-600 hover:text-primary transition-colors"
+            >
+              <FaXTwitter className="w-4 h-4" />
+            </a>
+            <button
+              className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+              onClick={() => router.push(ROUTES.FEED)}
+            >
+              {isConnected ? 'Go to App' : 'Try Testnet'}
+            </button>
+            {/* {!isAuthenticated && <ConnectButton />} */}
           </div>
         </div>
       </motion.header>
@@ -103,8 +112,11 @@ export default function InkrayLanding() {
             <div className="space-y-2 text-[#626262]">
               <p>Inkray combines the simplicity of modern blogging with the power of blockchain ownership. Publish effortlessly, own permanently.</p>
             </div>
-            <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg" asChild>
-              <a href={ROUTES.EXTERNAL.TWITTER} target="_blank" rel="noopener noreferrer">Follow us on X</a>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg"
+              onClick={() => router.push(ROUTES.FEED)}
+            >
+              Try Inkray on Testnet
             </Button>
 
             <div className="mt-12 flex items-center">Supported by <a href={ROUTES.EXTERNAL.WALRUS} target="_blank"><img src="/hero_section/walrus.svg" alt="Walrus" className="ml-2 h-8" /></a></div>

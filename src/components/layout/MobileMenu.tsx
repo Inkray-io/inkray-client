@@ -3,13 +3,13 @@
 import { HiMagnifyingGlass, HiBell, HiCog6Tooth } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@mysten/dapp-kit"
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose 
+  SheetClose
 } from "@/components/ui/sheet"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -25,7 +25,7 @@ interface MobileMenuProps {
 export function MobileMenu({ children, currentPage: _currentPage = "feed" }: MobileMenuProps) {
   const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
   const { account } = useAuth()
-  
+
   // Note: currentPage can be used for future active state management
   const topics = [
     { name: "Protocols", color: "bg-purple-400" },
@@ -50,7 +50,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
         <SheetHeader>
           <SheetTitle className="text-left">Menu</SheetTitle>
         </SheetHeader>
-        
+
         <div className="flex flex-col h-full">
           {/* Wallet/Profile Section */}
           <div className="py-6 border-b border-gray-200">
@@ -85,7 +85,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                     )}
                   </div>
                 </div>
-                
+
                 {/* Mobile Actions for Connected Users */}
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1 gap-2">
@@ -100,12 +100,12 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                     <HiCog6Tooth className="size-4" />
                   </Button>
                 </div>
-                
+
                 {/* Disconnect Button */}
                 <div className="mt-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => disconnect()}
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
@@ -139,7 +139,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                   </div>
                 </button>
               </SheetClose>
-              
+
               <div className="flex items-center justify-between">
                 <SheetClose asChild>
                   <button className="px-3 py-2.5 rounded-lg text-left">
@@ -151,7 +151,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                 </SheetClose>
                 <div className="size-2 bg-primary rounded mr-3"></div>
               </div>
-              
+
               <SheetClose asChild>
                 <button className="w-full px-3 py-2.5 rounded-lg text-left">
                   <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
               <div className="px-3 py-2.5">
                 <h3 className="font-medium text-black">Topics</h3>
               </div>
-              
+
               <div className="space-y-0.5">
                 {topics.map((topic) => (
                   <SheetClose key={topic.name} asChild>
@@ -185,9 +185,9 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
             {/* Inkray.io */}
             <div className="space-y-1">
               <div className="px-3 py-2.5">
-                <h3 className="font-medium text-black">Inkray.io</h3>
+                <h3 className="font-medium text-black">Inkray.xyz</h3>
               </div>
-              
+
               <div className="space-y-0.5">
                 <SheetClose asChild>
                   <button className="w-full px-3 py-2.5 rounded-lg hover:bg-gray-50 text-left">

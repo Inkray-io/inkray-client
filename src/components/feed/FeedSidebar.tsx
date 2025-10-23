@@ -24,7 +24,7 @@ export function FeedSidebar() {
               <span className="font-medium text-black">Popular</span>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="px-3 py-2.5 rounded-lg">
               <div className="flex items-center gap-3">
@@ -34,7 +34,7 @@ export function FeedSidebar() {
             </div>
             <div className="size-2 bg-primary rounded"></div>
           </div>
-          
+
           <div className="px-3 py-2.5 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="size-6">🖱️</div>
@@ -48,7 +48,7 @@ export function FeedSidebar() {
           <div className="px-3 py-2.5">
             <h3 className="font-medium text-black">Topics</h3>
           </div>
-          
+
           <div className="space-y-0.5">
             {topics.map((topic) => (
               <div key={topic.name} className="px-3 py-2.5 rounded-lg hover:bg-gray-50">
@@ -64,9 +64,9 @@ export function FeedSidebar() {
         {/* Inkray.io */}
         <div className="space-y-1">
           <div className="px-3 py-2.5">
-            <h3 className="font-medium text-black">Inkray.io</h3>
+            <h3 className="font-medium text-black">Inkray.xyz</h3>
           </div>
-          
+
           <div className="space-y-0.5">
             <div className="px-3 py-2.5 rounded-lg hover:bg-gray-50">
               <div className="flex items-center gap-3">

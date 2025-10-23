@@ -1,5 +1,6 @@
 "use client"
 
+import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { TopWriters } from "@/components/widgets/TopWriters"
@@ -11,7 +12,7 @@ import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function FeedPage() {
+function FeedPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -182,5 +183,13 @@ export default function FeedPage() {
 
       </div>
     </AppLayout>
+  )
+}
+
+export default function FeedPage() {
+  return (
+    <RequireAuth>
+      <FeedPageContent />
+    </RequireAuth>
   )
 }

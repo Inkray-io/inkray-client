@@ -11,6 +11,7 @@ import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { Avatar } from "@/components/ui/Avatar"
 import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface UserProfileProps {
   className?: string
@@ -22,6 +23,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   const { hasPublications, firstPublication, isLoading: publicationsLoading } = useUserPublications()
   const [isOpen, setIsOpen] = useState(false)
   const [copying, setCopying] = useState(false)
+  const router = useRouter()
   
   if (!address || !isAuthenticated) return null
   
@@ -46,6 +48,12 @@ export function UserProfile({ className = "" }: UserProfileProps) {
     logout() // Clear auth state
     disconnect() // Disconnect wallet
     setIsOpen(false)
+    
+    // Add a small delay to allow wallet disconnection to complete
+    // before redirecting to homepage to avoid race condition
+    setTimeout(() => {
+      router.push('/') // Redirect to homepage
+    }, 100)
   }
   
   return (
