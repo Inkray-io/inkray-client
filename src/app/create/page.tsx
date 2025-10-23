@@ -189,8 +189,8 @@ export default function CreateArticlePage() {
         <AppLayout currentPage="create">
           <div className="mx-auto space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+              <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-black">Create Article</h1>
                   <p className="text-gray-600 mt-1">Write and publish your story</p>
@@ -198,7 +198,7 @@ export default function CreateArticlePage() {
 
                 <div className="flex items-center gap-3">
                   {lastSaved && (
-                    <span className="text-sm text-gray-500">
+                    <span className="text-xs text-gray-400">
                       Last saved: {lastSaved.toLocaleTimeString()}
                     </span>
                   )}
@@ -225,7 +225,7 @@ export default function CreateArticlePage() {
 
               {/* Error Display */}
               {error && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 flex items-start gap-3">
+                <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-red-800 dark:text-red-200 text-sm font-medium mb-1">
@@ -245,100 +245,109 @@ export default function CreateArticlePage() {
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Title Input */}
-              <div className="mb-6">
+            {/* Main Editor Container */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              {/* Title Section */}
+              <div className="p-8 pb-6">
                 <input
                   type="text"
-                  placeholder="Article title..."
+                  placeholder="Add a Title..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black"
                 />
               </div>
 
-              {/* Summary and Category */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <SummaryInput
-                    value={summary}
-                    onChange={setSummary}
-                    placeholder="Write a brief summary or headline for your article..."
-                    label="Summary"
-                    maxLength={280}
-                    minLength={10}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  {categoriesError ? (
-                    <div className="text-red-600 text-sm">
-                      Failed to load categories: {categoriesError}
-                    </div>
-                  ) : (
-                    <CategorySelector
-                      value={categoryId}
-                      onValueChange={setCategoryId}
-                      categories={categories}
-                      placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
-                      disabled={categoriesLoading}
-                      required
+              {/* Metadata Section */}
+              <div className="px-8 pb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <SummaryInput
+                      value={summary}
+                      onChange={setSummary}
+                      placeholder="Add a short description..."
+                      label="Summary"
+                      maxLength={280}
+                      minLength={10}
                     />
-                  )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category
+                    </label>
+                    {categoriesError ? (
+                      <div className="text-red-600 text-sm">
+                        Failed to load categories: {categoriesError}
+                      </div>
+                    ) : (
+                      <CategorySelector
+                        value={categoryId}
+                        onValueChange={setCategoryId}
+                        categories={categories}
+                        placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
+                        disabled={categoriesLoading}
+                        required
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Editor Container */}
-            <div className="bg-white rounded-2xl p-6">
-              <MilkdownEditorWrapper>
-                <ArticleEditor
-                  ref={editorRef}
-                  initialValue={content}
-                  onChange={setContent}
-                  onTempImagesChange={setTempImages}
-                  placeholder="Start writing your article..."
-                  className="min-h-[600px]"
-                />
-              </MilkdownEditorWrapper>
-            </div>
+              {/* Divider */}
+              <div className="border-t border-gray-100" />
 
-            {/* Image Upload Status */}
-            {tempImages.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <HiDocumentText className="size-4" />
-                  <span className="text-sm font-medium">
-                    {tempImages.length} image{tempImages.length > 1 ? 's' : ''} ready for upload
-                  </span>
-                </div>
-                <div className="text-xs text-blue-600 mt-1">
-                  Images will be uploaded when you publish the article
-                </div>
+              {/* Editor Section */}
+              <div className="p-8">
+                <MilkdownEditorWrapper>
+                  <ArticleEditor
+                    ref={editorRef}
+                    initialValue={content}
+                    onChange={setContent}
+                    onTempImagesChange={setTempImages}
+                    placeholder="What's on your mind?"
+                    className="min-h-[600px]"
+                  />
+                </MilkdownEditorWrapper>
               </div>
-            )}
 
-            {/* Actions Footer */}
-            <div className="bg-white rounded-2xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-500">
-                    {getPlainTextFromMarkdown(content).length} characters
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    ~{calculateReadingTime(getPlainTextFromMarkdown(content))} min read
-                  </span>
+              {/* Image Upload Status - Integrated */}
+              {tempImages.length > 0 && (
+                <div className="mx-8 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <HiDocumentText className="size-4" />
+                    <span className="text-sm font-medium">
+                      {tempImages.length} image{tempImages.length > 1 ? 's' : ''} ready for upload
+                    </span>
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">
+                    Images will be uploaded when you publish the article
+                  </div>
                 </div>
+              )}
 
-                <Button
-                  variant="ghost"
-                  onClick={clearDraft}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  Clear Draft
-                </Button>
+              {/* Footer Section - Integrated */}
+              <div className="border-t border-gray-100 px-8 py-4 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <span className="text-xs text-gray-500">
+                      {getPlainTextFromMarkdown(content).length} characters
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      ~{calculateReadingTime(getPlainTextFromMarkdown(content))} min read
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearDraft}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                  >
+                    Clear Draft
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
