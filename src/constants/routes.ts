@@ -18,6 +18,11 @@ export const ROUTES = {
   FEED_FRESH: '/feed',
   FEED_MY_FEED: '/feed?type=my',
   
+  // Category feeds
+  FEED_CATEGORY: (categorySlug: string) => `/feed?category=${categorySlug}`,
+  FEED_CATEGORY_POPULAR: (categorySlug: string) => `/feed?type=popular&category=${categorySlug}`,
+  FEED_CATEGORY_MY: (categorySlug: string) => `/feed?type=my&category=${categorySlug}`,
+  
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
   PUBLICATION_WITH_ID: (id: string) => `/publication?id=${id}`,

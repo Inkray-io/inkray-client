@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/constants/routes"
 import { useSidebarMode } from "@/hooks/useSidebarMode"
+import { useCategories } from "@/hooks/useCategories"
 import { SidebarToggle } from "./SidebarToggle"
 import { ExpandableTooltip } from "./ExpandableTooltip"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -16,20 +17,22 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
   const { isCompact, toggleMode, isHydrated } = useSidebarMode()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { categories, isLoading: categoriesLoading } = useCategories()
 
-  // Determine current feed type from URL
+  // Determine current feed type and category from URL
   const currentFeedType = searchParams.get('type') || 'fresh'
-  const topics = [
-    { name: "Protocols", color: "bg-purple-400" },
-    { name: "DeFi", color: "bg-yellow-300" },
-    { name: "AI", color: "bg-green-400" },
-    { name: "Governance", color: "bg-orange-300" },
-    { name: "Investments", color: "bg-pink-500" },
-    { name: "Community", color: "bg-blue-900" },
-    { name: "Markets", color: "bg-purple-500" },
-    { name: "Builders", color: "bg-orange-500" },
-    { name: "Events", color: "bg-red-500" }
-  ]
+  const currentCategory = searchParams.get('category')
+  
+  // Generate consistent colors for categories based on their names
+  const getColor = (name: string) => {
+    const colors = [
+      "bg-purple-400", "bg-yellow-300", "bg-green-400", "bg-orange-300", 
+      "bg-pink-500", "bg-blue-900", "bg-purple-500", "bg-orange-500", 
+      "bg-red-500", "bg-teal-400", "bg-indigo-400", "bg-lime-400"
+    ]
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    return colors[hash % colors.length]
+  }
 
   const navigationItems = [
     {
@@ -121,46 +124,65 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
           ))}
         </div>
 
-        {/* Topics */}
+        {/* Categories */}
         {!isCompact && (
           <div className="space-y-0.5">
             <div className="px-2.5 py-1.5">
-              <h3 className="font-medium text-black text-sm">Topics</h3>
+              <h3 className="font-medium text-black text-sm">Categories</h3>
             </div>
 
             <div className="space-y-0.5">
-              {topics.map((topic) => (
-                <button
-                  key={topic.name}
-                  className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`size-4 rounded-lg ${topic.color}`} />
-                    <span className="font-medium text-black text-sm">{topic.name}</span>
-                  </div>
-                </button>
-              ))}
+              {categoriesLoading ? (
+                <div className="px-2.5 py-1.5 text-sm text-gray-500">Loading categories...</div>
+              ) : (
+                categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
+                    className={cn(
+                      "w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
+                      currentCategory === category.slug
+                        ? "bg-primary/10 text-primary"
+                        : "hover:bg-gray-50 text-black"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`size-4 rounded-lg ${getColor(category.name)}`} />
+                      <span className="font-medium text-sm">{category.name}</span>
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
 
-        {/* Topics - Compact Mode */}
+        {/* Categories - Compact Mode */}
         {isCompact && (
           <div className="space-y-0.5">
-            {topics.slice(0, 3).map((topic) => (
+            {!categoriesLoading && categories.slice(0, 3).map((category) => (
               <ExpandableTooltip
-                key={topic.name}
-                label={topic.name}
+                key={category.id}
+                label={category.name}
                 isCompact={isCompact}
+                isActive={currentCategory === category.slug}
               >
-                <button className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center">
-                  <div className={`size-4 rounded-lg ${topic.color}`} />
+                <button 
+                  onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
+                  className={cn(
+                    "w-full px-2 py-1.5 rounded-lg transition-colors flex justify-center",
+                    currentCategory === category.slug
+                      ? "bg-primary/10"
+                      : "hover:bg-gray-50"
+                  )}
+                >
+                  <div className={`size-4 rounded-lg ${getColor(category.name)}`} />
                 </button>
               </ExpandableTooltip>
             ))}
-            {topics.length > 3 && (
+            {!categoriesLoading && categories.length > 3 && (
               <ExpandableTooltip
-                label="More topics..."
+                label="More categories..."
                 isCompact={isCompact}
               >
                 <button className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center">

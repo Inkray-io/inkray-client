@@ -13,6 +13,7 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  * 
  * @param feedType - Type of feed to fetch ('fresh' | 'popular' | 'my')
  * @param timeframe - Timeframe for popular feed ('day' | 'week' | 'month')
+ * @param categoryId - Optional category ID to filter articles by
  * @returns Object containing feed state and management functions
  * 
  * @example
@@ -23,7 +24,7 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  *   hasMore, 
  *   loadMore, 
  *   refresh 
- * } = useFeedArticles('popular', 'week');
+ * } = useFeedArticles('popular', 'week', 'category-id');
  * 
  * return (
  *   <div>
@@ -41,7 +42,8 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
  */
 export const useFeedArticles = (
   feedType: 'fresh' | 'popular' | 'my' = 'fresh',
-  timeframe: 'day' | 'week' | 'month' = 'week'
+  timeframe: 'day' | 'week' | 'month' = 'week',
+  categoryId?: string
 ) => {
   const [state, setState] = useState<FeedArticlesState>({
     articles: [],
@@ -71,6 +73,11 @@ export const useFeedArticles = (
         params.timeframe = timeframe;
       }
 
+      // Add category filter if provided
+      if (categoryId) {
+        params.categoryId = categoryId;
+      }
+
       const response = await feedAPI.getArticles(params);
       const result = response.data;
 
@@ -84,7 +91,7 @@ export const useFeedArticles = (
       log.error('Failed to fetch articles', error, 'useFeedArticles');
       throw new Error(`Feed articles fetch failed: Could not fetch articles from backend. Ensure the backend service is running.`);
     }
-  }, [feedType, timeframe]);
+  }, [feedType, timeframe, categoryId]);
 
   /**
    * Load initial articles
@@ -194,7 +201,7 @@ export const useFeedArticles = (
   // Load articles on mount or when feed type/timeframe changes
   useEffect(() => {
     loadArticles();
-  }, [loadArticles, feedType, timeframe]);
+  }, [loadArticles, feedType, timeframe, categoryId]);
 
   return {
     // State

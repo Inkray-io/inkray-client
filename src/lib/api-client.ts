@@ -339,12 +339,15 @@ export const api = {
   // Feed endpoints
   feed: {
     getArticles: (params?: {
+      type?: 'fresh' | 'popular' | 'my';
       limit?: number;
       cursor?: string;
       author?: string;
       publicationId?: string;
+      categoryId?: string; // New parameter for category filtering
       fromDate?: string;
       toDate?: string;
+      timeframe?: 'day' | 'week' | 'month';
     }) => apiClient.getPaginated<Record<string, unknown>>('/feed/articles', params),
 
     getTrending: (params?: {

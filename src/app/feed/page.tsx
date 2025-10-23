@@ -7,6 +7,7 @@ import { TopWriters } from "@/components/widgets/TopWriters"
 import { PopularComments } from "@/components/widgets/PopularComments"
 import { Button } from "@/components/ui/button"
 import { useFeedArticles } from "@/hooks/useFeedArticles"
+import { useCategories } from "@/hooks/useCategories"
 import { FeedType, TimeFrame } from "@/components/feed/FeedTypeSelector"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -15,12 +16,17 @@ import { useEffect, useState } from "react"
 function FeedPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { categories } = useCategories()
   
-  // Extract feed type from URL params
+  // Extract feed type and category from URL params
   const [feedType, setFeedType] = useState<FeedType>(() => {
     const typeParam = searchParams.get('type') as FeedType
     return ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
   })
+  
+  // Get category from URL and find the corresponding category ID
+  const categorySlug = searchParams.get('category')
+  const selectedCategory = categories.find(cat => cat.slug === categorySlug)
   
   // Popular feed always uses week timeframe (as requested)
   const timeframe: TimeFrame = 'week'
@@ -34,7 +40,7 @@ function FeedPageContent() {
     refresh, 
     clearError,
     formatArticleForDisplay 
-  } = useFeedArticles(feedType, timeframe)
+  } = useFeedArticles(feedType, timeframe, selectedCategory?.id)
 
   const handleArticleClick = (slug: string) => {
     router.push(`/article?id=${encodeURIComponent(slug)}`)
@@ -54,6 +60,8 @@ function FeedPageContent() {
     if (newType !== feedType) {
       setFeedType(newType)
     }
+    // Note: Category changes are handled automatically through selectedCategory
+    // which updates when searchParams or categories change
   }, [searchParams, feedType])
 
   return (
@@ -140,28 +148,35 @@ function FeedPageContent() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {feedType === 'fresh' && 'No Articles Found'}
-                  {feedType === 'popular' && 'No Popular Articles This Week'}
-                  {feedType === 'my' && 'No Articles in Your Feed'}
+                  {selectedCategory && `No ${selectedCategory.name} Articles Found`}
+                  {!selectedCategory && feedType === 'fresh' && 'No Articles Found'}
+                  {!selectedCategory && feedType === 'popular' && 'No Popular Articles This Week'}
+                  {!selectedCategory && feedType === 'my' && 'No Articles in Your Feed'}
                 </h2>
                 <p className="text-muted-foreground">
-                  {feedType === 'fresh' && 'No articles have been published yet. Be the first to create content!'}
-                  {feedType === 'popular' && `No articles have gained popularity in the selected timeframe. Try a different timeframe or check back later.`}
-                  {feedType === 'my' && 'You haven\'t followed any publications yet, or they haven\'t published articles recently.'}
+                  {selectedCategory && `No articles have been published in the ${selectedCategory.name} category yet.`}
+                  {!selectedCategory && feedType === 'fresh' && 'No articles have been published yet. Be the first to create content!'}
+                  {!selectedCategory && feedType === 'popular' && `No articles have gained popularity in the selected timeframe. Try a different timeframe or check back later.`}
+                  {!selectedCategory && feedType === 'my' && 'You haven\'t followed any publications yet, or they haven\'t published articles recently.'}
                 </p>
               </div>
               <div className="flex gap-3 justify-center">
-                {feedType === 'fresh' && (
+                {selectedCategory && (
+                  <Button onClick={() => router.push('/feed')} variant="outline">
+                    Browse All Articles
+                  </Button>
+                )}
+                {!selectedCategory && feedType === 'fresh' && (
                   <Button onClick={() => router.push('/create')} className="gap-2">
                     Create Article
                   </Button>
                 )}
-                {feedType === 'my' && (
+                {!selectedCategory && feedType === 'my' && (
                   <Button onClick={() => router.push('/feed?type=fresh')} variant="outline">
                     Browse All Articles
                   </Button>
                 )}
-                {feedType === 'popular' && (
+                {!selectedCategory && feedType === 'popular' && (
                   <Button onClick={() => router.push('/feed')} variant="outline">
                     Browse Fresh Articles
                   </Button>
