@@ -19,6 +19,59 @@
   box-shadow: none !important;
 }
 
+/* Minimal editor styling for create page */
+.crepe-minimal {
+  /* Remove all borders and styling */
+  border: 0 !important;
+  border-bottom: 1px solid #e5e7eb !important; /* border-gray-200 */
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Remove toolbar borders in minimal mode */
+.crepe-minimal .crepe-toolbar {
+  background: transparent !important;
+  border-bottom: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 0 12px 0 !important;
+}
+
+/* Remove padding from editor content area but keep left padding for controls */
+.crepe-minimal .crepe-editor {
+  padding: 0 0 0 80px !important;
+  background: transparent !important;
+}
+
+/* Remove padding from ProseMirror content but keep left padding */
+.crepe-minimal .ProseMirror {
+  padding: 0 0 0 80px !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* Clean focus state for minimal editor */
+.crepe-minimal .crepe-editor-container:focus-within {
+  border-color: #9ca3af !important; /* border-gray-400 */
+  box-shadow: none !important;
+}
+
+/* Remove any additional container padding */
+.crepe-minimal .crepe-container {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Override any default Crepe padding */
+.crepe-minimal * {
+  background: transparent !important;
+}
+
+.crepe-minimal .crepe-editor-wrapper {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
 /* Editor content area */
 .crepe .milkdown {
   font-size: 16px !important;

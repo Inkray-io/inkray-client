@@ -129,7 +129,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
   // Return the official Milkdown component
   return (
     <div className={`milkdown-editor ${className}`}>
-      <div className="min-h-[500px] w-full">
+      <div className="min-h-[500px] w-full crepe crepe-minimal">
         <Milkdown />
       </div>
     </div>
