@@ -58,12 +58,10 @@ export {
 // Subscription Management Hooks
 export { 
   useSubscription,
-  type UseSubscriptionReturn,
 } from './useSubscription';
 
 export { 
   useUserSubscriptions,
-  type UseUserSubscriptionsReturn,
 } from './useUserSubscriptions';
 
 // UI Hooks

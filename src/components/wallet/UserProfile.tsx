@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiUser, HiPlus, HiCog6Tooth } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"

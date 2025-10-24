@@ -1,9 +1,9 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalletAccount } from '@mysten/wallet-standard';
-import { SealClient, SessionKey } from '@mysten/seal';
+import { SealClient } from '@mysten/seal';
 import { generateArticleContentId, generateMediaContentId } from './seal-identity';
 import { toBase64, fromBase64 } from '@mysten/bcs';
-import { getKeyServerConfigs, DEFAULT_SESSION_KEY_TTL_MINUTES, DEFAULT_ENCRYPTION_THRESHOLD, type SealNetwork } from './seal-config';
+import { getKeyServerConfigs, DEFAULT_ENCRYPTION_THRESHOLD, type SealNetwork } from './seal-config';
 import { CONFIG } from './config';
 
 // NOTE: Direct decryption methods are deprecated.
@@ -43,7 +43,6 @@ export interface SealDecryptionRequest {
 export class InkraySealClient {
   private config: SealClientConfig;
   private sealClient: SealClient | null = null;
-  private sessionKey: SessionKey | null = null;
 
   constructor(config: SealClientConfig) {
     this.config = config;
@@ -75,19 +74,6 @@ export class InkraySealClient {
     }
 
     return this.sealClient;
-  }
-
-
-  private async getSessionKey(address: string, packageId: string): Promise<SessionKey> {
-    if (!this.sessionKey) {
-      this.sessionKey = await SessionKey.create({
-        address,
-        packageId,
-        ttlMin: DEFAULT_SESSION_KEY_TTL_MINUTES,
-        suiClient: this.config.suiClient,
-      });
-    }
-    return this.sessionKey;
   }
 
   // === ENCRYPTION METHODS ===
@@ -194,7 +180,6 @@ export class InkraySealClient {
    */
   reset() {
     this.sealClient = null;
-    this.sessionKey = null;
     console.log('🔄 Seal client reset');
   }
 

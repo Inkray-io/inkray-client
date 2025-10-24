@@ -207,7 +207,7 @@ export function useSubscription({
   // Fetch subscription status when component mounts or dependencies change
   useEffect(() => {
     fetchSubscriptionStatus();
-  }, [publicationId, enabled, isConnected, account?.address]);
+  }, [publicationId, enabled, isConnected, account?.address, fetchSubscriptionStatus]);
 
   return {
     subscriptionStatus,

@@ -77,7 +77,7 @@ export function FeedPost({
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false)
+  // const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false) // Commented out as it's not used yet
   
   // Initialize likes hook if articleId is available
   const likesHook = useLikes(

@@ -110,7 +110,7 @@ export const useSubscriptionSettings = ({
       });
 
       log.info('Subscription price updated successfully', {
-        digest: result.digest,
+        digest: result?.digest,
         publicationId,
         newPrice: priceInSui,
       }, 'useSubscriptionSettings');

@@ -59,7 +59,13 @@ export const useFeedArticles = (
    */
   const fetchArticles = useCallback(async (cursor?: string | null) => {
     try {
-      const params: Parameters<typeof feedAPI.getArticles>[0] = {
+      const params: {
+        type?: 'fresh' | 'popular' | 'my';
+        limit?: number;
+        cursor?: string;
+        timeframe?: 'day' | 'week' | 'month';
+        categoryId?: string;
+      } = {
         type: feedType,
         limit: 20,
       };

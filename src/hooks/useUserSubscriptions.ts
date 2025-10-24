@@ -61,7 +61,7 @@ export function useUserSubscriptions({
       });
 
       if (response.data) {
-        const newSubscriptions = response.data.data.map((sub: any) => ({
+        const newSubscriptions = response.data.data.map((sub: UserSubscription & { expiresAt: string; createdAt: string }) => ({
           ...sub,
           expiresAt: new Date(sub.expiresAt),
           createdAt: new Date(sub.createdAt),
@@ -119,7 +119,7 @@ export function useUserSubscriptions({
       setCursor(undefined);
       setError(null);
     }
-  }, [enabled, isConnected, account?.address]);
+  }, [enabled, isConnected, account?.address, refetch]);
 
   return {
     subscriptions,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { clearUserSpecificCache, clearOnWalletChange, clearOnDisconnect } from '@/lib/cache-manager';
+import { clearOnWalletChange, clearOnDisconnect } from '@/lib/cache-manager';
 
 /**
  * Hook to detect wallet account changes and clear relevant cache data

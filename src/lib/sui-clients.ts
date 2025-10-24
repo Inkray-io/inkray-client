@@ -31,7 +31,7 @@ export const INKRAY_CONFIG = CONFIG;
  * This class is deprecated and will be removed. Please migrate to the new Seal client.
  */
 export class LegacySealClient {
-  constructor(private config: SealClientConfig) {
+  constructor() {
     console.warn('⚠️ Using deprecated LegacySealClient. Migrate to createSealClient from @/lib/seal-client');
   }
 
@@ -54,7 +54,7 @@ export class LegacySealClient {
  * This class is deprecated and will be removed. Please migrate to the new Walrus client.
  */
 export class LegacyWalrusClient {
-  constructor(private config: WalrusClientConfig) {
+  constructor() {
     console.warn('⚠️ Using deprecated LegacyWalrusClient. Migrate to createWalrusClient from @/lib/walrus-client');
   }
 

@@ -282,7 +282,7 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
   )
 }
 
-function GeneralSettings({ publicationId }: { publicationId: string }) {
+function GeneralSettings({ publicationId: _publicationId }: { publicationId: string }) {
   return (
     <div className="space-y-6">
       <div>
@@ -297,7 +297,7 @@ function GeneralSettings({ publicationId }: { publicationId: string }) {
   )
 }
 
-function Analytics({ publicationId }: { publicationId: string }) {
+function Analytics({ publicationId: _publicationId }: { publicationId: string }) {
   return (
     <div className="space-y-6">
       <div>
@@ -312,7 +312,7 @@ function Analytics({ publicationId }: { publicationId: string }) {
   )
 }
 
-function Subscribers({ publicationId }: { publicationId: string }) {
+function Subscribers({ publicationId: _publicationId }: { publicationId: string }) {
   return (
     <div className="space-y-6">
       <div>

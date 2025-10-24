@@ -305,10 +305,10 @@ function ArticlePageContent() {
                             publicationInfo={{
                               id: article.publicationId,
                               name: article.followInfo?.publicationName || 'Publication',
-                              description: article.followInfo?.publicationDescription,
+                              description: undefined, // description not available in followInfo
                               avatar: article.followInfo?.publicationAvatar || undefined,
-                              totalSubscribers: article.followInfo?.subscriberCount,
-                              totalArticles: article.followInfo?.articleCount,
+                              totalSubscribers: article.followInfo?.followerCount,
+                              totalArticles: undefined, // articleCount not available in followInfo
                             }}
                             subscriptionInfo={{
                               id: article.publicationSubscriptionInfo?.id || '',

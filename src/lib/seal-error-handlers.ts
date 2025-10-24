@@ -10,7 +10,6 @@ import {
   SealErrorType, 
   SealErrorSeverity,
   isSealError,
-  createConfigurationError,
   createWalletError,
   createKeyServerError,
   createDecryptionError,
