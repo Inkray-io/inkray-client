@@ -2,6 +2,13 @@
   "site_name": "Inkray",
   "object_id": "0x7cad4afc0c1541b92c71c6c7224798471e43fef19b9991dd6392bc590de0d356",
   "routes": {
+    "/feed": "/feed.html",
+    "/auth": "/auth.html",
+    "/create": "/create.html",
+    "/create-publication": "/create-publication.html",
+    "/article": "/article.html",
+    "/publication": "/publication.html",
+    "/publication/settings": "/publication/settings.html",
     "/*": "/index.html"
   }
 }
