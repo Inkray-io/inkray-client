@@ -104,14 +104,14 @@ export default function InkrayLanding() {
       <section className="px-6 py-16">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <motion.div className="space-y-6" {...slideInLeft}>
-            <div className="text-sm bg-primary/10 text-primary font-medium inline-block py-1 px-4 rounded-full">First Sui Testnet coming soon</div>
+            <div className="text-sm bg-primary/10 text-primary font-medium inline-block py-1 px-4 rounded-full">Try our first testnet right now</div>
             <h1 className="text-5xl lg:text-6xl font-semibold text-black">
               True digital <span className="text-primary">ownership</span> for creators
             </h1>
             <div className="space-y-2 text-[#626262]">
               <p>Inkray combines the simplicity of modern blogging with the power of blockchain ownership. Publish effortlessly, own permanently.</p>
             </div>
-            <Button 
+            <Button
               className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg"
               onClick={() => router.push(ROUTES.FEED)}
             >

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { usePathname } from "next/navigation"
 import { ONBOARDING_CONFIG, type OnboardingStep } from "./onboarding-config"
 
 interface UseOnboardingReturn {
@@ -36,7 +37,19 @@ function setOnboardingCompleted(): void {
   }
 }
 
+function shouldShowOnboardingForRoute(pathname: string): boolean {
+  // Don't show onboarding on the homepage/landing page
+  if (pathname === '/') {
+    return false
+  }
+  
+  // Show onboarding on app pages
+  const appRoutes = ['/feed', '/auth', '/create', '/publication', '/article']
+  return appRoutes.some(route => pathname.startsWith(route))
+}
+
 export function useOnboarding(): UseOnboardingReturn {
+  const pathname = usePathname()
   const [isCompleted, setIsCompleted] = useState<boolean>(() => getOnboardingStatus())
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -79,7 +92,7 @@ export function useOnboarding(): UseOnboardingReturn {
   }, [])
 
   return {
-    isOpen: isHydrated && !isCompleted,
+    isOpen: isHydrated && !isCompleted && shouldShowOnboardingForRoute(pathname),
     currentStep,
     currentStepData,
     totalSteps,
