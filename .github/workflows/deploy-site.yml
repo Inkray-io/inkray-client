@@ -39,6 +39,7 @@ jobs:
           SUI_NETWORK: mainnet
           SUI_ADDRESS: ${{ vars.SUI_ADDRESS }}
           SUI_KEYSTORE: ${{ secrets.SUI_KEYSTORE }}
+          SITES_CONFIG: ${{ vars.SITES_CONFIG }}
           DIST: "out" # directory containing your static files
           WS_RESOURCES: "./ws-resources.json"
           EPOCHS: "12" # number of epochs to keep the site alive (optional)
