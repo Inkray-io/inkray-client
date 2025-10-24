@@ -28,6 +28,6 @@ contexts:
       # wallet: /path/to/.sui/sui_config/client.yaml
       # walrus_binary: /path/to/walrus
       # walrus_config: /path/to/mainnet/client_config.yaml
-      # gas_budget: 500000000
+      gas_budget: 1000000000
 
 default_context: mainnet
