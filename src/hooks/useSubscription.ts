@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { subscriptionsAPI } from '@/lib/api';
 import { useWalletConnection } from './useWalletConnection';
 
@@ -100,7 +100,7 @@ export function useSubscription({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscriptionStatus = async () => {
+  const fetchSubscriptionStatus = useCallback(async () => {
     if (!enabled || !publicationId) {
       return;
     }
@@ -180,7 +180,7 @@ export function useSubscription({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [enabled, publicationId]); // Only depend on values that actually change
 
   const refetch = async () => {
     await fetchSubscriptionStatus();
@@ -207,7 +207,7 @@ export function useSubscription({
   // Fetch subscription status when component mounts or dependencies change
   useEffect(() => {
     fetchSubscriptionStatus();
-  }, [publicationId, enabled, isConnected, account?.address, fetchSubscriptionStatus]);
+  }, [fetchSubscriptionStatus, publicationId, enabled, isConnected, account?.address]);
 
   return {
     subscriptionStatus,

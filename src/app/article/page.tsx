@@ -31,12 +31,20 @@ function ArticlePageContent() {
   const searchParams = useSearchParams();
   const [articleSlug, setArticleSlug] = useState<string | null>(null);
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Get article slug from query parameters
+  // Mark as hydrated after mount to prevent SSR/client mismatch
   useEffect(() => {
-    const id = searchParams.get('id');
-    setArticleSlug(id);
-  }, [searchParams]);
+    setIsHydrated(true);
+  }, []);
+
+  // Get article slug from query parameters (only after hydration)
+  useEffect(() => {
+    if (isHydrated) {
+      const id = searchParams.get('id');
+      setArticleSlug(id);
+    }
+  }, [isHydrated, searchParams]);
 
   const {
     article,
@@ -75,6 +83,24 @@ function ArticlePageContent() {
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
   };
+
+  // Show loading state during hydration to prevent SSR mismatch
+  if (!isHydrated) {
+    return (
+      <RequireAuth redirectTo="/">
+        <AppLayout currentPage="feed">
+          <div className="max-w-4xl mx-auto py-8">
+            <div className="bg-white rounded-2xl p-8">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="font-medium">Loading article...</p>
+              </div>
+            </div>
+          </div>
+        </AppLayout>
+      </RequireAuth>
+    );
+  }
 
   // Show loading state when no slug is available
   if (!articleSlug) {

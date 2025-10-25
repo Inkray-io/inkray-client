@@ -115,13 +115,49 @@ export const useArticle = (articleSlug: string | null) => {
     enabled: !!currentPublicationId
   });
 
+  // Stable refs to prevent dependency loops
+  const stableSubscriptionData = useRef<{
+    requiresSubscription: boolean;
+    hasActiveSubscription: boolean;
+    subscriptionPrice: number | undefined;
+    subscriptionId: string | undefined;
+  }>({
+    requiresSubscription: false,
+    hasActiveSubscription: false,
+    subscriptionPrice: undefined,
+    subscriptionId: undefined,
+  });
+
+  /**
+   * Update stable subscription data ref
+   */
+  useEffect(() => {
+    const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
+      !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
+    const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
+    const subscriptionPrice = subscriptionInfo?.subscriptionPrice ?? currentPublication?.subscriptionPrice;
+    const subscriptionId = subscriptionStatus?.subscription?.subscriptionId;
+
+    stableSubscriptionData.current = {
+      requiresSubscription,
+      hasActiveSubscription,
+      subscriptionPrice,
+      subscriptionId,
+    };
+  }, [
+    subscriptionStatus?.publicationRequiresSubscription,
+    subscriptionStatus?.hasActiveSubscription,
+    subscriptionStatus?.subscription?.subscriptionId,
+    currentPublication?.subscriptionPrice,
+    subscriptionInfo?.subscriptionPrice,
+  ]);
+
   /**
    * Determine if we should attempt decryption based on access control policies
    */
   const shouldAttemptDecryption = useCallback((article: Article): { shouldAttempt: boolean; reason: string; hasAccess: boolean } => {
     // For free content (no subscription price), always allow decryption
-    const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
-      !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
+    const requiresSubscription = stableSubscriptionData.current.requiresSubscription;
     
     if (!requiresSubscription) {
       return { 
@@ -142,7 +178,7 @@ export const useArticle = (articleSlug: string | null) => {
     }
 
     // Check subscription access
-    const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
+    const hasActiveSubscription = stableSubscriptionData.current.hasActiveSubscription;
     if (hasActiveSubscription) {
       return { 
         shouldAttempt: true, 
@@ -178,15 +214,7 @@ export const useArticle = (articleSlug: string | null) => {
       reason: 'User lacks subscription access to gated content',
       hasAccess: false 
     };
-  }, [
-    subscriptionStatus?.publicationRequiresSubscription,
-    subscriptionStatus?.hasActiveSubscription,
-    currentPublication?.subscriptionPrice,
-    stableOwnerData,
-    isLoadingUserPublications,
-    isLoadingPublication,
-    isLoadingSubscription
-  ]);
+  }, [isLoadingUserPublications, isLoadingPublication, isLoadingSubscription]);
 
   // Get loading state information based on current stage
   const getLoadingStateInfo = useCallback((): LoadingStateInfo => {
@@ -291,9 +319,8 @@ export const useArticle = (articleSlug: string | null) => {
       }
 
       // Smart subscription/owner check - avoid race conditions for publication owners
-      const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
-        !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
-      const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
+      const requiresSubscription = stableSubscriptionData.current.requiresSubscription;
+      const hasActiveSubscription = stableSubscriptionData.current.hasActiveSubscription;
       
       // Check if user might be the publication owner (using stable owner data)
       const mightBeOwner = stableOwnerData.current?.publicationId === article.publicationId;
@@ -455,9 +482,6 @@ export const useArticle = (articleSlug: string | null) => {
     suiClient, 
     currentAccount, 
     isWalletReady,
-    subscriptionStatus?.publicationRequiresSubscription,
-    subscriptionStatus?.hasActiveSubscription,
-    currentPublication?.subscriptionPrice,
     isLoadingUserPublications,
     isLoadingPublication,
     firstPublication?.publicationId,
@@ -594,13 +618,18 @@ export const useArticle = (articleSlug: string | null) => {
     }
   }, [loadArticleMetadata, loadArticleContent, shouldAttemptDecryption]);
 
+  // Stable reference to current slug to prevent unnecessary reloads
+  const currentSlugRef = useRef<string | null>(null);
+
   /**
    * Load article when slug changes
    */
   useEffect(() => {
-    if (articleSlug) {
+    if (articleSlug && articleSlug !== currentSlugRef.current) {
+      currentSlugRef.current = articleSlug;
       loadArticle(articleSlug);
-    } else {
+    } else if (!articleSlug && currentSlugRef.current) {
+      currentSlugRef.current = null;
       // Clear state when no slug
       setState({
         article: null,
@@ -613,7 +642,7 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
       setEncryptedContentData(null);
     }
-  }, [articleSlug, loadArticle]);
+  }, [articleSlug]); // Remove loadArticle from dependencies
 
   /**
    * Update stable owner data when firstPublication changes
@@ -716,10 +745,9 @@ export const useArticle = (articleSlug: string | null) => {
           ownerCapId: stableOwnerData.current?.publicationId === article.publicationId
             ? stableOwnerData.current?.ownerCapId
             : undefined,
-          // Use subscription price from subscription API if available, fallback to publication data
-          subscriptionPrice: subscriptionInfo?.subscriptionPrice ?? currentPublication?.subscriptionPrice,
-          // Add subscriptionId from the subscription system
-          subscriptionId: subscriptionStatus?.subscription?.subscriptionId,
+          // Use stable subscription data
+          subscriptionPrice: stableSubscriptionData.current.subscriptionPrice,
+          subscriptionId: stableSubscriptionData.current.subscriptionId,
         };
 
         console.log('🎯 FINAL POLICY SELECTION INPUT:', {
@@ -778,12 +806,7 @@ export const useArticle = (articleSlug: string | null) => {
     currentAccount,
     isLoadingUserPublications,
     isLoadingPublication,
-    currentPublication?.subscriptionPrice,
     currentPublicationId,
-    currentPublication,
-    subscriptionInfo?.subscriptionPrice,
-    subscriptionStatus?.hasActiveSubscription,
-    subscriptionStatus?.subscription?.subscriptionId,
     stableDecryptContent,
     shouldAttemptDecryption
   ]);
@@ -822,13 +845,9 @@ export const useArticle = (articleSlug: string | null) => {
       },
     });
 
-    // Determine if this publication requires a subscription
-    // Priority: Use subscription API data if available, fallback to publication data
-    const publicationRequiresSubscription = subscriptionStatus?.publicationRequiresSubscription ??
-      !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
-
-    // Determine if user has an active subscription
-    const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
+    // Use stable subscription data to prevent loops
+    const publicationRequiresSubscription = stableSubscriptionData.current.requiresSubscription;
+    const hasActiveSubscription = stableSubscriptionData.current.hasActiveSubscription;
 
     // Only update if the subscription fields need to change
     const needsUpdate =
@@ -847,9 +866,9 @@ export const useArticle = (articleSlug: string | null) => {
             subscriptionPrice: subscriptionInfo.subscriptionPrice,
             subscriptionPeriod: subscriptionInfo.subscriptionPeriod,
           } : {
-            // Fallback to publication data if subscription API data not available
+            // Fallback to stable subscription data
             id: currentPublicationId || '',
-            subscriptionPrice: currentPublication?.subscriptionPrice || 0,
+            subscriptionPrice: stableSubscriptionData.current.subscriptionPrice || 0,
             subscriptionPeriod: 30, // Default
           }) : undefined,
         publicationSubscriptionExpiresAt: subscriptionStatus?.subscription?.expiresAt?.toISOString(),
@@ -877,15 +896,11 @@ export const useArticle = (articleSlug: string | null) => {
     }
   }, [
     state.article,
-    currentPublication?.subscriptionPrice,
-    currentPublication?.id,
     currentPublicationId,
-    subscriptionStatus?.hasActiveSubscription,
-    subscriptionStatus?.publicationRequiresSubscription,
-    subscriptionStatus?.subscription?.expiresAt,
     subscriptionInfo,
     isLoadingSubscription,
     isLoadingPublication,
+    subscriptionStatus?.subscription?.expiresAt,
   ]);
 
 
@@ -958,10 +973,9 @@ export const useArticle = (articleSlug: string | null) => {
           ownerCapId: firstPublication?.ownerCapId && firstPublication.publicationId === article.publicationId
             ? firstPublication.ownerCapId
             : undefined,
-          // Use subscription price from subscription API if available, fallback to publication data
-          subscriptionPrice: subscriptionInfo?.subscriptionPrice ?? currentPublication?.subscriptionPrice,
-          // Add subscriptionId from the subscription system
-          subscriptionId: subscriptionStatus?.subscription?.subscriptionId,
+          // Use stable subscription data
+          subscriptionPrice: stableSubscriptionData.current.subscriptionPrice,
+          subscriptionId: stableSubscriptionData.current.subscriptionId,
         };
 
         console.log('🎯 MANUAL POLICY SELECTION INPUT:', {
@@ -1004,10 +1018,6 @@ export const useArticle = (articleSlug: string | null) => {
     stableDecryptContent,
     firstPublication?.ownerCapId,
     firstPublication?.publicationId,
-    currentPublication?.subscriptionPrice,
-    subscriptionInfo?.subscriptionPrice,
-    subscriptionStatus?.hasActiveSubscription,
-    subscriptionStatus?.subscription?.subscriptionId
   ]);
 
   /**
