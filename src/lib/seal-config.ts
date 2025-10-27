@@ -1,8 +1,9 @@
 import { CONFIG } from './config';
+import { log } from './utils/Logger';
 
 /**
  * Shared Seal Configuration Module
- * 
+ *
  * Centralizes all Seal-related configuration including:
  * - Key server IDs for different networks
  * - Environment variable handling
@@ -55,12 +56,17 @@ export function getKeyServerIds(network?: SealNetwork): string[] {
   if (CONFIG.SEAL_KEY_SERVER_IDS) {
     const envServers = CONFIG.SEAL_KEY_SERVER_IDS.split(',').map(id => id.trim());
     if (envServers.length > 0 && envServers[0] !== '') {
-      console.log(`🔧 Using key servers from environment: ${envServers.length} servers`);
+      log.debug('Using key servers from environment', {
+        serverCount: envServers.length
+      }, 'SealConfig');
       return envServers;
     }
   }
 
-  console.log(`🔧 Using default key servers for ${targetNetwork}: ${servers.length} servers`);
+  log.debug('Using default key servers', {
+    network: targetNetwork,
+    serverCount: servers.length
+  }, 'SealConfig');
   return servers;
 }
 

@@ -8,6 +8,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { log } from "@/lib/utils/Logger";
 
 interface MintButtonProps {
   articleId: string;
@@ -31,11 +32,11 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
       setIsMinting(true);
       setMintError(null);
 
-      console.log("Starting NFT mint transaction:", {
+      log.debug("Starting NFT mint transaction", {
         articleId,
         userAddress: account.address,
         packageId: INKRAY_CONFIG.PACKAGE_ID,
-      });
+      }, "MintButton");
 
       // Build NFT mint transaction
       const tx = new Transaction();
@@ -68,13 +69,13 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
         transaction: tx,
       });
 
-      console.log("NFT mint successful:", result);
-      
+      log.debug("NFT mint successful", { result }, "MintButton");
+
       // On successful mint, call the success callback
       onMintSuccess?.();
-      
+
     } catch (error) {
-      console.error("Error minting NFT:", error);
+      log.error("Error minting NFT", { error }, "MintButton");
       setMintError(error instanceof Error ? error.message : "Failed to mint NFT. Please try again.");
     } finally {
       setIsMinting(false);

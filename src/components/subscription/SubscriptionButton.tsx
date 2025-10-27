@@ -11,6 +11,7 @@ import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Lock, Loader2, Clock, Check } from "lucide-react";
 import { MIST_PER_SUI } from "@/constants/tipping";
 import { ConnectButton } from "@mysten/dapp-kit";
+import { log } from "@/lib/utils/Logger";
 
 interface SubscriptionInfo {
   id: string;
@@ -86,8 +87,8 @@ export function SubscriptionButton({
         transaction: tx,
       });
 
-      console.log("Subscription successful:", result);
-      
+      log.debug("Subscription successful", { result }, "SubscriptionButton");
+
       // Close dialog and call success callback
       setDialogOpen(false);
       onSubscriptionSuccess?.();
@@ -139,8 +140,8 @@ export function SubscriptionButton({
         transaction: tx,
       });
 
-      console.log("Subscription extension successful:", result);
-      
+      log.debug("Subscription extension successful", { result }, "SubscriptionButton");
+
       // Close dialog and call success callback
       setDialogOpen(false);
       onSubscriptionSuccess?.();

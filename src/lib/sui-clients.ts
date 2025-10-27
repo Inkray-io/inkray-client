@@ -1,6 +1,7 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { CONFIG } from './config';
+import { log } from './utils/Logger';
 
 // Types for client configurations
 export interface SealClientConfig {
@@ -32,7 +33,7 @@ export const INKRAY_CONFIG = CONFIG;
  */
 export class LegacySealClient {
   constructor() {
-    console.warn('⚠️ Using deprecated LegacySealClient. Migrate to createSealClient from @/lib/seal-client');
+    log.warn('Using deprecated LegacySealClient. Migrate to createSealClient from @/lib/seal-client', {}, 'LegacySealClient');
   }
 
   generateArticleContentId(publicationId: string, articleTitle: string): Uint8Array {
@@ -55,7 +56,7 @@ export class LegacySealClient {
  */
 export class LegacyWalrusClient {
   constructor() {
-    console.warn('⚠️ Using deprecated LegacyWalrusClient. Migrate to createWalrusClient from @/lib/walrus-client');
+    log.warn('Using deprecated LegacyWalrusClient. Migrate to createWalrusClient from @/lib/walrus-client', {}, 'LegacyWalrusClient');
   }
 
   async uploadBlob(): Promise<never> {

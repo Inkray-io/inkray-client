@@ -5,6 +5,7 @@ import { generateArticleContentId, generateMediaContentId } from './seal-identit
 import { toBase64, fromBase64 } from '@mysten/bcs';
 import { getKeyServerConfigs, DEFAULT_ENCRYPTION_THRESHOLD, type SealNetwork } from './seal-config';
 import { CONFIG } from './config';
+import { log } from './utils/Logger';
 
 // NOTE: Direct decryption methods are deprecated.
 // Use useContentDecryption hook for React components.
@@ -58,7 +59,10 @@ export class InkraySealClient {
           throw new Error(`No key servers configured for network: ${this.config.network}`);
         }
 
-        console.log(`🔑 Connecting to ${serverConfigs.length} Seal key servers on ${this.config.network}`);
+        log.debug('Connecting to Seal key servers', {
+          serverCount: serverConfigs.length,
+          network: this.config.network
+        }, 'SealClient');
 
         this.sealClient = new SealClient({
           suiClient: this.config.suiClient,
@@ -66,9 +70,9 @@ export class InkraySealClient {
           verifyKeyServers: false, // Disable for compatibility - enable when servers support it
         });
 
-        console.log('✅ Seal client connected to key servers');
+        log.debug('Seal client connected to key servers', undefined, 'SealClient');
       } catch (error) {
-        console.error('❌ Failed to initialize Seal client:', error);
+        log.error('Failed to initialize Seal client', { error }, 'SealClient');
         throw new Error(`Seal encryption service unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
@@ -91,8 +95,6 @@ export class InkraySealClient {
     options: SealEncryptionOptions
   ): Promise<Uint8Array> {
     try {
-      console.log(`🔒 Encrypting content with Seal...`);
-
       const packageId = options.packageId || this.config.packageId;
       const threshold = options.threshold || DEFAULT_ENCRYPTION_THRESHOLD;
 
@@ -102,10 +104,12 @@ export class InkraySealClient {
 
       const sealClient = await this.getSealClient();
 
-      console.log(`  Content size: ${data.length} bytes`);
-      console.log(`  Content ID: [BCS-encoded IdV1: ${options.contentId.length} bytes]`);
-      console.log(`  Package ID: ${packageId}`);
-      console.log(`  Threshold: ${threshold} key servers`);
+      log.debug('Encrypting content with Seal', {
+        contentSize: data.length,
+        contentIdLength: options.contentId.length,
+        packageId,
+        threshold
+      }, 'SealClient');
 
       // Convert BCS-encoded content ID to hex string for Seal API
       const idForSeal = '0x' + Array.from(options.contentId)
@@ -119,13 +123,14 @@ export class InkraySealClient {
         data,
       });
 
-      console.log(`✅ Content encrypted with Seal!`);
-      console.log(`  Original size: ${data.length} bytes`);
-      console.log(`  Encrypted size: ${encrypted.length} bytes`);
+      log.debug('Content encrypted with Seal', {
+        originalSize: data.length,
+        encryptedSize: encrypted.length
+      }, 'SealClient');
 
       return encrypted;
     } catch (error) {
-      console.error(`❌ Encryption failed: ${error}`);
+      log.error('Encryption failed', { error }, 'SealClient');
       throw error;
     }
   }
@@ -180,7 +185,7 @@ export class InkraySealClient {
    */
   reset() {
     this.sealClient = null;
-    console.log('🔄 Seal client reset');
+    log.debug('Seal client reset', undefined, 'SealClient');
   }
 
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { log } from '@/lib/utils/Logger'
 
 type SidebarMode = "expanded" | "compact"
 
@@ -49,7 +50,7 @@ export function useSidebarMode(): UseSidebarModeReturn {
     try {
       localStorage.setItem(SIDEBAR_MODE_KEY, newMode)
     } catch (error) {
-      console.warn("Failed to save sidebar mode to localStorage:", error)
+      log.warn("Failed to save sidebar mode to localStorage", { error }, 'useSidebarMode')
     }
   }, [])
 

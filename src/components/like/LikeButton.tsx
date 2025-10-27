@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { ThumbsUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { log } from '@/lib/utils/Logger';
 
 interface LikeButtonProps {
   isLiked: boolean;
@@ -32,7 +33,7 @@ export function LikeButton({
     try {
       await onToggleLike();
     } catch (error) {
-      console.error('Like toggle failed:', error);
+      log.error('Like toggle failed', { error }, 'LikeButton');
     } finally {
       setIsProcessing(false);
     }

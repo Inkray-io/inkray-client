@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { nftAPI } from "@/lib/api";
 import { Clock, ExternalLink } from "lucide-react";
+import { log } from "@/lib/utils/Logger";
 
 interface MintTransaction {
   id: string;
@@ -36,7 +37,7 @@ export function RecentMints({ articleId }: RecentMintsProps) {
         }
       } catch (err) {
         setError("Failed to load recent mints");
-        console.error("Error fetching recent mints:", err);
+        log.error("Error fetching recent mints", { error: err }, "RecentMints");
       } finally {
         setLoading(false);
       }

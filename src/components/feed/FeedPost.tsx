@@ -14,6 +14,7 @@ import { useLikes } from "@/hooks/useLikes"
 import { useState } from "react"
 import { copyToClipboard } from "@/utils/address"
 import { SubscriptionButton } from "@/components/subscription"
+import { log } from "@/lib/utils/Logger"
 
 interface FeedPostProps {
   author: {
@@ -146,7 +147,7 @@ export function FeedPost({
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
       // Silently fail - no toast needed as per requirement
-      console.error('Failed to copy link:', error)
+      log.error('Failed to copy link', { error }, 'FeedPost')
     }
   }
 
@@ -212,7 +213,7 @@ export function FeedPost({
               subscriptionExpiresAt={subscriptionInfo.subscriptionExpiresAt}
               onSubscriptionSuccess={() => {
                 // Refresh feed or show success state
-                console.log('Subscription successful');
+                log.debug('Subscription successful', {}, 'FeedPost');
               }}
               variant="button"
             />

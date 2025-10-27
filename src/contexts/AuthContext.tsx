@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import { AuthState, Account } from '@/types/auth';
 import { usersAPI } from '@/lib/api';
 import { clearUserSpecificCache } from '@/lib/cache-manager';
+import { log } from '@/lib/utils/Logger';
 
 interface AuthContextType extends AuthState {
   login: (accessToken: string, account: Account) => void;
@@ -25,55 +26,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state from cookie
   useEffect(() => {
     const initializeAuth = async () => {
+      // Test basic cookie functionality in development
       if (process.env.NODE_ENV === 'development') {
-        // Test basic cookie functionality
         const testValue = `test-${Date.now()}`;
         Cookies.set('test_cookie', testValue);
         const testRetrieve = Cookies.get('test_cookie');
-        console.log('🧪 Cookie functionality test:', {
+        log.debug('Cookie functionality test', {
           set: testValue,
           retrieved: testRetrieve,
           working: testValue === testRetrieve
-        });
-        
+        }, 'AuthContext');
+
         // Log all available cookies for debugging
         const allCookies = document.cookie;
-        console.log('🍪 All browser cookies:', allCookies);
-        console.log('🍪 Cookie parsing debug:');
-        allCookies.split(';').forEach(cookie => {
-          const [name, value] = cookie.trim().split('=');
-          console.log(`  - ${name}: ${value?.substring(0, 20)}${value?.length > 20 ? '...' : ''}`);
-        });
-        
+        log.debug('All browser cookies', { cookies: allCookies }, 'AuthContext');
+        log.debug('Cookie parsing debug', {
+          parsedCookies: allCookies.split(';').map(cookie => {
+            const [name, value] = cookie.trim().split('=');
+            return `${name}: ${value?.substring(0, 20)}${value?.length > 20 ? '...' : ''}`;
+          })
+        }, 'AuthContext');
+
         // Clean up test cookie
         Cookies.remove('test_cookie');
       }
-      
+
       const token = Cookies.get('access_token');
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔐 Auth initialization:', { 
-          hasToken: !!token,
-          tokenLength: token?.length,
-          tokenSample: token ? token.substring(0, 20) + '...' : null,
-          currentUrl: window.location.href,
-          domain: window.location.hostname,
-          port: window.location.port
-        });
-      }
+
+      log.debug('Auth initialization', {
+        hasToken: !!token,
+        tokenLength: token?.length,
+        tokenSample: token ? token.substring(0, 20) + '...' : null,
+        currentUrl: window.location.href,
+        domain: window.location.hostname,
+        port: window.location.port
+      }, 'AuthContext');
       
       if (token) {
         try {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 Validating stored token...');
-          }
+          log.debug('Validating stored token', {}, 'AuthContext');
+
           // Validate token by fetching user profile
           const response = await usersAPI.getProfile();
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ Token validation successful:', { userId: response.data?.id });
-          }
-          
+
+          log.debug('Token validation successful', { userId: response.data?.id }, 'AuthContext');
+
           setState({
             account: response.data,
             accessToken: token,
@@ -81,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading: false,
           });
         } catch (error) {
-          console.warn('❌ Token validation failed, clearing stored token:', error);
+          log.warn('Token validation failed, clearing stored token', error, 'AuthContext');
+
           // Token is invalid, clear it and user-specific cache
           Cookies.remove('access_token');
           clearUserSpecificCache();
@@ -93,11 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('ℹ️ No stored token found, user needs to authenticate');
-          console.log('🔍 Debug: Checking if access_token exists in document.cookie:', 
-            document.cookie.includes('access_token'));
-        }
+        log.debug('No stored token found, user needs to authenticate', {
+          hasAccessTokenInCookie: document.cookie.includes('access_token')
+        }, 'AuthContext');
+
         setState({
           account: null,
           accessToken: null,
@@ -111,78 +108,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = (accessToken: string, account: Account) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 Login function called with:', { 
-        userId: account?.id, 
-        username: account?.username,
-        tokenLength: accessToken?.length,
-        tokenSample: accessToken?.substring(0, 20) + '...'
-      });
-    }
-    
+    log.debug('Login function called', {
+      userId: account?.id,
+      username: account?.username,
+      tokenLength: accessToken?.length,
+      tokenSample: accessToken?.substring(0, 20) + '...'
+    }, 'AuthContext');
+
     try {
       // Set cookie with explicit configuration for localhost development
-      const cookieOptions = { 
+      const cookieOptions = {
         expires: 7, // 7 days
         path: '/',
         domain: undefined, // Let browser handle localhost
         sameSite: 'lax' as const,
         secure: false // Allow for localhost HTTP
       };
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🍪 Setting cookie with options:', cookieOptions);
-      }
-      
+
+      log.debug('Setting cookie with options', cookieOptions, 'AuthContext');
+
       Cookies.set('access_token', accessToken, cookieOptions);
-      
+
       // Immediately verify the cookie was set
       const verifyToken = Cookies.get('access_token');
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Cookie verification after setting:', {
-          wasSet: !!verifyToken,
-          matches: verifyToken === accessToken,
-          tokenLength: verifyToken?.length
-        });
-      }
-      
+      log.debug('Cookie verification after setting', {
+        wasSet: !!verifyToken,
+        matches: verifyToken === accessToken,
+        tokenLength: verifyToken?.length
+      }, 'AuthContext');
+
       if (!verifyToken) {
-        console.error('❌ CRITICAL: Cookie was not set successfully!');
+        log.error('CRITICAL: Cookie was not set successfully', {}, 'AuthContext');
       }
-      
+
     } catch (error) {
-      console.error('❌ Error setting cookie:', error);
+      log.error('Error setting cookie', error, 'AuthContext');
     }
-    
+
     setState({
       account,
       accessToken,
       isAuthenticated: true,
       isLoading: false,
     });
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Auth state updated successfully');
-    }
+
+    log.debug('Auth state updated successfully', {}, 'AuthContext');
   };
 
   const logout = () => {
     // Clear authentication cookie
     Cookies.remove('access_token');
-    
+
     // Clear user-specific cached data
     clearUserSpecificCache();
-    
+
     setState({
       account: null,
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
     });
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚪 User logged out and cache cleared');
-    }
+
+    log.debug('User logged out and cache cleared', {}, 'AuthContext');
   };
 
   const updateAccount = (account: Account) => {

@@ -13,6 +13,7 @@ import { addressesEqual } from '@/utils/address';
 import { Image } from 'lucide-react';
 import { HiCog6Tooth } from 'react-icons/hi2';
 import Link from 'next/link';
+import { log } from '@/lib/utils/Logger';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -47,12 +48,12 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   // Refresh follow status when publication data loads
   useEffect(() => {
     if (publication?.id && !isLoading) {
-      console.log('Publication follow state:', {
+      log.debug('Publication follow state', {
         publicationId: publication.id,
         isFollowing: publication.isFollowing,
         followerCount: publication.followerCount
-      });
-      
+      }, 'PublicationHeader');
+
       // Refresh from server to ensure we have the correct state
       refreshFollowStatus();
     }
