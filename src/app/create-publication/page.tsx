@@ -11,6 +11,7 @@ import { Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { setCachedPublication } from "@/lib/cache-manager";
+import { log } from "@/lib/utils/Logger";
 
 export default function CreatePublicationPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function CreatePublicationPage() {
         setTimeout(() => router.push('/create'), 1500);
       }
     } catch (error) {
-      console.error('Failed to check existing publications:', error);
+      log.error('Failed to check existing publications', { error }, 'CreatePublicationPage');
     } finally {
       setIsCheckingPublications(false);
     }

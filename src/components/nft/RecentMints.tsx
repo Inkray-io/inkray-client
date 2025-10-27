@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { nftAPI } from "@/lib/api";
 import { Clock, ExternalLink } from "lucide-react";
+import { log } from "@/lib/utils/Logger";
 
 interface MintTransaction {
   id: string;
@@ -15,9 +16,10 @@ interface MintTransaction {
 
 interface RecentMintsProps {
   articleId: string;
+  refreshKey?: number;
 }
 
-export function RecentMints({ articleId }: RecentMintsProps) {
+export function RecentMints({ articleId, refreshKey }: RecentMintsProps) {
   const [mints, setMints] = useState<MintTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,14 +38,14 @@ export function RecentMints({ articleId }: RecentMintsProps) {
         }
       } catch (err) {
         setError("Failed to load recent mints");
-        console.error("Error fetching recent mints:", err);
+        log.error("Error fetching recent mints", { error: err }, "RecentMints");
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecentMints();
-  }, [articleId]);
+  }, [articleId, refreshKey]);
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;

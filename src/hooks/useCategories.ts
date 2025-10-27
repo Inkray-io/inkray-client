@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api-client'
+import { log } from '@/lib/utils/Logger'
 
 export interface Category {
   id: string
@@ -30,7 +31,7 @@ export function useCategories(): UseCategoriesResult {
       setCategories(response.categories)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch categories'
-      console.error('Error fetching categories:', errorMessage)
+      log.error('Error fetching categories', { error: errorMessage }, 'useCategories')
       setError(errorMessage)
     } finally {
       setIsLoading(false)

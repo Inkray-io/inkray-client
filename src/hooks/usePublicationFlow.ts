@@ -3,6 +3,7 @@ import { Transaction } from '@mysten/sui/transactions';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { INKRAY_CONFIG } from '@/lib/sui-clients';
 import { useEnhancedTransaction, type EnhancedTransactionResult } from './useEnhancedTransaction';
+import { log } from '@/lib/utils/Logger';
 
 /**
  * Result of successful publication creation
@@ -93,11 +94,11 @@ export const usePublicationFlow = () => {
       setState(prev => ({ ...prev, isCreating: true, error: null }));
 
       try {
-        console.log('Creating publication:', {
+        log.debug('Creating publication', {
           name: publicationName,
           creator: currentAccount.address,
           packageId: INKRAY_CONFIG.PACKAGE_ID,
-        });
+        }, 'usePublicationFlow');
 
         // Build transaction
         const tx = new Transaction();
@@ -117,11 +118,11 @@ export const usePublicationFlow = () => {
             },
             {
               onSuccess: (data) => {
-                console.log('Publication creation successful:', data);
+                log.debug('Publication creation successful', { data }, 'usePublicationFlow');
                 resolve(data);
               },
               onError: (error) => {
-                console.error('Publication creation failed:', error);
+                log.error('Publication creation failed', { error }, 'usePublicationFlow');
                 reject(error);
               },
             }
@@ -135,12 +136,12 @@ export const usePublicationFlow = () => {
         let vaultId = '';
         let ownerCapId = '';
 
-        console.log(`Analyzing ${objectChanges.length} object changes...`);
+        log.debug('Analyzing object changes', { count: objectChanges.length }, 'usePublicationFlow');
 
         for (const change of objectChanges) {
           if (change.type === 'created' && change.objectType) {
             const objectType = change.objectType;
-            console.log(`Created: ${objectType} -> ${change.objectId}`);
+            log.debug('Created object', { objectType, objectId: change.objectId }, 'usePublicationFlow');
 
             // Match exact fully qualified type names
             if (objectType === `${INKRAY_CONFIG.PACKAGE_ID}::publication::Publication`) {
@@ -170,7 +171,7 @@ export const usePublicationFlow = () => {
           creatorAddress: currentAccount.address,
         };
 
-        console.log('Publication created successfully:', publicationResult);
+        log.debug('Publication created successfully', publicationResult, 'usePublicationFlow');
         return publicationResult;
 
       } catch (error) {
@@ -200,11 +201,11 @@ export const usePublicationFlow = () => {
       setState(prev => ({ ...prev, isAddingContributor: true, error: null }));
 
       try {
-        console.log('Adding contributor:', {
+        log.debug('Adding contributor', {
           contributor: contributorAddress,
           publication: publicationId,
           owner: currentAccount.address,
-        });
+        }, 'usePublicationFlow');
 
         // Build transaction
         const tx = new Transaction();
@@ -225,11 +226,11 @@ export const usePublicationFlow = () => {
             },
             {
               onSuccess: (data) => {
-                console.log('Contributor addition successful:', data);
+                log.debug('Contributor addition successful', { data }, 'usePublicationFlow');
                 resolve(data);
               },
               onError: (error) => {
-                console.error('Contributor addition failed:', error);
+                log.error('Contributor addition failed', { error }, 'usePublicationFlow');
                 reject(error);
               },
             }
@@ -241,7 +242,7 @@ export const usePublicationFlow = () => {
           contributorAddress,
         };
 
-        console.log('Contributor added successfully:', contributorResult);
+        log.debug('Contributor added successfully', contributorResult, 'usePublicationFlow');
         return contributorResult;
 
       } catch (error) {
@@ -261,7 +262,7 @@ export const usePublicationFlow = () => {
   const getPublicationInfo = useCallback(
     async (publicationId: string) => {
       try {
-        console.log('Getting publication info:', publicationId);
+        log.debug('Getting publication info', { publicationId }, 'usePublicationFlow');
 
         const publicationObject = await suiClient.getObject({
           id: publicationId,
@@ -272,10 +273,10 @@ export const usePublicationFlow = () => {
           throw new Error('Publication not found');
         }
 
-        console.log('Publication info retrieved:', publicationObject.data);
+        log.debug('Publication info retrieved', { data: publicationObject.data }, 'usePublicationFlow');
         return publicationObject.data;
       } catch (error) {
-        console.error('Failed to get publication info:', error);
+        log.error('Failed to get publication info', { error }, 'usePublicationFlow');
         throw error;
       }
     },
@@ -303,7 +304,7 @@ export const usePublicationFlow = () => {
           },
         });
 
-        console.log(`Found ${ownedObjects.data.length} publication owner caps`);
+        log.debug('Found publication owner caps', { count: ownedObjects.data.length }, 'usePublicationFlow');
 
         // Extract publication IDs from the owner caps
         const publicationIds: string[] = [];
@@ -318,7 +319,7 @@ export const usePublicationFlow = () => {
 
         return publicationIds;
       } catch (error) {
-        console.error('Failed to get user publications:', error);
+        log.error('Failed to get user publications', { error }, 'usePublicationFlow');
         return [];
       }
     },

@@ -10,6 +10,7 @@ import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
 import { ConnectButton } from "@mysten/dapp-kit";
+import { log } from "@/lib/utils/Logger";
 
 interface TipButtonProps {
   articleId: string;
@@ -71,8 +72,8 @@ export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess
         transaction: tx,
       });
 
-      console.log("Tip successful:", result);
-      
+      log.debug("Tip successful", { result }, "TipButton");
+
       // Close dialog and call success callback
       setDialogOpen(false);
       onTipSuccess?.();

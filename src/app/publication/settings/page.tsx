@@ -14,6 +14,7 @@ import { HiCog6Tooth, HiCurrencyDollar, HiUserGroup, HiChartBarSquare, HiCheckCi
 import { cn } from "@/lib/utils"
 import { addressesEqual } from "@/utils/address"
 import Link from "next/link"
+import { log } from "@/lib/utils/Logger"
 
 interface TabConfig {
   id: string
@@ -127,7 +128,7 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
       }
     } catch (err) {
       // Error handling is done in the hook
-      console.error('Failed to save subscription settings:', err);
+      log.error('Failed to save subscription settings', { error: err }, 'PublicationSettingsPage');
     }
   };
 

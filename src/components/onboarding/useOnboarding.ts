@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import { ONBOARDING_CONFIG, type OnboardingStep } from "./onboarding-config"
+import { log } from "@/lib/utils/Logger"
 
 interface UseOnboardingReturn {
   isOpen: boolean
@@ -24,7 +25,7 @@ function getOnboardingStatus(): boolean {
   try {
     return localStorage.getItem(ONBOARDING_CONFIG.localStorageKey) === 'true'
   } catch (error) {
-    console.warn("Failed to read onboarding status from localStorage:", error)
+    log.warn("Failed to read onboarding status from localStorage", { error }, "useOnboarding")
     return false
   }
 }
@@ -33,7 +34,7 @@ function setOnboardingCompleted(): void {
   try {
     localStorage.setItem(ONBOARDING_CONFIG.localStorageKey, 'true')
   } catch (error) {
-    console.warn("Failed to save onboarding status to localStorage:", error)
+    log.warn("Failed to save onboarding status to localStorage", { error }, "useOnboarding")
   }
 }
 

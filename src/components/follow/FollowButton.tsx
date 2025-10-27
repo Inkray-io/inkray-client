@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { log } from '@/lib/utils/Logger';
 
 interface FollowButtonProps {
   isFollowing: boolean;
@@ -30,7 +31,7 @@ export function FollowButton({
     try {
       await onToggleFollow();
     } catch (error) {
-      console.error('Follow toggle failed:', error);
+      log.error('Follow toggle failed', { error }, 'FollowButton');
     } finally {
       setIsProcessing(false);
     }

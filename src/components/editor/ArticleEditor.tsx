@@ -7,6 +7,7 @@ import { listener, listenerCtx } from '@milkdown/plugin-listener'
 import { TemporaryImageManager } from '@/lib/services/TemporaryImageManager'
 import { validateImageFile } from '@/lib/utils/imageValidation'
 import { TemporaryImage } from '@/types/article'
+import { log } from '@/lib/utils/Logger'
 import '@milkdown/crepe/theme/common/style.css'
 import '@milkdown/crepe/theme/frame.css'
 import '../../styles/milkdown.css'
@@ -69,7 +70,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
       featureConfigs: {
         [Crepe.Feature.ImageBlock]: {
           onUpload: async (file: File) => {
-            console.log(`Processing image: ${file.name}`)
+            log.debug('Processing image', { fileName: file.name }, 'ArticleEditor')
 
             // Validate the image file
             const validation = validateImageFile(file)
@@ -91,7 +92,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
 
             // Return the final URL - this URL will remain in the markdown permanently
             // Example: "http://localhost:3000/articles/media/media0"
-            console.log(`Generated URL: ${finalUrl}`)
+            log.debug('Generated URL', { finalUrl }, 'ArticleEditor')
             return finalUrl
           },
           proxyDomURL: (originalURL: string) => {
@@ -99,7 +100,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
             const blobUrl = tempImageManager.current.getBlobUrl(originalURL)
             if (blobUrl) {
               // Return blob URL for immediate preview in editor
-              console.log(`Proxying ${originalURL} to blob URL for preview`)
+              log.debug('Proxying URL to blob URL for preview', { originalURL }, 'ArticleEditor')
               return blobUrl
             }
             // Return original URL for any other images (published articles, etc.)

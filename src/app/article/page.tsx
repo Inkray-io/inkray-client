@@ -14,7 +14,10 @@ import {
   Lock,
   RefreshCw,
   ExternalLink,
-  Tag
+  Tag,
+  Link,
+  Share,
+  Check
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
@@ -25,6 +28,8 @@ import { TipDisplay } from "@/components/ui/TipDisplay";
 import { LikeButton } from "@/components/like/LikeButton";
 import { useLikes } from "@/hooks/useLikes";
 import { SubscriptionPaywall } from "@/components/subscription";
+import { copyToClipboard } from "@/utils/address";
+import { ROUTES } from "@/constants/routes";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -32,6 +37,8 @@ function ArticlePageContent() {
   const [articleSlug, setArticleSlug] = useState<string | null>(null);
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   // Mark as hydrated after mount to prevent SSR/client mismatch
   useEffect(() => {
@@ -82,6 +89,57 @@ function ArticlePageContent() {
 
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
+  };
+
+  const handleCopyLink = async () => {
+    if (copied) return; // Prevent multiple clicks while in copied state
+    
+    try {
+      // Generate article URL
+      const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug || '')}`;
+      
+      // Copy to clipboard
+      await copyToClipboard(articleUrl);
+      
+      // Show success state
+      setCopied(true);
+      
+      // Reset after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
+  };
+
+  const generateShareUrls = (articleUrl: string, title: string) => {
+    const encodedUrl = encodeURIComponent(articleUrl);
+    const encodedTitle = encodeURIComponent(title);
+    
+    return {
+      twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      reddit: `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+    };
+  };
+
+  const handleShareClick = () => {
+    setIsShareOpen(!isShareOpen);
+  };
+
+  const handleSharePlatform = (platform: string) => {
+    // Generate article URL
+    const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug || '')}`;
+    const shareUrls = generateShareUrls(articleUrl, article?.title || 'Article');
+    
+    // Open sharing URL in new tab
+    const url = shareUrls[platform as keyof typeof shareUrls];
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+    
+    // Close popup
+    setIsShareOpen(false);
   };
 
   // Show loading state during hydration to prevent SSR mismatch
@@ -219,7 +277,130 @@ function ArticlePageContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      {/* Like Button */}
+                      {article.articleId && (
+                        <LikeButton
+                          isLiked={likesHook.isLiked}
+                          isLoading={likesHook.isLoading}
+                          likeCount={likesHook.likeCount}
+                          onToggleLike={handleLikeToggle}
+                          showLikeCount={false}
+                          variant="engagement"
+                        />
+                      )}
+                      
+                      {/* Copy Link Button */}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="size-8 hover:bg-gray-100 transition-colors"
+                        onClick={handleCopyLink}
+                      >
+                        {copied ? (
+                          <Check className="size-4 text-green-600" />
+                        ) : (
+                          <Link className="size-4 text-gray-600" />
+                        )}
+                      </Button>
+                      
+                      {/* Share Button with Dropdown */}
+                      <div className="relative">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="size-8 hover:bg-gray-100 transition-colors"
+                          onClick={handleShareClick}
+                        >
+                          <Share className="size-4 text-gray-600" />
+                        </Button>
+                        
+                        {/* Share Popup */}
+                        {isShareOpen && (
+                          <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                            <div className="py-1">
+                              <button
+                                onClick={() => handleSharePlatform('twitter')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs font-bold">𝕏</span>
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">Twitter</div>
+                                  <div className="text-xs text-gray-500">Share on Twitter</div>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                              </button>
+                              
+                              <button
+                                onClick={() => handleSharePlatform('linkedin')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs font-bold">in</span>
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">LinkedIn</div>
+                                  <div className="text-xs text-gray-500">Share on LinkedIn</div>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                              </button>
+                              
+                              <button
+                                onClick={() => handleSharePlatform('facebook')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs font-bold">f</span>
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">Facebook</div>
+                                  <div className="text-xs text-gray-500">Share on Facebook</div>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                              </button>
+                              
+                              <button
+                                onClick={() => handleSharePlatform('reddit')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs font-bold">r</span>
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">Reddit</div>
+                                  <div className="text-xs text-gray-500">Share on Reddit</div>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                              </button>
+                              
+                              <hr className="my-1" />
+                              
+                              <button
+                                onClick={handleCopyLink}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                  {copied ? (
+                                    <Check className="w-4 h-4 text-white" />
+                                  ) : (
+                                    <Link className="w-4 h-4 text-white" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {copied ? 'Copied!' : 'Copy Link'}
+                                  </div>
+                                  <div className="text-xs text-gray-500">Copy article link</div>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Support Button */}
                       {article?.articleId && article?.publicationId ? (
                         <button 
                           className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
@@ -415,41 +596,23 @@ function ArticlePageContent() {
 
               {/* Article Footer */}
               <div className="bg-white rounded-2xl p-5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-500">
-                    <p>Published on Sui blockchain</p>
-                    <p className="flex items-center gap-2">
-                      Object ID:{' '}
-                      <button
-                        onClick={() => article.articleId && window.open(`https://suiexplorer.com/object/${article.articleId}?network=testnet`, '_blank')}
-                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                      >
-                        <span className="font-mono">
-                          {article.articleId ?
-                            `${article.articleId.slice(0, 8)}...${article.articleId.slice(-8)}` :
-                            'Unknown'
-                          }
-                        </span>
-                        <ExternalLink className="h-3 w-3" />
-                      </button>
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    {article.articleId && (
-                      <LikeButton
-                        isLiked={likesHook.isLiked}
-                        isLoading={likesHook.isLoading}
-                        likeCount={likesHook.likeCount}
-                        onToggleLike={handleLikeToggle}
-                        showLikeCount={false}
-                        variant="button"
-                      />
-                    )}
-                    <button className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors">
-                      Share Article
+                <div className="text-xs text-gray-500">
+                  <p>Published on Sui blockchain</p>
+                  <p className="flex items-center gap-2">
+                    Object ID:{' '}
+                    <button
+                      onClick={() => article.articleId && window.open(`https://suiexplorer.com/object/${article.articleId}?network=testnet`, '_blank')}
+                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      <span className="font-mono">
+                        {article.articleId ?
+                          `${article.articleId.slice(0, 8)}...${article.articleId.slice(-8)}` :
+                          'Unknown'
+                        }
+                      </span>
+                      <ExternalLink className="h-3 w-3" />
                     </button>
-                  </div>
+                  </p>
                 </div>
               </div>
             </div>
@@ -477,6 +640,14 @@ function ArticlePageContent() {
             </div>
           )}
         </div>
+
+        {/* Click outside to close share popup */}
+        {isShareOpen && (
+          <div 
+            className="fixed inset-0 z-0" 
+            onClick={() => setIsShareOpen(false)}
+          />
+        )}
 
         {/* Tip Dialog */}
         {article?.articleId && article?.publicationId && isTipDialogOpen && (

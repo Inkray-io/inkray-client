@@ -5,6 +5,7 @@ import { MintButton } from "./MintButton";
 import { VerificationSection } from "./VerificationSection";
 import { nftAPI } from "@/lib/api";
 import { Image } from "lucide-react";
+import { log } from "@/lib/utils/Logger";
 
 interface NftMintingSectionProps {
   articleId: string;
@@ -34,7 +35,7 @@ export function NftMintingSection({
           setMintCount(0);
         }
       } catch (error) {
-        console.error("Error fetching mint count:", error);
+        log.error("Error fetching mint count", { error }, "NftMintingSection");
         setMintCount(0);
       } finally {
         setLoadingCount(false);
@@ -91,6 +92,7 @@ export function NftMintingSection({
         <div>
           <VerificationSection 
             articleId={articleId}
+            refreshKey={refreshKey}
           />
         </div>
       </div>

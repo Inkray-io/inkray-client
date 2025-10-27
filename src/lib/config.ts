@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { log } from './utils/Logger';
 
 // ========================================
 // ENVIRONMENT VALIDATION SCHEMAS
@@ -89,40 +90,41 @@ function loadAndValidateConfig() {
 
     // Debug logging for troubleshooting
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 Loading configuration...');
-      console.log('📦 Package ID:', rawConfig.PACKAGE_ID ? `${rawConfig.PACKAGE_ID.substring(0, 10)}...` : 'MISSING');
-      console.log('🌐 Network:', rawConfig.NETWORK);
-      console.log('🌍 API URL:', rawConfig.API_URL);
+      log.debug('Loading configuration...', {
+        packageId: rawConfig.PACKAGE_ID ? `${rawConfig.PACKAGE_ID.substring(0, 10)}...` : 'MISSING',
+        network: rawConfig.NETWORK,
+        apiUrl: rawConfig.API_URL
+      }, 'Config');
     }
 
     const validatedConfig = ConfigSchema.parse(rawConfig);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Configuration validation successful');
+      log.debug('Configuration validation successful', undefined, 'Config');
     }
 
     return validatedConfig;
   } catch (error) {
     // Enhanced error handling with more context
-    console.error('❌ Configuration validation failed:', error);
+    log.error('Configuration validation failed', { error }, 'Config');
 
     if (error instanceof z.ZodError) {
       const errorMessages = error.issues.map(err => {
         const path = err.path.join('.');
-        return `❌ ${path}: ${err.message}`;
+        return `${path}: ${err.message}`;
       }).join('\n');
 
       const errorMsg =
-        `🔧 Configuration Error - Please check your environment variables:\n\n${errorMessages}\n\n` +
-        `💡 Make sure you have copied .env.example to .env.local and filled in all required values.\n` +
-        `📖 See .env.example for detailed configuration instructions.\n\n` +
-        `🐛 If this error persists, check the browser console for more details.`;
+        `Configuration Error - Please check your environment variables:\n\n${errorMessages}\n\n` +
+        `Make sure you have copied .env.example to .env.local and filled in all required values.\n` +
+        `See .env.example for detailed configuration instructions.\n\n` +
+        `If this error persists, check the browser console for more details.`;
 
-      console.error(errorMsg);
+      log.error(errorMsg, { issues: error.issues }, 'Config');
       throw new Error(errorMsg);
     }
 
-    console.error('Unknown configuration error:', error);
+    log.error('Unknown configuration error', { error }, 'Config');
     throw error;
   }
 }
@@ -139,8 +141,8 @@ try {
 } catch (error) {
   // In development, provide a fallback configuration to prevent app crashes
   if (process.env.NODE_ENV === 'development') {
-    console.warn('⚠️ Using fallback configuration due to validation error');
-    console.warn('⚠️ Some features may not work properly until configuration is fixed');
+    log.warn('Using fallback configuration due to validation error', { error }, 'Config');
+    log.warn('Some features may not work properly until configuration is fixed', undefined, 'Config');
 
     CONFIG = {
       PACKAGE_ID: process.env.NEXT_PUBLIC_PACKAGE_ID || '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -226,25 +228,19 @@ export const validateConfiguration = (): { valid: boolean; errors: string[] } =>
 export const logConfigurationStatus = () => {
   if (!isDevelopment) return;
 
-  console.log('🔧 Inkray Configuration Status:');
-  console.log('================================');
-
   const info = getEnvironmentInfo();
-  console.log(`📍 Network: ${info.network}`);
-  console.log(`📦 Package ID: ${info.hasPackageId ? '✅ Set' : '❌ Missing'}`);
-  console.log(`🐋 Walrus Aggregator: ${info.walrusEndpoints.aggregator}`);
-  console.log(`🚀 Walrus Publisher: ${info.walrusEndpoints.publisher}`);
-  console.log(`🔐 Seal API: ${info.sealEndpoint}`);
-  console.log(`🌐 Backend API: ${info.apiEndpoint}`);
-
   const validation = validateConfiguration();
-  if (!validation.valid) {
-    console.log('❌ Configuration Issues:');
-    validation.errors.forEach(error => console.log(`  - ${error}`));
-  } else {
-    console.log('✅ All configuration valid');
-  }
-  console.log('================================');
+
+  log.debug('Inkray Configuration Status', {
+    network: info.network,
+    packageId: info.hasPackageId ? 'Set' : 'Missing',
+    walrusAggregator: info.walrusEndpoints.aggregator,
+    walrusPublisher: info.walrusEndpoints.publisher,
+    sealAPI: info.sealEndpoint,
+    backendAPI: info.apiEndpoint,
+    isValid: validation.valid,
+    errors: validation.valid ? undefined : validation.errors
+  }, 'Config');
 };
 
 // ========================================
@@ -257,7 +253,7 @@ export const logConfigurationStatus = () => {
  */
 export const parseKeyServerIds = (): string[] => {
   if (!CONFIG.SEAL_KEY_SERVER_IDS) {
-    console.warn('⚠️ No Seal key server IDs configured. Seal encryption will not work.');
+    log.warn('No Seal key server IDs configured. Seal encryption will not work.', undefined, 'Config');
     return [];
   }
 
@@ -265,7 +261,10 @@ export const parseKeyServerIds = (): string[] => {
   const validIds = ids.filter(id => /^0x[a-fA-F0-9]{64}$/.test(id));
 
   if (validIds.length !== ids.length) {
-    console.warn('⚠️ Some key server IDs are invalid and were filtered out');
+    log.warn('Some key server IDs are invalid and were filtered out', {
+      totalIds: ids.length,
+      validIds: validIds.length
+    }, 'Config');
   }
 
   return validIds;
@@ -316,7 +315,9 @@ export const getKeyServerIds = (): string[] => {
 
   // Fallback to defaults for development
   if (isDevelopment) {
-    console.warn('⚠️ Using default key server IDs for development. Set NEXT_PUBLIC_SEAL_KEY_SERVER_IDS for production.');
+    log.warn('Using default key server IDs for development. Set NEXT_PUBLIC_SEAL_KEY_SERVER_IDS for production.', {
+      network: CONFIG.NETWORK
+    }, 'Config');
     return getDefaultKeyServerIds(CONFIG.NETWORK);
   }
 
