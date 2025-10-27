@@ -54,20 +54,16 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
             <ConnectButton />
           )}
         </div>
-        
-        {/* Mobile wallet state - Show connect button or user profile on mobile */}
+
+        {/* Mobile - Show connect button only if not connected (profile is in mobile menu) */}
         <div className="lg:hidden">
-          {isConnected ? (
-            <UserProfile />
-          ) : (
-            <ConnectButton />
-          )}
+          {!isConnected && <ConnectButton />}
         </div>
-        
+
         {/* Create Button - Only visible when wallet is connected */}
         {isConnected && (
           <Link href={ROUTES.CREATE}>
-            <Button className="bg-primary hover:bg-primary/90 text-white gap-2 text-sm lg:text-base px-3 lg:px-4">
+            <Button className="bg-primary hover:bg-primary/90 text-white gap-2 text-sm lg:text-base px-3 lg:px-4 min-h-[40px]">
               <HiPlus className="size-4 lg:size-5" />
               <span className="hidden sm:inline">Create</span>
             </Button>

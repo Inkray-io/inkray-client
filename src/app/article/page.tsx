@@ -252,7 +252,7 @@ function ArticlePageContent() {
           {article && (
             <div className="space-y-6">
               {/* Unified Article Container */}
-              <div className="bg-white rounded-2xl p-5">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8">
                 <div className="space-y-6">
                   {/* Article Author */}
                   <div className="flex items-center justify-between">
@@ -291,10 +291,10 @@ function ArticlePageContent() {
                       )}
                       
                       {/* Copy Link Button */}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-8 hover:bg-gray-100 transition-colors"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 sm:size-8 hover:bg-gray-100 transition-colors min-h-[36px] min-w-[36px]"
                         onClick={handleCopyLink}
                       >
                         {copied ? (
@@ -303,13 +303,13 @@ function ArticlePageContent() {
                           <Link className="size-4 text-gray-600" />
                         )}
                       </Button>
-                      
+
                       {/* Share Button with Dropdown */}
                       <div className="relative">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="size-8 hover:bg-gray-100 transition-colors"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-9 sm:size-8 hover:bg-gray-100 transition-colors min-h-[36px] min-w-[36px]"
                           onClick={handleShareClick}
                         >
                           <Share className="size-4 text-gray-600" />
@@ -317,7 +317,7 @@ function ArticlePageContent() {
                         
                         {/* Share Popup */}
                         {isShareOpen && (
-                          <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                          <div className="absolute top-full right-0 mt-1 w-56 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-w-[calc(100vw-2rem)]">
                             <div className="py-1">
                               <button
                                 onClick={() => handleSharePlatform('twitter')}
@@ -402,14 +402,14 @@ function ArticlePageContent() {
                       
                       {/* Support Button */}
                       {article?.articleId && article?.publicationId ? (
-                        <button 
-                          className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                        <button
+                          className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
                           onClick={() => setIsTipDialogOpen(true)}
                         >
                           Support
                         </button>
                       ) : (
-                        <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
+                        <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg min-h-[36px] flex items-center">
                           Support
                         </div>
                       )}
@@ -419,13 +419,13 @@ function ArticlePageContent() {
                   {/* Article Metadata */}
                   <div className="space-y-4">
                     {/* Article Title */}
-                    <h1 className="text-2xl font-semibold text-black leading-tight">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-black leading-tight">
                       {article.title || 'Untitled Article'}
                     </h1>
 
                     {/* Article Summary */}
                     {article.summary && (
-                      <p className="text-gray-700 text-sm leading-relaxed">
+                      <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
                         {article.summary}
                       </p>
                     )}
@@ -441,14 +441,14 @@ function ArticlePageContent() {
                         isEncrypted={!!article.contentSealId}
                       />
                     ) : content ? (
-                      <div className="prose prose-lg max-w-none">
+                      <div className="prose prose-base sm:prose-lg max-w-none">
                         <ReactMarkdown
                           components={{
                             // Custom styling for markdown elements
-                            h1: ({ children }) => <h1 className="text-2xl font-semibold mb-4 text-black">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-6 text-black">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-lg font-semibold mb-2 mt-4 text-black">{children}</h3>,
-                            p: ({ children }) => <p className="mb-3 text-gray-700 text-sm leading-relaxed">{children}</p>,
+                            h1: ({ children }) => <h1 className="text-xl sm:text-2xl font-semibold mb-4 text-black">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-lg sm:text-xl font-semibold mb-3 mt-6 text-black">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-base sm:text-lg font-semibold mb-2 mt-4 text-black">{children}</h3>,
+                            p: ({ children }) => <p className="mb-4 text-gray-700 text-base sm:text-lg leading-relaxed">{children}</p>,
                             strong: ({ children }) => <strong className="font-semibold text-black">{children}</strong>,
                             em: ({ children }) => <em className="italic text-gray-600">{children}</em>,
                             code: ({ children }) => (
@@ -574,14 +574,14 @@ function ArticlePageContent() {
 
               {/* Tip Section */}
               {article.articleId && article.publicationId && (
-                <div className="bg-white rounded-2xl p-5">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white rounded-2xl p-4 sm:p-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
                       <h3 className="text-sm font-semibold">Support this article</h3>
                       <TipDisplay amount={article.totalTips || 0} size="default" />
                     </div>
-                    <button 
-                      className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                    <button
+                      className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
                       onClick={() => setIsTipDialogOpen(true)}
                     >
                       Tip
@@ -595,7 +595,7 @@ function ArticlePageContent() {
 
 
               {/* Article Footer */}
-              <div className="bg-white rounded-2xl p-5">
+              <div className="bg-white rounded-2xl p-4 sm:p-5">
                 <div className="text-xs text-gray-500">
                   <p>Published on Sui blockchain</p>
                   <p className="flex items-center gap-2">

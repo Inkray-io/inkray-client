@@ -189,7 +189,7 @@ export function FeedPost({
   }
   
   return (
-    <div className="bg-white rounded-2xl p-5">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6">
       {/* Author Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -221,18 +221,18 @@ export function FeedPost({
 
           {/* Support/Tip Button */}
           {articleId && publicationId ? (
-            <button 
-              className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+            <button
+              className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
               onClick={() => setIsTipDialogOpen(true)}
             >
               Support
             </button>
           ) : (
-            <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
+            <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg min-h-[36px] flex items-center">
               Support
             </div>
           )}
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="min-h-[36px] min-w-[36px]">
             <MoreHorizontal className="size-5" />
           </Button>
         </div>
@@ -241,8 +241,8 @@ export function FeedPost({
       {/* Content */}
       <div className="space-y-4">
         <div>
-          <h2 
-            className="text-lg font-semibold text-black cursor-pointer hover:text-primary transition-colors"
+          <h2
+            className="text-base sm:text-lg font-semibold text-black cursor-pointer hover:text-primary transition-colors leading-snug"
             onClick={handleArticleClick}
           >
             {title}
@@ -258,20 +258,20 @@ export function FeedPost({
               </button>
             </div>
           )}
-          <p className="text-gray-700 text-sm mt-3 leading-relaxed">
+          <p className="text-gray-700 text-sm sm:text-base mt-3 leading-relaxed">
             {description}
           </p>
         </div>
         
         {image && (
-          <div 
+          <div
             className="rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
             onClick={handleArticleClick}
           >
-            <img 
+            <img
               src={image}
-              alt="Post image" 
-              className="w-full h-[333px] object-cover"
+              alt="Post image"
+              className="w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[333px] object-cover"
             />
           </div>
         )}
@@ -288,8 +288,8 @@ export function FeedPost({
             )}
             
             {engagement && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                   {articleId ? (
                     <LikeButton
                       isLiked={likesHook.isLiked}
@@ -343,7 +343,7 @@ export function FeedPost({
                     
                     {/* Share Popup */}
                     {isShareOpen && (
-                      <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="absolute top-full right-0 mt-1 w-56 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-w-[calc(100vw-2rem)]">
                         <div className="py-1">
                           <button
                             onClick={() => handleSharePlatform('twitter')}
