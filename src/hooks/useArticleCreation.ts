@@ -325,7 +325,6 @@ export const useArticleCreation = () => {
             size: file.size,
             // No contentId for unencrypted media files
           })),
-          storageEpochs: 1,
           // Encryption metadata for backend
           isEncrypted: true, // Flag to indicate content is encrypted
           encryptionMetadata: {

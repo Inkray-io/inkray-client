@@ -259,7 +259,6 @@ export const api = {
         size?: number;
         contentId?: string;
       }>;
-      storageEpochs?: number;
       isEncrypted?: boolean;
       contentId?: string;
       encryptionMetadata?: {

@@ -130,7 +130,6 @@ export const articlesAPI = {
       size?: number;
       contentId?: string; // For encrypted media files
     }>;
-    storageEpochs?: number;
     // Encryption support
     isEncrypted?: boolean;
     contentId?: string;
