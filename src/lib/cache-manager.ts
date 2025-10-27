@@ -1,5 +1,6 @@
 import { CONFIG } from './config';
 import type { ExportedSessionKey } from '@mysten/seal';
+import { log } from './utils/Logger';
 
 /**
  * Cache Manager for Inkray Application
@@ -58,15 +59,18 @@ export interface SerializableSessionKeyData {
  */
 export function isCacheValid(cachedData: { packageId?: string }): boolean {
   if (!cachedData.packageId) {
-    console.log('📦 Cache invalid: No package ID in cached data');
+    log.debug('Cache invalid: No package ID in cached data', {}, 'CacheManager');
     return false;
   }
-  
+
   if (cachedData.packageId !== CONFIG.PACKAGE_ID) {
-    console.log(`📦 Cache invalid: Package ID mismatch. Cached: ${cachedData.packageId}, Current: ${CONFIG.PACKAGE_ID}`);
+    log.debug('Cache invalid: Package ID mismatch', {
+      cached: cachedData.packageId,
+      current: CONFIG.PACKAGE_ID
+    }, 'CacheManager');
     return false;
   }
-  
+
   return true;
 }
 
@@ -74,16 +78,16 @@ export function isCacheValid(cachedData: { packageId?: string }): boolean {
  * Clear all Inkray-related localStorage entries
  */
 export function clearInkrayCache(): void {
-  console.log('🧹 Clearing all Inkray cache entries...');
-  
+  log.debug('Clearing all Inkray cache entries', {}, 'CacheManager');
+
   Object.values(CACHE_KEYS).forEach(key => {
     if (localStorage.getItem(key)) {
       localStorage.removeItem(key);
-      console.log(`  ✅ Cleared: ${key}`);
+      log.debug('Cleared cache key', { key }, 'CacheManager');
     }
   });
-  
-  console.log('🧹 Cache clearing completed');
+
+  log.debug('Cache clearing completed', {}, 'CacheManager');
 }
 
 /**
@@ -100,24 +104,24 @@ export function getCachedPublication(): CachedPublicationData | null {
     
     // Validate cache against current package ID
     if (!isCacheValid(data)) {
-      console.log('📦 Removing invalid publication cache');
+      log.debug('Removing invalid publication cache', {}, 'CacheManager');
       localStorage.removeItem(CACHE_KEYS.PUBLICATION);
       return null;
     }
-    
+
     // Check if cache is too old (optional: 24 hours)
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     if (Date.now() - data.timestamp > maxAge) {
-      console.log('⏰ Publication cache expired, clearing...');
+      log.debug('Publication cache expired, clearing', { age: Date.now() - data.timestamp, maxAge }, 'CacheManager');
       localStorage.removeItem(CACHE_KEYS.PUBLICATION);
       return null;
     }
-    
-    console.log('✅ Valid publication cache found');
+
+    log.debug('Valid publication cache found', {}, 'CacheManager');
     return data;
-    
+
   } catch (error) {
-    console.error('❌ Error reading publication cache:', error);
+    log.error('Error reading publication cache', { error }, 'CacheManager');
     localStorage.removeItem(CACHE_KEYS.PUBLICATION);
     return null;
   }
@@ -133,12 +137,12 @@ export function setCachedPublication(data: Omit<CachedPublicationData, 'packageI
       packageId: CONFIG.PACKAGE_ID,
       timestamp: Date.now(),
     };
-    
+
     localStorage.setItem(CACHE_KEYS.PUBLICATION, JSON.stringify(cachedData));
-    console.log(`✅ Publication cached with package ID: ${CONFIG.PACKAGE_ID}`);
-    
+    log.debug('Publication cached', { packageId: CONFIG.PACKAGE_ID }, 'CacheManager');
+
   } catch (error) {
-    console.error('❌ Error storing publication cache:', error);
+    log.error('Error storing publication cache', { error }, 'CacheManager');
   }
 }
 
@@ -153,19 +157,19 @@ export function getCachedDraft(): CachedDraftData | null {
     }
     
     const data: CachedDraftData = JSON.parse(cached);
-    
+
     // Validate cache against current package ID
     if (!isCacheValid(data)) {
-      console.log('📦 Removing invalid draft cache');
+      log.debug('Removing invalid draft cache', {}, 'CacheManager');
       localStorage.removeItem(CACHE_KEYS.ARTICLE_DRAFT);
       return null;
     }
-    
-    console.log('✅ Valid draft cache found');
+
+    log.debug('Valid draft cache found', {}, 'CacheManager');
     return data;
-    
+
   } catch (error) {
-    console.error('❌ Error reading draft cache:', error);
+    log.error('Error reading draft cache', { error }, 'CacheManager');
     localStorage.removeItem(CACHE_KEYS.ARTICLE_DRAFT);
     return null;
   }
@@ -181,12 +185,12 @@ export function setCachedDraft(data: Omit<CachedDraftData, 'packageId' | 'timest
       packageId: CONFIG.PACKAGE_ID,
       timestamp: Date.now(),
     };
-    
+
     localStorage.setItem(CACHE_KEYS.ARTICLE_DRAFT, JSON.stringify(cachedData));
-    console.log(`✅ Draft cached with package ID: ${CONFIG.PACKAGE_ID}`);
-    
+    log.debug('Draft cached', { packageId: CONFIG.PACKAGE_ID }, 'CacheManager');
+
   } catch (error) {
-    console.error('❌ Error storing draft cache:', error);
+    log.error('Error storing draft cache', { error }, 'CacheManager');
   }
 }
 
@@ -195,7 +199,7 @@ export function setCachedDraft(data: Omit<CachedDraftData, 'packageId' | 'timest
  */
 export function clearPublicationCache(): void {
   localStorage.removeItem(CACHE_KEYS.PUBLICATION);
-  console.log('🧹 Publication cache cleared');
+  log.debug('Publication cache cleared', {}, 'CacheManager');
 }
 
 /**
@@ -203,7 +207,7 @@ export function clearPublicationCache(): void {
  */
 export function clearDraftCache(): void {
   localStorage.removeItem(CACHE_KEYS.ARTICLE_DRAFT);
-  console.log('🧹 Draft cache cleared');
+  log.debug('Draft cache cleared', {}, 'CacheManager');
 }
 
 /**
@@ -213,50 +217,52 @@ export function getCachedSessionKey(): CachedSessionKeyData | null {
   try {
     const cached = localStorage.getItem(CACHE_KEYS.SESSION_KEY);
     if (!cached) {
-      console.log('🔍 No cached session key found');
+      log.debug('No cached session key found', {}, 'CacheManager');
       return null;
     }
-    
-    console.log('🔍 Found cached session key, validating...');
-    
+
+    log.debug('Found cached session key, validating', {}, 'CacheManager');
+
     const serializableData: SerializableSessionKeyData = JSON.parse(cached);
-    
+
     // Validate cache against current package ID
     if (serializableData.cachePackageId !== CONFIG.PACKAGE_ID) {
-      console.log(`📦 Removing invalid session key cache - package ID mismatch: ${serializableData.cachePackageId} != ${CONFIG.PACKAGE_ID}`);
+      log.debug('Removing invalid session key cache - package ID mismatch', {
+        cached: serializableData.cachePackageId,
+        current: CONFIG.PACKAGE_ID
+      }, 'CacheManager');
       localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
       return null;
     }
-    
+
     // Check if session key has signature (required for usage)
     if (!serializableData.personalMessageSignature) {
-      console.log('⚠️ Cached session key has no signature, removing...');
+      log.warn('Cached session key has no signature, removing', {}, 'CacheManager');
       localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
       return null;
     }
-    
+
     // Deserialize back to expected format
     const exportedSessionKey = deserializeExportedSessionKey(serializableData);
-    
+
     const result: CachedSessionKeyData = {
       exportedSessionKey,
       packageId: serializableData.cachePackageId,
       timestamp: serializableData.timestamp,
     };
-    
-    console.log('✅ Valid session key cache found and deserialized');
-    console.log('📝 Cache details:', {
+
+    log.debug('Valid session key cache found and deserialized', {
       address: exportedSessionKey.address,
       packageId: exportedSessionKey.packageId,
       hasSignature: !!exportedSessionKey.personalMessageSignature,
       ttlMin: exportedSessionKey.ttlMin,
       age: Date.now() - serializableData.timestamp
-    });
-    
+    }, 'CacheManager');
+
     return result;
-    
+
   } catch (error) {
-    console.error('❌ Error reading session key cache:', error);
+    log.error('Error reading session key cache', { error }, 'CacheManager');
     localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
     return null;
   }
@@ -299,25 +305,25 @@ function deserializeExportedSessionKey(data: SerializableSessionKeyData): Export
  */
 export function setCachedSessionKey(exportedSessionKey: ExportedSessionKey): void {
   try {
-    console.log('💾 Attempting to cache session key...');
-    
+    log.debug('Attempting to cache session key', {}, 'CacheManager');
+
     // Use safe serialization to avoid "not serializable" errors
     const serializableData = serializeExportedSessionKey(exportedSessionKey);
-    
-    console.log('📝 Serialized session key data:', {
+
+    log.debug('Serialized session key data', {
       address: serializableData.address,
       packageId: serializableData.packageId,
       hasSignature: !!serializableData.personalMessageSignature,
       ttlMin: serializableData.ttlMin,
       timestamp: serializableData.timestamp
-    });
-    
+    }, 'CacheManager');
+
     localStorage.setItem(CACHE_KEYS.SESSION_KEY, JSON.stringify(serializableData));
-    console.log(`✅ Session key successfully cached with package ID: ${CONFIG.PACKAGE_ID}`);
-    
+    log.debug('Session key successfully cached', { packageId: CONFIG.PACKAGE_ID }, 'CacheManager');
+
   } catch (error) {
-    console.error('❌ Error storing session key cache:', error);
-    console.error('❌ Failed to serialize session key. Data:', exportedSessionKey);
+    log.error('Error storing session key cache', { error }, 'CacheManager');
+    log.error('Failed to serialize session key', { exportedSessionKey }, 'CacheManager');
   }
 }
 
@@ -326,7 +332,7 @@ export function setCachedSessionKey(exportedSessionKey: ExportedSessionKey): voi
  */
 export function clearSessionKeyCache(): void {
   localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
-  console.log('🧹 Session key cache cleared');
+  log.debug('Session key cache cleared', {}, 'CacheManager');
 }
 
 /**
@@ -334,49 +340,49 @@ export function clearSessionKeyCache(): void {
  * Preserves non-user-specific data like package ID
  */
 export function clearUserSpecificCache(): void {
-  console.log('🧹 Clearing user-specific cache data...');
-  
+  log.debug('Clearing user-specific cache data', {}, 'CacheManager');
+
   const userSpecificKeys = [
     CACHE_KEYS.PUBLICATION,
     CACHE_KEYS.ARTICLE_DRAFT,
     CACHE_KEYS.SESSION_KEY,
   ];
-  
+
   userSpecificKeys.forEach(key => {
     if (localStorage.getItem(key)) {
       localStorage.removeItem(key);
-      console.log(`  ✅ Cleared: ${key}`);
+      log.debug('Cleared cache key', { key }, 'CacheManager');
     }
   });
-  
-  console.log('🧹 User-specific cache clearing completed');
+
+  log.debug('User-specific cache clearing completed', {}, 'CacheManager');
 }
 
 /**
  * Clear cache when wallet address changes (account switch)
  */
 export function clearOnWalletChange(previousAddress: string | null, newAddress: string): void {
-  console.log('🔄 Clearing cache due to wallet address change', {
+  log.debug('Clearing cache due to wallet address change', {
     previous: previousAddress ? previousAddress.substring(0, 8) + '...' : 'none',
     new: newAddress.substring(0, 8) + '...'
-  });
-  
+  }, 'CacheManager');
+
   // Clear all user-specific data since it belongs to the previous account
   clearUserSpecificCache();
-  
-  console.log('✅ Cache cleared for wallet address change');
+
+  log.debug('Cache cleared for wallet address change', {}, 'CacheManager');
 }
 
 /**
  * Clear cache when wallet disconnects
  */
 export function clearOnDisconnect(): void {
-  console.log('🔌 Clearing cache due to wallet disconnect');
-  
+  log.debug('Clearing cache due to wallet disconnect', {}, 'CacheManager');
+
   // Clear all cache except package ID (non-user-specific)
   clearUserSpecificCache();
-  
-  console.log('✅ Cache cleared for wallet disconnect');
+
+  log.debug('Cache cleared for wallet disconnect', {}, 'CacheManager');
 }
 
 /**
@@ -386,19 +392,22 @@ export function clearOnDisconnect(): void {
 export function checkPackageIdChange(): { hasChanged: boolean; oldPackageId?: string; newPackageId: string } {
   const lastPackageId = localStorage.getItem(CACHE_KEYS.PACKAGE_ID);
   const currentPackageId = CONFIG.PACKAGE_ID;
-  
+
   // Update stored package ID
   localStorage.setItem(CACHE_KEYS.PACKAGE_ID, currentPackageId);
-  
+
   if (lastPackageId && lastPackageId !== currentPackageId) {
-    console.log(`📦 Package ID change detected: ${lastPackageId} → ${currentPackageId}`);
+    log.debug('Package ID change detected', {
+      oldPackageId: lastPackageId,
+      newPackageId: currentPackageId
+    }, 'CacheManager');
     return {
       hasChanged: true,
       oldPackageId: lastPackageId,
       newPackageId: currentPackageId,
     };
   }
-  
+
   return {
     hasChanged: false,
     newPackageId: currentPackageId,
@@ -410,16 +419,16 @@ export function checkPackageIdChange(): { hasChanged: boolean; oldPackageId?: st
  * Automatically clears cache if package ID has changed
  */
 export function initializeCacheManager(): void {
-  console.log('🚀 Initializing Inkray cache manager...');
-  
+  log.debug('Initializing Inkray cache manager', {}, 'CacheManager');
+
   const packageChange = checkPackageIdChange();
-  
+
   if (packageChange.hasChanged) {
-    console.log('📦 Package ID changed - clearing all cache to prevent stale data');
+    log.debug('Package ID changed - clearing all cache to prevent stale data', {}, 'CacheManager');
     clearInkrayCache();
   }
-  
-  console.log(`📦 Current package ID: ${packageChange.newPackageId}`);
+
+  log.debug('Current package ID', { packageId: packageChange.newPackageId }, 'CacheManager');
 }
 
 /**

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscriptionsAPI } from '@/lib/api';
 import { useWalletConnection } from './useWalletConnection';
+import { log } from '@/lib/utils/Logger';
 
 interface UserSubscription {
   subscriptionId: string;
@@ -77,7 +78,7 @@ export function useUserSubscriptions({
         setCursor(response.data.meta.nextCursor);
       }
     } catch (err) {
-      console.error('Failed to fetch user subscriptions:', err);
+      log.error('Failed to fetch user subscriptions', { error: err }, 'useUserSubscriptions');
       setError(err instanceof Error ? err.message : 'Failed to fetch subscriptions');
     } finally {
       setIsLoading(false);

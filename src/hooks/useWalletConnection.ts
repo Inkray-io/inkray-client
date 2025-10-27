@@ -65,17 +65,6 @@ export const useWalletConnection = (): WalletConnectionState => {
   const address = account?.address
   const isConnected = !!account
 
-  // Debug logging for wallet connection state (remove in production)
-  // if (process.env.NODE_ENV === 'development') {
-  //   console.log('🔗 Wallet Connection State:', {
-  //     account: !!account,
-  //     address,
-  //     isConnected,
-  //     isConnecting,
-  //     isDisconnecting
-  //   });
-  // }
-
   // Resolve SuiNS name for connected account
   const { name: suiNSName, loading: suiNSLoading, error: suiNSError } = useSuiNS(address)
 

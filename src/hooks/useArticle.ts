@@ -382,7 +382,10 @@ export const useArticle = (articleSlug: string | null) => {
 
         // If user owns publication but we don't have owner cap data, wait for it
         if (isOwnerOfPublication && !hasOwnerCapData && !isLoadingUserPublications) {
-          console.warn('⚠️ Owner publication detected but no ownerCapId available');
+          log.warn('Owner publication detected but no ownerCapId available', {
+            isOwnerOfPublication,
+            hasOwnerCapData
+          }, 'useArticle');
           if (forceWait) {
             setIsWaitingForWallet(true);
             setLoadingStage('waiting-wallet');
@@ -452,7 +455,10 @@ export const useArticle = (articleSlug: string | null) => {
 
         // Store encrypted data and article for later decryption
         // Decryption will be triggered by useEffect when all data is ready
-        console.log('📦 Storing encrypted content for data-driven decryption');
+        log.debug('Storing encrypted content for data-driven decryption', {
+          articleId: article.articleId,
+          encryptedSize: encryptedData.length
+        }, 'useArticle');
         setEncryptedContentData({ encryptedData, article });
         setLoadingStage('waiting-wallet'); // Will be updated when decryption starts
 
@@ -653,7 +659,10 @@ export const useArticle = (articleSlug: string | null) => {
         publicationId: firstPublication.publicationId,
         ownerCapId: firstPublication.ownerCapId
       };
-      console.log('📋 Stable owner data updated:', stableOwnerData.current);
+      log.debug('Stable owner data updated', {
+        publicationId: stableOwnerData.current.publicationId,
+        ownerCapId: stableOwnerData.current.ownerCapId
+      }, 'useArticle');
     }
   }, [firstPublication?.publicationId, firstPublication?.ownerCapId]);
 
@@ -671,7 +680,11 @@ export const useArticle = (articleSlug: string | null) => {
     // Check access control before attempting decryption
     const accessCheck = shouldAttemptDecryption(article);
     if (!accessCheck.shouldAttempt || !accessCheck.hasAccess) {
-      console.log('🚫 Data-driven decryption blocked:', accessCheck.reason);
+      log.debug('Data-driven decryption blocked', {
+        reason: accessCheck.reason,
+        shouldAttempt: accessCheck.shouldAttempt,
+        hasAccess: accessCheck.hasAccess
+      }, 'useArticle');
       // Clear encrypted content data to prevent retries and show subscription paywall instead
       setEncryptedContentData(null);
       setLoadingStage('idle');
@@ -681,19 +694,27 @@ export const useArticle = (articleSlug: string | null) => {
 
     // Check if decryption is already in progress for this article
     if (decryptionInProgress.current.has(decryptionKey)) {
-      console.log('⏳ Decryption already in progress for article:', article.articleId);
+      log.debug('Decryption already in progress for article', {
+        articleId: article.articleId
+      }, 'useArticle');
       return;
     }
 
     // Check if wallet is ready
     if (!isWalletReady || !currentAccount) {
-      console.log('⏳ Waiting for wallet connection');
+      log.debug('Waiting for wallet connection', {
+        isWalletReady,
+        hasAccount: !!currentAccount
+      }, 'useArticle');
       return;
     }
 
     // Check if we're still loading publication data
     if (isLoadingUserPublications || isLoadingPublication) {
-      console.log('⏳ Waiting for publication data to load');
+      log.debug('Waiting for publication data to load', {
+        isLoadingUserPublications,
+        isLoadingPublication
+      }, 'useArticle');
       return;
     }
 
@@ -704,13 +725,13 @@ export const useArticle = (articleSlug: string | null) => {
 
     // Ensure we have all required data
     if (!hasOwnerCapData || !hasSubscriptionData) {
-      console.log('⏳ Waiting for complete publication data', {
+      log.debug('Waiting for complete publication data', {
         isOwnerOfPublication,
         hasOwnerCapData,
         hasSubscriptionData,
         stableOwnerData: stableOwnerData.current,
         currentPublication: !!currentPublication
-      });
+      }, 'useArticle');
       return;
     }
 
@@ -719,21 +740,24 @@ export const useArticle = (articleSlug: string | null) => {
       try {
         // Mark decryption as in progress
         decryptionInProgress.current.add(decryptionKey);
-        
-        console.log('🚀 ALL DATA READY - Starting decryption');
+
+        log.debug('ALL DATA READY - Starting decryption', {
+          articleId: article.articleId,
+          contentSealId: article.contentSealId?.substring(0, 20) + '...'
+        }, 'useArticle');
         setLoadingStage('decrypting');
         setState(prev => ({ ...prev, isLoadingContent: true, error: null }));
 
         // Debug: Check data availability before creating decryption params
-        console.log('🔍 FINAL DATA CHECK:', {
+        log.debug('FINAL DATA CHECK', {
           stableOwnerData: stableOwnerData.current,
-          currentPublication,
+          currentPublication: !!currentPublication,
           hasCurrentPub: !!currentPublication,
           subscriptionPrice: currentPublication?.subscriptionPrice,
           articlePubId: article.publicationId,
           isLoadingUserPubs: isLoadingUserPublications,
           isLoadingPub: isLoadingPublication
-        });
+        }, 'useArticle');
 
         // Create decryption parameters with stable owner data
         const decryptionParams = {
@@ -750,7 +774,7 @@ export const useArticle = (articleSlug: string | null) => {
           subscriptionId: stableSubscriptionData.current.subscriptionId,
         };
 
-        console.log('🎯 FINAL POLICY SELECTION INPUT:', {
+        log.debug('FINAL POLICY SELECTION INPUT', {
           ownerCapId: decryptionParams.ownerCapId,
           subscriptionPrice: decryptionParams.subscriptionPrice,
           subscriptionId: decryptionParams.subscriptionId,
@@ -760,7 +784,7 @@ export const useArticle = (articleSlug: string | null) => {
           subscriptionPriceFromPublication: currentPublication?.subscriptionPrice,
           expectedPolicy: decryptionParams.ownerCapId ? 'OWNER' :
             (decryptionParams.subscriptionPrice && decryptionParams.subscriptionPrice > 0 && decryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
-        });
+        }, 'useArticle');
 
         // Decrypt content
         const decryptedContent = await stableDecryptContent(decryptionParams);
@@ -780,11 +804,17 @@ export const useArticle = (articleSlug: string | null) => {
         setEncryptedContentData(null);
         setLoadingStage('idle');
 
-        console.log('✅ Decryption completed successfully');
+        log.debug('Decryption completed successfully', {
+          articleId: article.articleId,
+          contentLength: transformedContent.length
+        }, 'useArticle');
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to decrypt content';
-        console.error('❌ Decryption failed:', errorMessage);
+        log.error('Decryption failed', {
+          error: errorMessage,
+          articleId: article.articleId
+        }, 'useArticle');
 
         setState(prev => ({
           ...prev,
@@ -823,7 +853,7 @@ export const useArticle = (articleSlug: string | null) => {
 
     const article = state.article;
 
-    console.log('🔍 ARTICLE ENHANCEMENT DEBUG:', {
+    log.debug('ARTICLE ENHANCEMENT DEBUG', {
       articleId: article.articleId,
       publicationId: article.publicationId,
       currentPublication: {
@@ -843,7 +873,7 @@ export const useArticle = (articleSlug: string | null) => {
         isLoadingSubscription,
         isLoadingPublication,
       },
-    });
+    }, 'useArticle');
 
     // Use stable subscription data to prevent loops
     const publicationRequiresSubscription = stableSubscriptionData.current.requiresSubscription;
@@ -879,14 +909,14 @@ export const useArticle = (articleSlug: string | null) => {
         article: enhancedArticle,
       }));
 
-      console.log('📋 Enhanced article with publication subscription info:', {
+      log.debug('Enhanced article with publication subscription info', {
         requiresSubscription: publicationRequiresSubscription,
         hasActiveSubscription: hasActiveSubscription,
         subscriptionPriceFromPublication: currentPublication?.subscriptionPrice,
         subscriptionPriceFromAPI: subscriptionInfo?.subscriptionPrice,
         finalSubscriptionInfo: enhancedArticle.publicationSubscriptionInfo,
         subscriptionExpiresAt: subscriptionStatus?.subscription?.expiresAt,
-      });
+      }, 'useArticle');
 
       log.debug('Subscription validation completed - content loading will be evaluated', {
         articleId: enhancedArticle.articleId,
@@ -978,7 +1008,7 @@ export const useArticle = (articleSlug: string | null) => {
           subscriptionId: stableSubscriptionData.current.subscriptionId,
         };
 
-        console.log('🎯 MANUAL POLICY SELECTION INPUT:', {
+        log.debug('MANUAL POLICY SELECTION INPUT', {
           ownerCapId: manualDecryptionParams.ownerCapId,
           subscriptionPrice: manualDecryptionParams.subscriptionPrice,
           subscriptionId: manualDecryptionParams.subscriptionId,
@@ -986,7 +1016,7 @@ export const useArticle = (articleSlug: string | null) => {
           hasActiveSubscription: subscriptionStatus?.hasActiveSubscription,
           expectedPolicy: manualDecryptionParams.ownerCapId ? 'OWNER' :
             (manualDecryptionParams.subscriptionPrice && manualDecryptionParams.subscriptionPrice > 0 && manualDecryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
-        });
+        }, 'useArticle');
 
         const decryptedContent = await stableDecryptContent(manualDecryptionParams);
 

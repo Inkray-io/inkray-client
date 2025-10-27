@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { log } from '@/lib/utils/Logger'
 
 interface UseSuiNSResult {
   name: string
@@ -37,7 +38,7 @@ export const useSuiNS = (address?: string): UseSuiNSResult => {
         
         setName(data?.[0] || '')
       } catch (err) {
-        console.error('Failed to resolve SuiNS name:', err)
+        log.error('Failed to resolve SuiNS name', { error: err }, 'useSuiNS')
         setError('Failed to resolve SuiNS name')
         setName('')
       } finally {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { clearOnWalletChange, clearOnDisconnect } from '@/lib/cache-manager';
+import { log } from '@/lib/utils/Logger';
 
 /**
  * Hook to detect wallet account changes and clear relevant cache data
@@ -22,28 +23,28 @@ export const useWalletChangeDetection = () => {
       isInitialized.current = true;
       
       if (currentAddress) {
-        console.log('🔗 Wallet connection detected on init:', {
+        log.debug('Wallet connection detected on init', {
           address: currentAddress.substring(0, 8) + '...',
-        });
+        }, 'useWalletChangeDetection');
       }
       return;
     }
 
     // Detect wallet changes
     if (lastKnownAddress.current !== currentAddress) {
-      console.log('🔄 Wallet address change detected:', {
+      log.debug('Wallet address change detected', {
         previous: lastKnownAddress.current ? lastKnownAddress.current.substring(0, 8) + '...' : 'none',
         current: currentAddress ? currentAddress.substring(0, 8) + '...' : 'none',
         action: currentAddress ? 'switch' : 'disconnect'
-      });
+      }, 'useWalletChangeDetection');
 
       if (currentAddress) {
         // User switched to a different wallet account
-        console.log('👤 Account switch detected - clearing user-specific cache');
+        log.debug('Account switch detected - clearing user-specific cache', {}, 'useWalletChangeDetection');
         clearOnWalletChange(lastKnownAddress.current, currentAddress);
       } else {
         // User disconnected wallet
-        console.log('🔌 Wallet disconnect detected - clearing all cache');
+        log.debug('Wallet disconnect detected - clearing all cache', {}, 'useWalletChangeDetection');
         clearOnDisconnect();
       }
 

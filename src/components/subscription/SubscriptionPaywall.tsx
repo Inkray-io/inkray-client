@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Lock, Star, Clock, Users, Shield } from "lucide-react";
 import { SubscriptionButton } from "./SubscriptionButton";
+import { log } from "@/lib/utils/Logger";
 
 interface SubscriptionInfo {
   id: string;
@@ -46,7 +47,7 @@ export function SubscriptionPaywall({
 }: SubscriptionPaywallProps) {
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
 
-  console.log('💳 SUBSCRIPTION PAYWALL PROPS:', {
+  log.debug('Subscription paywall props', {
     publicationInfo: {
       id: publicationInfo.id,
       name: publicationInfo.name,
@@ -59,16 +60,16 @@ export function SubscriptionPaywall({
     },
     isSubscribed,
     formattedPrice: subscriptionInfo.subscriptionPrice ? (subscriptionInfo.subscriptionPrice / 1_000_000_000).toFixed(2) : 'N/A',
-  });
+  }, 'SubscriptionPaywall');
 
   const formatPrice = (priceInMist: number) => {
     const suiPrice = (priceInMist / 1_000_000_000).toFixed(2);
-    console.log('🎯 FORMATTING PRICE:', {
+    log.debug('Formatting price', {
       input: priceInMist,
       inputType: typeof priceInMist,
       output: suiPrice,
       calculation: `${priceInMist} / 1_000_000_000 = ${priceInMist / 1_000_000_000}`,
-    });
+    }, 'SubscriptionPaywall');
     return suiPrice;
   };
 

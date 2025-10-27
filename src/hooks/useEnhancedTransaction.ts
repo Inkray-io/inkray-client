@@ -1,5 +1,6 @@
 import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
+import { log } from '@/lib/utils/Logger';
 
 export interface EnhancedTransactionResult {
   digest: string;
@@ -94,7 +95,7 @@ export const useEnhancedTransaction = () => {
         return new Promise<EnhancedTransactionResult>((resolve, reject) => {
           signAndExecuteTransaction(args, {
             onSuccess: (data) => {
-              console.log('Enhanced transaction success:', data);
+              log.debug('Enhanced transaction success', { data }, 'useEnhancedTransaction');
               const enhancedResult: EnhancedTransactionResult = {
                 digest: data.digest,
                 objectChanges: data.objectChanges?.map(change => ({
@@ -119,7 +120,7 @@ export const useEnhancedTransaction = () => {
               resolve(enhancedResult);
             },
             onError: (error) => {
-              console.error('Enhanced transaction error:', error);
+              log.error('Enhanced transaction error', { error }, 'useEnhancedTransaction');
               reject(error);
             },
           });

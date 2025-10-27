@@ -1,3 +1,5 @@
+import { log } from '@/lib/utils/Logger';
+
 /**
  * Format a Sui address to display first 4 and last 4 characters
  * @param address - The full Sui address
@@ -85,7 +87,7 @@ export const addressesEqual = (address1: string | undefined, address2: string | 
   try {
     return normalizeSuiAddress(address1) === normalizeSuiAddress(address2)
   } catch (error) {
-    console.warn('Failed to normalize addresses for comparison:', { address1, address2, error })
+    log.warn('Failed to normalize addresses for comparison', { address1, address2, error }, 'address');
     return false
   }
 }
@@ -111,7 +113,7 @@ export const copyToClipboard = async (text: string): Promise<void> => {
     try {
       document.execCommand('copy')
     } catch (error) {
-      console.error('Failed to copy text:', error)
+      log.error('Failed to copy text', { error }, 'address');
       throw error
     } finally {
       textArea.remove()

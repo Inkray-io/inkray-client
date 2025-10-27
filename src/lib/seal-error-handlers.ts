@@ -1,13 +1,13 @@
 /**
  * Seal Error Handling Utilities
- * 
+ *
  * Provides centralized error handling, logging, and recovery utilities
  * for Seal IBE operations throughout the application.
  */
 
-import { 
-  SealError, 
-  SealErrorType, 
+import {
+  SealError,
+  SealErrorType,
   SealErrorSeverity,
   isSealError,
   createWalletError,
@@ -17,6 +17,7 @@ import {
   type SealResult,
   type SafeOperation
 } from './seal-types';
+import { log } from './utils/Logger';
 
 /**
  * ================================
@@ -116,29 +117,29 @@ export function classifySealError(error: unknown): SealError {
 
 /** Log Seal errors with appropriate detail level */
 export function logSealError(error: SealError, context?: string): void {
-  const prefix = context ? `[${context}]` : '[Seal]';
+  const component = context || 'Seal';
   const errorData = error.toJSON();
 
   switch (error.severity) {
     case SealErrorSeverity.CRITICAL:
-      console.error(`${prefix} CRITICAL ERROR:`, errorData);
+      log.error('CRITICAL ERROR', errorData, component);
       // In production, this would send to error reporting service
       break;
 
     case SealErrorSeverity.HIGH:
-      console.error(`${prefix} HIGH SEVERITY:`, errorData);
+      log.error('HIGH SEVERITY', errorData, component);
       break;
 
     case SealErrorSeverity.MEDIUM:
-      console.warn(`${prefix} MEDIUM SEVERITY:`, errorData);
+      log.warn('MEDIUM SEVERITY', errorData, component);
       break;
 
     case SealErrorSeverity.LOW:
-      console.log(`${prefix} LOW SEVERITY:`, errorData);
+      log.debug('LOW SEVERITY', errorData, component);
       break;
 
     default:
-      console.error(`${prefix} UNKNOWN SEVERITY:`, errorData);
+      log.error('UNKNOWN SEVERITY', errorData, component);
   }
 }
 
@@ -364,8 +365,12 @@ export async function withRetry<T>(
         finalConfig.baseDelay * Math.pow(finalConfig.backoffMultiplier, attempt - 1),
         finalConfig.maxDelay
       );
-      
-      console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms:`, lastError.message);
+
+      log.warn(`Attempt ${attempt} failed, retrying in ${delay}ms`, {
+        attempt,
+        delay,
+        errorMessage: lastError.message
+      }, 'Retry');
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -566,6 +571,6 @@ export function isDebugMode(): boolean {
 /** Debug log function that only logs in debug mode */
 export function debugLog(message: string, data?: unknown): void {
   if (debugMode) {
-    console.log(`[Seal Debug] ${message}`, data);
+    log.debug(message, data, 'SealDebug');
   }
 }

@@ -12,6 +12,7 @@ import {
   DEFAULT_ENCRYPTION_THRESHOLD,
   DEFAULT_SESSION_KEY_TTL_MINUTES
 } from '../seal-config';
+import { log } from '../utils/Logger';
 
 /**
  * Unified Seal Service for Content Encryption and Decryption
@@ -253,7 +254,7 @@ export class SealService {
     const cachedSessionKeyData = getCachedSessionKey();
 
     if (cachedSessionKeyData) {
-      console.log('🔑 Found cached session key, attempting to restore...');
+      log.debug('Found cached session key, attempting to restore', {}, 'SealService');
       try {
         const restoredSessionKey = SessionKey.import(
           cachedSessionKeyData.exportedSessionKey,
@@ -262,17 +263,17 @@ export class SealService {
 
         // Check if the session key is still valid
         if (!restoredSessionKey.isExpired()) {
-          console.log('✅ Restored valid session key from cache');
+          log.debug('Restored valid session key from cache', {}, 'SealService');
           return restoredSessionKey;
         } else {
-          console.log('⏰ Cached session key expired, creating new one');
+          log.debug('Cached session key expired, creating new one', {}, 'SealService');
         }
       } catch (error) {
-        console.warn('⚠️ Failed to restore session key from cache:', error);
+        log.warn('Failed to restore session key from cache', error, 'SealService');
       }
     }
 
-    console.log('🔑 Creating new session key with 1-month TTL...');
+    log.debug('Creating new session key with 1-month TTL', { ttlMin: DEFAULT_SESSION_KEY_TTL_MINUTES }, 'SealService');
     const sessionKey = await SessionKey.create({
       address: this.currentAccount.address,
       packageId: CONFIG.PACKAGE_ID,
@@ -290,9 +291,9 @@ export class SealService {
       try {
         const exportedSessionKey = sessionKey.export();
         setCachedSessionKey(exportedSessionKey);
-        console.log('✅ New session key created and cached');
+        log.debug('New session key created and cached', {}, 'SealService');
       } catch (error) {
-        console.warn('⚠️ Failed to cache session key:', error);
+        log.warn('Failed to cache session key', error, 'SealService');
       }
     }
 
@@ -303,28 +304,28 @@ export class SealService {
    * Build Move transaction for content access approval (smart policy selection)
    */
   private buildApprovalTransaction(contentIdBytes: Uint8Array, params: DecryptionParams): Transaction {
-    console.log('🎯 POLICY SELECTION DEBUG:', {
+    log.debug('Policy selection', {
       ownerCapId: params.ownerCapId,
       subscriptionPrice: params.subscriptionPrice,
       subscriptionId: params.subscriptionId,
       publicationId: params.publicationId,
       articleId: params.articleId
-    });
+    }, 'SealService');
 
     // Case 1: Publication Owner (highest priority)
     if (params.ownerCapId) {
-      console.log('✅ Selected OWNER POLICY: seal_approve_publication_owner');
+      log.debug('Selected OWNER POLICY: seal_approve_publication_owner', {}, 'SealService');
       return this.buildOwnerApprovalTransaction(contentIdBytes, params.ownerCapId, params.publicationId);
     }
 
     // Case 2: Publication Subscription (medium priority)
     if (params.subscriptionPrice && params.subscriptionPrice > 0 && params.subscriptionId) {
-      console.log('✅ Selected SUBSCRIPTION POLICY: seal_approve_publication_subscription');
+      log.debug('Selected SUBSCRIPTION POLICY: seal_approve_publication_subscription', {}, 'SealService');
       return this.buildSubscriptionApprovalTransaction(contentIdBytes, params.subscriptionId, params.publicationId);
     }
 
     // Case 3: Free Content (fallback)
-    console.log('✅ Selected FREE POLICY: seal_approve_free (fallback)');
+    log.debug('Selected FREE POLICY: seal_approve_free (fallback)', {}, 'SealService');
     return this.buildFreeApprovalTransaction(contentIdBytes, params.publicationId);
   }
 
@@ -386,22 +387,22 @@ export class SealService {
   ): Promise<string> {
     const traceId = `seal-decrypt-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-    console.group(`🔍 SEAL DECRYPT TRACE [${traceId}] - ${new Date().toISOString()}`);
+    log.debug(`SEAL DECRYPT TRACE [${traceId}]`, { timestamp: new Date().toISOString() }, 'SealService');
 
     try {
       // Input validation
       if (!params.contentId || params.contentId.length === 0) {
-        console.error('❌ Content ID validation failed: empty or null');
+        log.error('Content ID validation failed: empty or null', {}, 'SealService');
         throw new Error('Invalid content ID: empty or null');
       }
 
       if (!params.contentId.startsWith('0x')) {
-        console.error('❌ Content ID validation failed: missing 0x prefix');
+        log.error('Content ID validation failed: missing 0x prefix', {}, 'SealService');
         throw new Error('Content ID must be a hex string starting with 0x');
       }
 
       if (!params.articleId || !/^0x[a-fA-F0-9]{64}$/.test(params.articleId)) {
-        console.error('❌ Article ID validation failed:', params.articleId);
+        log.error('Article ID validation failed', { articleId: params.articleId }, 'SealService');
         throw new Error('Invalid article ID format. Must be a valid Sui object ID.');
       }
 
@@ -409,26 +410,26 @@ export class SealService {
       try {
         const encObj = EncryptedObject.parse(params.encryptedData);
         if (encObj.id !== params.contentId) {
-          console.warn('⚠️ Content ID mismatch:', {
+          log.warn('Content ID mismatch', {
             fromEncryptedObject: encObj.id,
             fromParameters: params.contentId
-          });
+          }, 'SealService');
         }
       } catch (bcsError) {
-        console.error('❌ BCS validation failed:', bcsError instanceof Error ? bcsError.message : 'Unknown BCS error');
+        log.error('BCS validation failed', bcsError, 'SealService');
         throw new Error(`BCS validation failed: ${bcsError instanceof Error ? bcsError.message : 'Invalid encrypted object format'}`);
       }
 
       // Convert content ID from hex
       const contentIdBytes = fromHex(params.contentId);
       if (contentIdBytes.length !== 43) {
-        console.warn('⚠️ Unexpected content ID length:', contentIdBytes.length, 'expected 43 bytes');
+        log.warn('Unexpected content ID length', { length: contentIdBytes.length, expected: 43 }, 'SealService');
       }
 
       // Get key server configuration
       const serverConfigs = getKeyServerConfigs();
       if (serverConfigs.length === 0) {
-        console.error('❌ No key servers configured for network:', CONFIG.NETWORK);
+        log.error('No key servers configured for network', { network: CONFIG.NETWORK }, 'SealService');
         throw new Error(`No key servers configured for network: ${CONFIG.NETWORK}`);
       }
 
@@ -441,32 +442,30 @@ export class SealService {
       // Create or restore session key
       const sessionKey = await this.createSessionKey(signMessage);
 
-      // Phase 6: Transaction Building Logging
-      console.log('🔍 Step 6: Building approval transaction...');
-      console.log('📝 Policy selection input parameters:', {
+      // Transaction Building
+      log.debug('Building approval transaction', {
         contentIdBytesLength: contentIdBytes.length,
-        contentIdBytesArray: Array.from(contentIdBytes),
         articleId: params.articleId,
         publicationId: params.publicationId,
         ownerCapId: params.ownerCapId,
         subscriptionPrice: params.subscriptionPrice,
         subscriptionId: params.subscriptionId
-      });
+      }, 'SealService');
 
       const tx = this.buildApprovalTransaction(contentIdBytes, params);
-      console.log('✅ Transaction built successfully');
-      
+      log.debug('Transaction built successfully', {}, 'SealService');
+
       // Log the actual transaction details
       try {
         const txJSON = await tx.toJSON();
         const parsedTx = typeof txJSON === 'string' ? JSON.parse(txJSON) : txJSON;
-        console.log('📝 Built transaction details:', {
+        log.debug('Built transaction details', {
           transactions: parsedTx.transactions?.length || 0,
           inputs: parsedTx.inputs?.length || 0,
           gasConfig: parsedTx.gasConfig
-        });
+        }, 'SealService');
       } catch (jsonError) {
-        console.warn('⚠️ Could not serialize transaction to JSON:', jsonError);
+        log.warn('Could not serialize transaction to JSON', jsonError, 'SealService');
       }
 
       // Build transaction bytes for Seal
@@ -484,13 +483,12 @@ export class SealService {
 
       // Convert decrypted bytes to string
       const decryptedContent = new TextDecoder().decode(decrypted);
-      console.log('✅ SEAL DECRYPT SUCCESS - Content length:', decryptedContent.length);
-      console.groupEnd();
+      log.debug('SEAL DECRYPT SUCCESS', { contentLength: decryptedContent.length, traceId }, 'SealService');
       return decryptedContent;
 
     } catch (error) {
       // Enhanced error logging with full context
-      console.error('💥 SEAL DECRYPT ERROR - FULL DEBUG CONTEXT:', {
+      log.error('SEAL DECRYPT ERROR', {
         traceId,
         error,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
@@ -513,9 +511,7 @@ export class SealService {
           currentStep: 'Unknown - check logs above for last successful step',
           accountAddress: this.currentAccount?.address || 'Not available'
         }
-      });
-
-      console.groupEnd();
+      }, 'SealService');
 
       let errorMessage = 'Failed to decrypt content';
 

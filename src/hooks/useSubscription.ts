@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscriptionsAPI } from '@/lib/api';
 import { useWalletConnection } from './useWalletConnection';
+import { log } from '@/lib/utils/Logger';
 
 /**
  * Publication Subscription Management Hook
@@ -110,8 +111,8 @@ export function useSubscription({
       setError(null);
 
       const response = await subscriptionsAPI.getSubscriptionStatus(publicationId);
-      
-      console.log('📊 SUBSCRIPTION API RESPONSE:', {
+
+      log.debug('Subscription API response', {
         publicationId,
         rawResponse: response.data,
         success: response.data?.success,
@@ -119,8 +120,8 @@ export function useSubscription({
         subscriptionPriceType: typeof response.data?.data?.subscriptionPrice,
         hasActiveSubscription: response.data?.data?.hasActiveSubscription,
         publicationRequiresSubscription: response.data?.data?.publicationRequiresSubscription,
-      });
-      
+      }, 'useSubscription');
+
       // Handle wrapped API response: { success: true, data: {...} }
       if (!response.data || !response.data.success) {
         throw new Error('API returned unsuccessful response');
@@ -141,18 +142,18 @@ export function useSubscription({
         if (subscriptionData.publicationRequiresSubscription && subscriptionData.subscriptionPrice) {
           // Use Number() for better conversion than parseInt() - handles edge cases better
           const parsedPrice = Number(subscriptionData.subscriptionPrice);
-          
-          console.log('💰 BUILDING SUBSCRIPTION INFO:', {
+
+          log.debug('Building subscription info', {
             originalPrice: subscriptionData.subscriptionPrice,
             originalType: typeof subscriptionData.subscriptionPrice,
             parsedPrice: parsedPrice,
             parseSuccessful: !isNaN(parsedPrice) && isFinite(parsedPrice),
             priceInSUI: parsedPrice / 1_000_000_000,
-          });
-          
+          }, 'useSubscription');
+
           // Validate the parsed price is a valid positive number
           if (isNaN(parsedPrice) || !isFinite(parsedPrice) || parsedPrice < 0) {
-            console.error('❌ Invalid subscription price:', subscriptionData.subscriptionPrice);
+            log.error('Invalid subscription price', { price: subscriptionData.subscriptionPrice }, 'useSubscription');
             setSubscriptionInfo(null);
             return;
           }
@@ -164,16 +165,16 @@ export function useSubscription({
             publicationName: undefined, // Will be filled by parent component
           });
         } else {
-          console.log('❌ NOT BUILDING SUBSCRIPTION INFO:', {
+          log.debug('Not building subscription info', {
             publicationRequiresSubscription: subscriptionData.publicationRequiresSubscription,
             subscriptionPrice: subscriptionData.subscriptionPrice,
             hasSubscriptionPrice: !!subscriptionData.subscriptionPrice,
-          });
+          }, 'useSubscription');
           setSubscriptionInfo(null);
         }
       }
     } catch (err) {
-      console.error('Failed to fetch subscription status:', err);
+      log.error('Failed to fetch subscription status', { error: err }, 'useSubscription');
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription status');
       setSubscriptionStatus(null);
       setSubscriptionInfo(null);
