@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@mysten/dapp-kit"
 import {
@@ -12,9 +14,13 @@ import {
 } from "@/components/ui/sheet"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
-import { getDisplayName } from "@/utils/address"
+import { useUserPublications } from "@/hooks/useUserPublications"
+import { getDisplayName, copyToClipboard } from "@/utils/address"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { Avatar } from "@/components/ui/Avatar"
+import { ROUTES } from "@/constants/routes"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface MobileMenuProps {
   children: React.ReactNode
@@ -23,7 +29,10 @@ interface MobileMenuProps {
 
 export function MobileMenu({ children, currentPage: _currentPage = "feed" }: MobileMenuProps) {
   const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
-  const { account } = useAuth()
+  const { account, logout } = useAuth()
+  const { hasPublications, firstPublication, isLoading: publicationsLoading } = useUserPublications()
+  const router = useRouter()
+  const [copying, setCopying] = useState(false)
 
   // Note: currentPage can be used for future active state management
   const topics = [
@@ -40,6 +49,27 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
 
   const { primary, secondary } = getDisplayName(suiNSName, address || '')
 
+  const handleCopyAddress = async () => {
+    if (!address || copying) return
+
+    setCopying(true)
+    try {
+      await copyToClipboard(address)
+    } catch (error) {
+      // Failed to copy - continue silently
+    } finally {
+      setTimeout(() => setCopying(false), 1000)
+    }
+  }
+
+  const handleDisconnect = () => {
+    logout()
+    disconnect()
+    setTimeout(() => {
+      router.push('/')
+    }, 100)
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -52,12 +82,12 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
 
         <div className="flex flex-col h-full">
           {/* Wallet/Profile Section */}
-          <div className="pt-6 pb-5 border-b border-gray-200">
+          <div className="pt-4 pb-4 border-b border-gray-200">
             {isConnected ? (
-              <div className="space-y-4">
-                {/* Connected User Profile Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
+              <div className="space-y-3">
+                {/* Connected User Profile Card - More Compact */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2.5">
                     {account ? (
                       <Avatar
                         {...createUserAvatarConfig({
@@ -65,52 +95,94 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                           publicKey: address || account.publicKey,
                           name: account.username,
                           avatar: account.avatar,
-                        }, 'lg')}
+                        }, 'md')}
                       />
                     ) : (
                       <Avatar
                         src={null}
                         alt="User avatar"
-                        size="lg"
+                        size="md"
                         fallbackText="??"
                         gradientColors="from-gray-400 to-gray-500"
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-black text-base truncate">
+                      <div className="font-semibold text-black text-sm truncate">
                         {suiNSLoading ? 'Loading...' : primary}
                       </div>
                       {secondary && !suiNSLoading && (
-                        <div className="text-sm text-gray-600 truncate">{secondary}</div>
+                        <div className="text-xs text-gray-600 truncate">{secondary}</div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Disconnect Button */}
+                {/* Profile Actions Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {hasPublications && firstPublication ? (
+                    <SheetClose asChild>
+                      <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 text-xs h-9"
+                        >
+                          <HiCog6Tooth className="size-3.5" />
+                          <span className="truncate">My Publication</span>
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                  ) : (
+                    <SheetClose asChild>
+                      <Link href="/create-publication">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 text-xs h-9"
+                          disabled={publicationsLoading}
+                        >
+                          <HiPlus className="size-3.5" />
+                          <span className="truncate">{publicationsLoading ? 'Loading...' : 'Create Pub'}</span>
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyAddress}
+                    disabled={copying}
+                    className="w-full justify-start gap-2 text-xs h-9"
+                  >
+                    <HiClipboard className="size-3.5" />
+                    <span className="truncate">{copying ? 'Copied!' : 'Copy Address'}</span>
+                  </Button>
+                </div>
+
+                {/* Sign Out Button */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => disconnect()}
-                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-colors"
+                  onClick={handleDisconnect}
+                  className="w-full justify-start gap-2 text-xs h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-colors"
                 >
-                  Disconnect Wallet
+                  <HiArrowRightOnRectangle className="size-3.5" />
+                  Sign Out
                 </Button>
               </div>
             ) : (
-              /* Disconnected State - Show Connect Button */
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 text-center">
-                <div className="mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-black mb-2">Connect Wallet</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Connect to access all features
-                  </p>
+              /* Disconnected State - Show Connect Button - More Compact */
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 text-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
                 </div>
+                <h3 className="font-semibold text-black text-sm mb-1">Connect Wallet</h3>
+                <p className="text-xs text-gray-600 mb-3">
+                  Connect to access features
+                </p>
                 <ConnectButton />
               </div>
             )}
