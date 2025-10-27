@@ -82,7 +82,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
 
         <div className="flex flex-col h-full">
           {/* Wallet/Profile Section */}
-          <div className="pt-4 pb-4 border-b border-gray-200">
+          <div className="px-4 pt-4 pb-4 border-b border-gray-200">
             {isConnected ? (
               <div className="space-y-3">
                 {/* Connected User Profile Card - More Compact */}
