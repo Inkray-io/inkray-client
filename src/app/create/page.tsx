@@ -189,14 +189,14 @@ export default function CreateArticlePage() {
         <AppLayout currentPage="create">
           <div className="mx-auto space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
-              <div className="flex items-center justify-between">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-black">Create Article</h1>
-                  <p className="text-gray-600 mt-1">Write and publish your story</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-black">Create Article</h1>
+                  <p className="text-sm sm:text-base text-gray-600 mt-1">Write and publish your story</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   {lastSaved && (
                     <span className="text-xs text-gray-400">
                       Last saved: {lastSaved.toLocaleTimeString()}
@@ -206,7 +206,7 @@ export default function CreateArticlePage() {
                   <Button
                     onClick={handlePublish}
                     disabled={isProcessing || !title.trim() || !content.trim() || !summary.trim() || !categoryId}
-                    className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50"
+                    className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50 min-h-[40px] flex-1 sm:flex-initial"
                   >
                     {isProcessing ? (
                       <>
@@ -249,7 +249,7 @@ export default function CreateArticlePage() {
 
             {/* Main Editor Container - Fluid Vertical Structure */}
             <div className="bg-white rounded-2xl overflow-hidden">
-              <div className="p-8 space-y-8">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
                 {/* Title */}
                 <div>
                   <input
@@ -257,7 +257,7 @@ export default function CreateArticlePage() {
                     placeholder="Add a Title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black focus:outline-none"
+                    className="w-full text-xl sm:text-2xl md:text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-400 text-black focus:outline-none"
                   />
                 </div>
 
@@ -303,7 +303,7 @@ export default function CreateArticlePage() {
                       onChange={setContent}
                       onTempImagesChange={setTempImages}
                       placeholder="What's on your mind?"
-                      className="min-h-[600px]"
+                      className="min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"
                     />
                   </MilkdownEditorWrapper>
                 </div>
@@ -325,8 +325,8 @@ export default function CreateArticlePage() {
 
                 {/* Footer Stats and Actions */}
                 <div className="pt-6 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                       <span className="text-xs text-gray-500">
                         {getPlainTextFromMarkdown(content).length} characters
                       </span>

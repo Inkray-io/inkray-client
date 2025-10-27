@@ -33,6 +33,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'Inkray Team', url: 'https://inkray.xyz' }],
   creator: 'Inkray',
   publisher: 'Inkray',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
   openGraph: {
     type: 'website',
     url: 'https://inkray.xyz',
