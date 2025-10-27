@@ -92,6 +92,7 @@ export function NftMintingSection({
         <div>
           <VerificationSection 
             articleId={articleId}
+            refreshKey={refreshKey}
           />
         </div>
       </div>
