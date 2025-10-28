@@ -72,6 +72,7 @@ export const feedAPI = {
     fromDate?: string;
     toDate?: string;
     timeframe?: 'day' | 'week' | 'month'; // For popular feed
+    includeFollowStatus?: boolean; // Include follow information for publications
   }) => api.get('/feed/articles', { params }),
 
   getTrending: (params: {

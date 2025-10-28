@@ -137,6 +137,8 @@ function FeedPageContent() {
               articleId={article.articleId}
               publicationId={article.publicationId}
               totalTips={article.totalTips}
+              isFollowing={article.followInfo?.isFollowing}
+              followerCount={article.followInfo?.followerCount}
             />
           )
         })}

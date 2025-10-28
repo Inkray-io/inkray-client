@@ -66,9 +66,11 @@ export const useFeedArticles = (
         cursor?: string;
         timeframe?: 'day' | 'week' | 'month';
         categoryId?: string;
+        includeFollowStatus?: boolean;
       } = {
         type: feedType,
         limit: 20,
+        includeFollowStatus: true, // Include follow status for publications
       };
 
       if (cursor) {
