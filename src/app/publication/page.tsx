@@ -8,6 +8,8 @@ import { usePublicationFeed } from '@/hooks/usePublicationFeed';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicationHeader } from '@/components/publication/PublicationHeader';
 import { FeedPost } from '@/components/feed/FeedPost';
+import { FeedPostSkeleton } from '@/components/feed/FeedPostSkeleton';
+import { PublicationPageSkeleton } from '@/components/publication/PublicationPageSkeleton';
 import { TopWriters } from '@/components/widgets/TopWriters';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -129,23 +131,9 @@ const PublicationPageContent: React.FC = () => {
 
             {/* Articles Loading State */}
             {articlesLoading && articles.length === 0 && (
-              <div className="space-y-6">
-                {[...Array(2)].map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-32"></div>
-                          <div className="h-3 bg-gray-200 rounded w-24"></div>
-                        </div>
-                      </div>
-                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-80 bg-gray-200 rounded-xl"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-6 px-6">
+                <FeedPostSkeleton />
+                <FeedPostSkeleton />
               </div>
             )}
 
@@ -263,16 +251,7 @@ const PublicationPageContent: React.FC = () => {
 const PublicationPage: React.FC = () => {
   return (
     <RequireAuth>
-      <Suspense
-        fallback={
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="text-muted-foreground">Loading publication...</span>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<PublicationPageSkeleton />}>
         <PublicationPageContent />
       </Suspense>
     </RequireAuth>
