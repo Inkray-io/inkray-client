@@ -251,7 +251,7 @@ export function FeedPost({
           )}
 
           {/* Support/Tip Button */}
-          {articleId && publicationId ? (
+          {publicationId ? (
             <button
               className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
               onClick={() => setIsTipDialogOpen(true)}
@@ -331,7 +331,7 @@ export function FeedPost({
                     <MessageCircle className="size-4 text-gray-600 group-hover:text-gray-700" />
                     <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.comments}</span>
                   </button>
-                  {articleId && publicationId && (
+                  {publicationId && (
                     <button 
                       className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group"
                       onClick={() => setIsTipDialogOpen(true)}
@@ -468,9 +468,8 @@ export function FeedPost({
       )}
 
       {/* Tip Dialog */}
-      {articleId && publicationId && isTipDialogOpen && (
+      {publicationId && isTipDialogOpen && (
         <TipButton 
-          articleId={articleId}
           publicationId={publicationId}
           articleTitle={title}
           isOpen={isTipDialogOpen}

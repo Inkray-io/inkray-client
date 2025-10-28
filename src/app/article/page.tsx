@@ -401,7 +401,7 @@ function ArticlePageContent() {
                       </div>
                       
                       {/* Support Button */}
-                      {article?.articleId && article?.publicationId ? (
+                      {article?.publicationId ? (
                         <button
                           className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
                           onClick={() => setIsTipDialogOpen(true)}
@@ -573,7 +573,7 @@ function ArticlePageContent() {
               )}
 
               {/* Tip Section */}
-              {article.articleId && article.publicationId && (
+              {article.publicationId && (
                 <div className="bg-white rounded-2xl p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
@@ -650,9 +650,8 @@ function ArticlePageContent() {
         )}
 
         {/* Tip Dialog */}
-        {article?.articleId && article?.publicationId && isTipDialogOpen && (
+        {article?.publicationId && isTipDialogOpen && (
           <TipButton 
-            articleId={article.articleId}
             publicationId={article.publicationId}
             articleTitle={article.title || 'Untitled Article'}
             isOpen={isTipDialogOpen}

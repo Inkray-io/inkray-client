@@ -98,7 +98,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <TipDisplay amount={article.totalTips || 0} size="sm" />
           <TipButton 
-            articleId={article.articleId}
             publicationId={article.publicationId}
             articleTitle={article.title}
           />

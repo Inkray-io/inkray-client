@@ -13,7 +13,6 @@ import { ConnectButton } from "@mysten/dapp-kit";
 import { log } from "@/lib/utils/Logger";
 
 interface TipButtonProps {
-  articleId: string;
   publicationId: string;
   articleTitle: string;
   onTipSuccess?: () => void;
@@ -21,7 +20,7 @@ interface TipButtonProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess, isOpen, onOpenChange }: TipButtonProps) {
+export function TipButton({ publicationId, articleTitle, onTipSuccess, isOpen, onOpenChange }: TipButtonProps) {
   const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
@@ -49,19 +48,17 @@ export function TipButton({ articleId, publicationId, articleTitle, onTipSuccess
       // Build tip transaction
       const tx = new Transaction();
       
-      // Reference article and publication objects
-      const article = tx.object(articleId);
+      // Reference publication object
       const publication = tx.object(publicationId);
       
       // Create payment coin
       const [coin] = tx.splitCoins(tx.gas, [amount]);
       
-      // Call tip_article function with embedded treasury
+      // Call tip_publication function with embedded treasury
       // Tips are stored directly in the publication object (embedded treasury)
       tx.moveCall({
-        target: `${INKRAY_CONFIG.PACKAGE_ID}::platform_economics::tip_article`,
+        target: `${INKRAY_CONFIG.PACKAGE_ID}::platform_economics::tip_publication`,
         arguments: [
-          article,      // &Article - article being tipped
           publication,  // &mut Publication - publication with embedded treasury
           coin,         // Coin<SUI> - payment amount
         ],
