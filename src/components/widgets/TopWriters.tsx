@@ -3,6 +3,7 @@
 import { useTopWriters } from '@/hooks/useTopWriters';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
 
@@ -43,26 +44,26 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
         <div className="mb-4">
           <h3 className="font-semibold text-black text-lg">Top writers</h3>
         </div>
-        
+
         <div className="space-y-4">
           {[1, 2, 3].map((rank) => (
             <div key={rank} className="flex items-center gap-3">
               {/* Rank number skeleton */}
               <div className="w-6 text-center">
-                <div className="w-4 h-4 bg-gray-200 rounded animate-pulse mx-auto"></div>
+                <Skeleton className="w-4 h-4 mx-auto" />
               </div>
               {/* Avatar skeleton */}
-              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+              <Skeleton className="w-10 h-10 rounded-full" />
               {/* Writer info skeleton */}
-              <div className="flex-1 space-y-1">
-                <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
-                <div className="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-20" />
               </div>
             </div>
           ))}
         </div>
-        
-        <div className="h-6 bg-gray-200 rounded animate-pulse mt-4 w-28"></div>
+
+        <Skeleton className="h-6 mt-4 w-28" />
       </div>
     );
   }

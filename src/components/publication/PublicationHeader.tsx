@@ -5,6 +5,7 @@ import { FollowButton } from '@/components/follow/FollowButton';
 import { PublicationTipButton } from '@/components/publication/PublicationTipButton';
 import { TipDisplay } from '@/components/ui/TipDisplay';
 import { Avatar } from '@/components/ui/Avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -67,48 +68,53 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl overflow-hidden">
-        <div className="animate-pulse">
-          {/* Cover image skeleton */}
-          <div className="h-40 sm:h-60 bg-neutral-200 rounded-tl-2xl rounded-tr-2xl"></div>
-          
-          {/* Profile section skeleton */}
-          <div className="px-3 sm:px-6 pb-5">
-            <div className="flex items-end justify-between -mt-8 sm:-mt-12 pb-2.5">
-              <div className="flex items-center gap-7.5">
-                <div className="w-20 h-20 sm:w-25 sm:h-25 bg-gray-300 rounded-full"></div>
-              </div>
-            </div>
-            
-            {/* Mobile Layout Skeleton */}
-            <div className="sm:hidden w-full">
-              <div className="space-y-3 w-full">
-                <div className="space-y-1.5 pl-3">
-                  <div className="h-5 bg-gray-300 rounded w-48 max-w-[calc(100%-2rem)]"></div>
-                  <div className="h-3 bg-gray-300 rounded w-32"></div>
-                </div>
-                <div className="px-3">
-                  <div className="h-9 bg-gray-300 rounded w-24"></div>
-                </div>
-              </div>
-            </div>
+        {/* Cover image skeleton */}
+        <div className="relative h-40 sm:h-60 rounded-tl-2xl rounded-tr-2xl overflow-hidden">
+          <Skeleton className="w-full h-full rounded-none" />
 
-            {/* Desktop Layout Skeleton */}
-            <div className="hidden sm:flex items-start justify-between w-full">
-              <div className="flex-shrink-0 min-w-0 flex-1">
-                <div className="pl-6 space-y-1.5 pr-4">
-                  <div className="h-5 bg-gray-300 rounded w-48 max-w-full"></div>
-                  <div className="h-3 bg-gray-300 rounded w-32"></div>
-                </div>
+          {/* Profile section skeleton - Avatar overlapping the cover */}
+          <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-6 pb-2.5">
+            <div className="flex items-end justify-between">
+              <Skeleton className="w-20 h-20 sm:w-25 sm:h-25 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Publication Info Section Skeleton */}
+        <div className="px-3 sm:px-6 pb-5">
+          {/* Mobile Layout Skeleton */}
+          <div className="sm:hidden w-full">
+            <div className="space-y-3 w-full pt-3">
+              <div className="space-y-1.5 pl-3">
+                <Skeleton className="h-5 w-48 max-w-[calc(100%-2rem)]" />
+                <Skeleton className="h-3 w-32" />
               </div>
-              <div className="flex-shrink-0 ml-4">
-                <div className="h-9 bg-gray-300 rounded w-24"></div>
+              <div className="px-3 flex gap-3">
+                <Skeleton className="h-9 w-24 rounded-lg" />
+                <Skeleton className="h-9 w-24 rounded-lg" />
               </div>
             </div>
-            
-            <div className="mt-4 flex gap-3 px-3 sm:px-0">
-              <div className="h-4 bg-gray-300 rounded w-24"></div>
-              <div className="h-4 bg-gray-300 rounded w-24"></div>
+          </div>
+
+          {/* Desktop Layout Skeleton */}
+          <div className="hidden sm:flex items-start justify-between w-full pt-3">
+            <div className="flex-shrink-0 min-w-0 flex-1">
+              <div className="pl-6 space-y-1.5 pr-4">
+                <Skeleton className="h-5 w-48 max-w-full" />
+                <Skeleton className="h-3 w-32" />
+              </div>
             </div>
+            <div className="flex-shrink-0 ml-4 flex gap-3">
+              <Skeleton className="h-9 w-24 rounded-lg" />
+              <Skeleton className="h-9 w-24 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Subscriber Stats Skeleton */}
+          <div className="mt-4 flex gap-3 px-3 sm:px-6">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
           </div>
         </div>
       </div>
