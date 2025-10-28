@@ -4,7 +4,6 @@ import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { TopWriters } from "@/components/widgets/TopWriters"
-import { PopularComments } from "@/components/widgets/PopularComments"
 import { Button } from "@/components/ui/button"
 import { useFeedArticles } from "@/hooks/useFeedArticles"
 import { useCategories } from "@/hooks/useCategories"
@@ -125,6 +124,7 @@ function FeedPageContent() {
               author={displayArticle.author}
               title={displayArticle.title}
               description={displayArticle.description}
+              image={displayArticle.image}
               engagement={displayArticle.engagement}
               hasReadMore={true}
               slug={article.slug}

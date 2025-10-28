@@ -79,6 +79,7 @@ export const usePublicationFeed = (publicationId: string) => {
           gated: article.gated,
           quiltBlobId: article.quiltBlobId || '',
           quiltObjectId: article.quiltObjectId || '',
+          hasCover: article.hasCover ?? false,
           createdAt: article.createdAt,
           transactionHash: article.transactionHash,
           timeAgo: article.timeAgo,

@@ -9,11 +9,11 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicationHeader } from '@/components/publication/PublicationHeader';
 import { FeedPost } from '@/components/feed/FeedPost';
 import { TopWriters } from '@/components/widgets/TopWriters';
-import { PopularComments } from '@/components/widgets/PopularComments';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
+import { CONFIG } from '@/lib/config';
 
 /**
  * Publication page content component
@@ -168,6 +168,10 @@ const PublicationPageContent: React.FC = () => {
               <div className="space-y-6">
                 {articles.map((article) => {
                   // Format article data for FeedPost component
+                  const coverImage = article.hasCover
+                    ? `${CONFIG.API_URL}/articles/media/media0?articleId=${encodeURIComponent(article.articleId)}`
+                    : undefined;
+
                   const formattedArticle = {
                     author: {
                       name: article.authorShortAddress,
@@ -181,6 +185,7 @@ const PublicationPageContent: React.FC = () => {
                       mintedBy: 0,
                     },
                     title: article.title,
+                    image: coverImage,
                     description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
                     engagement: article.engagement,
                     slug: article.slug,

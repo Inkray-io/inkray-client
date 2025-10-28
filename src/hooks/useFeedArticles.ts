@@ -3,6 +3,7 @@ import { feedAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
+import { CONFIG } from '@/lib/config';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed
@@ -177,6 +178,10 @@ export const useFeedArticles = (
       publicKey: article.author,
       // Don't pass the short address as name - let the function detect it's an address
     }, 'md');
+    const hasCover = Boolean(article.hasCover);
+    const coverImage = hasCover
+      ? `${CONFIG.API_URL}/articles/media/media0?articleId=${encodeURIComponent(article.articleId)}`
+      : undefined;
 
     return {
       id: article.articleId,
@@ -190,6 +195,7 @@ export const useFeedArticles = (
       },
       title: article.title,
       slug: article.slug,
+      image: coverImage,
       description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
       engagement: {
         likes: article.totalLikes,
@@ -201,6 +207,7 @@ export const useFeedArticles = (
       quiltBlobId: article.quiltBlobId,
       quiltObjectId: article.quiltObjectId,
       gated: article.gated,
+      hasCover,
     };
   }, []);
 

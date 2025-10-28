@@ -47,6 +47,8 @@ export interface Article {
   tags?: string[];
   /** Optional article summary/excerpt */
   summary?: string;
+  /** Whether the article has at least one media file that can be used as cover */
+  hasCover?: boolean;
   /** Publication follow information */
   followInfo?: {
     publicationName: string;
@@ -342,6 +344,7 @@ export interface PublicationArticle {
   title: string;
   slug: string;
   summary?: string;
+  hasCover?: boolean;
   author: string;
   authorShortAddress: string;
   createdAt: string;
