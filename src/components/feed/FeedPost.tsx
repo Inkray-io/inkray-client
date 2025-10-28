@@ -7,12 +7,12 @@ import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
 import { TipDisplay } from "@/components/ui/TipDisplay"
 import { Avatar } from "@/components/ui/Avatar"
-import { createUserAvatarConfig } from "@/lib/utils/avatar"
+import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/utils/avatar"
 import { SuiIcon } from "@/components/ui/SuiIcon"
 import { LikeButton } from "@/components/like/LikeButton"
 import { useLikes } from "@/hooks/useLikes"
 import { useState } from "react"
-import { copyToClipboard } from "@/utils/address"
+import { copyToClipboard, formatAddress } from "@/utils/address"
 import { SubscriptionButton } from "@/components/subscription"
 import { log } from "@/lib/utils/Logger"
 
@@ -43,6 +43,7 @@ interface FeedPostProps {
   publication?: {
     id: string
     name: string
+    avatar?: string | null
   }
   // Article information for tipping
   articleId?: string
@@ -94,6 +95,23 @@ export function FeedPost({
     publicKey: author.address || author.name, // Use full address if available, otherwise use name
     avatar: author.avatar,
   }, 'md');
+
+  const publicationAvatarConfig = publication
+    ? createPublicationAvatarConfig(
+        {
+          id: publication.id,
+          name: publication.name,
+          avatar: publication.avatar ?? null,
+        },
+        'md'
+      )
+    : null;
+
+  const displayAvatarConfig = publicationAvatarConfig || authorAvatarConfig;
+
+  const displayAuthor = author.address
+    ? formatAddress(author.address)
+    : author.name;
   
   const handleArticleClick = () => {
     if (onClick) {
@@ -194,12 +212,25 @@ export function FeedPost({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Avatar
-            {...authorAvatarConfig}
+            {...displayAvatarConfig}
           />
-          <div>
-            <div className="font-semibold text-black text-sm">{author.name}</div>
+          <div className="flex flex-col">
+            {publication ? (
+              <button
+                type="button"
+                onClick={handlePublicationClick}
+                className="font-semibold text-black text-sm text-left hover:text-primary transition-colors"
+              >
+                {publication.name}
+              </button>
+            ) : (
+              <div className="font-semibold text-black text-sm">{author.name}</div>
+            )}
             <div className="text-xs text-gray-500">
-              Minted by <span className="font-semibold">{author.mintedBy}</span> • {author.date} • {author.readTime}
+              By{" "}
+              <span className="font-semibold">
+                {displayAuthor}
+              </span>
             </div>
           </div>
         </div>
@@ -247,17 +278,9 @@ export function FeedPost({
           >
             {title}
           </h2>
-          {publication && (
-            <div className="text-xs text-gray-500 mt-1">
-              Published in{' '}
-              <button
-                onClick={handlePublicationClick}
-                className="font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
-              >
-                {publication.name}
-              </button>
-            </div>
-          )}
+          <div className="text-xs text-gray-500 mt-1">
+            Minted by <span className="font-semibold">{author.mintedBy}</span> • {author.date} • {author.readTime}
+          </div>
           <p className="text-gray-700 text-sm sm:text-base mt-3 leading-relaxed">
             {description}
           </p>

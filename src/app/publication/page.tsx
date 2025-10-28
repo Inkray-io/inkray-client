@@ -187,6 +187,7 @@ const PublicationPageContent: React.FC = () => {
                     publication: publication ? {
                       id: publication.id,
                       name: publication.name,
+                      avatar: publication.avatar ?? null,
                     } : undefined,
                   };
 

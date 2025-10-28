@@ -131,7 +131,8 @@ function FeedPageContent() {
               onClick={() => handleArticleClick(article.slug)}
               publication={{
                 id: article.publicationId,
-                name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`
+                name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`,
+                avatar: article.followInfo?.publicationAvatar || null
               }}
               articleId={article.articleId}
               publicationId={article.publicationId}
