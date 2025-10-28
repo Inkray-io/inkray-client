@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
-import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
