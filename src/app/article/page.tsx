@@ -20,7 +20,7 @@ import {
   Check
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
+import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
 import { TipButton } from "@/components/article/TipButton";
@@ -434,12 +434,9 @@ function ArticlePageContent() {
 
                   {/* Article Body */}
                   <div className="border-t border-gray-100 pt-6">
-                    {/* Show animated loader while loading content */}
+                    {/* Show skeleton loader while loading content */}
                     {(loadingStage !== 'idle' && !content) ? (
-                      <ArticleAnimatedLoader
-                        currentStage={loadingStage}
-                        isEncrypted={!!article.contentSealId}
-                      />
+                      <ArticleSkeletonLoader />
                     ) : content ? (
                       <div className="prose prose-base sm:prose-lg max-w-none">
                         <ReactMarkdown
