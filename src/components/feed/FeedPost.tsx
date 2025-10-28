@@ -15,6 +15,8 @@ import { useState } from "react"
 import { copyToClipboard, formatAddress } from "@/utils/address"
 import { SubscriptionButton } from "@/components/subscription"
 import { log } from "@/lib/utils/Logger"
+import { useFollows } from "@/hooks/useFollows"
+import { FollowButton } from "@/components/follow/FollowButton"
 
 interface FeedPostProps {
   author: {
@@ -58,13 +60,18 @@ interface FeedPostProps {
     isSubscribed?: boolean
     subscriptionExpiresAt?: Date
   }
+  // Follow information
+  isFollowing?: boolean
+  followerCount?: number
+  // Control whether to show follow button (hide on publication-specific feeds)
+  showFollowButton?: boolean
 }
 
-export function FeedPost({ 
-  author, 
-  title, 
-  description, 
-  image, 
+export function FeedPost({
+  author,
+  title,
+  description,
+  image,
   hasReadMore = false,
   engagement,
   slug,
@@ -73,14 +80,26 @@ export function FeedPost({
   articleId,
   publicationId,
   totalTips,
-  subscriptionInfo
+  subscriptionInfo,
+  isFollowing,
+  followerCount,
+  showFollowButton = true // Default to true for backward compatibility
 }: FeedPostProps) {
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
   // const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false) // Commented out as it's not used yet
-  
+
+  // Initialize follows hook if publicationId is available
+  const followsHook = useFollows(
+    publicationId || '',
+    publicationId ? {
+      isFollowing: isFollowing || false,
+      followerCount: followerCount || 0,
+    } : undefined
+  )
+
   // Initialize likes hook if articleId is available
   const likesHook = useLikes(
     articleId || '',
@@ -140,6 +159,10 @@ export function FeedPost({
 
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
+  }
+
+  const handleFollowToggle = async () => {
+    await followsHook.toggleFollow();
   }
 
   const handleCopyLink = async () => {
@@ -250,18 +273,16 @@ export function FeedPost({
             />
           )}
 
-          {/* Support/Tip Button */}
-          {publicationId ? (
-            <button
-              className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
-              onClick={() => setIsTipDialogOpen(true)}
-            >
-              Support
-            </button>
-          ) : (
-            <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg min-h-[36px] flex items-center">
-              Support
-            </div>
+          {/* Follow Button */}
+          {publicationId && showFollowButton && (
+            <FollowButton
+              isFollowing={followsHook.isFollowing}
+              isLoading={followsHook.isLoading}
+              followerCount={followsHook.followerCount}
+              onToggleFollow={handleFollowToggle}
+              showFollowerCount={false}
+              className="min-h-[36px]"
+            />
           )}
           <Button variant="ghost" size="icon" className="min-h-[36px] min-w-[36px]">
             <MoreHorizontal className="size-5" />
