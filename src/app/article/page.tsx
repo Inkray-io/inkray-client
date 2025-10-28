@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useArticle } from "@/hooks/useArticle";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import {
-  Loader2,
   AlertCircle,
   ArrowLeft,
   User,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
+import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
 import { TipButton } from "@/components/article/TipButton";
@@ -147,13 +147,12 @@ function ArticlePageContent() {
     return (
       <RequireAuth redirectTo="/">
         <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <p className="font-medium">Loading article...</p>
-              </div>
+          <div className="max-w-4xl mx-auto py-8 space-y-6">
+            {/* Back Button Skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
             </div>
+            <ArticleSkeleton />
           </div>
         </AppLayout>
       </RequireAuth>
@@ -668,13 +667,12 @@ export default function ArticlePage() {
     <Suspense fallback={
       <RequireAuth redirectTo="/">
         <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <p className="font-medium">Loading article...</p>
-              </div>
+          <div className="max-w-4xl mx-auto py-8 space-y-6">
+            {/* Back Button Skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
             </div>
+            <ArticleSkeleton />
           </div>
         </AppLayout>
       </RequireAuth>
