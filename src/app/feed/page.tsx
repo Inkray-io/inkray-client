@@ -3,6 +3,7 @@
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { FeedPost } from "@/components/feed/FeedPost"
+import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { TopWriters } from "@/components/widgets/TopWriters"
 import { Button } from "@/components/ui/button"
 import { useFeedArticles } from "@/hooks/useFeedArticles"
@@ -77,17 +78,11 @@ function FeedPageContent() {
       <div className="space-y-5">
         {/* Loading State */}
         {isLoading && articles.length === 0 && (
-          <div className="bg-white rounded-2xl p-8">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-              <div className="space-y-2">
-                <p className="font-medium">Loading articles...</p>
-                <p className="text-sm text-muted-foreground">
-                  Fetching the latest articles from the blockchain
-                </p>
-              </div>
-            </div>
-          </div>
+          <>
+            <FeedPostSkeleton />
+            <FeedPostSkeleton />
+            <FeedPostSkeleton />
+          </>
         )}
 
         {/* Error State */}

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useArticle } from "@/hooks/useArticle";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import {
-  Loader2,
   AlertCircle,
   ArrowLeft,
   User,
@@ -21,6 +20,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
+import { ArticleAnimatedLoader } from "@/components/ui/ArticleAnimatedLoader";
+import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
 import { TipButton } from "@/components/article/TipButton";
@@ -93,17 +94,17 @@ function ArticlePageContent() {
 
   const handleCopyLink = async () => {
     if (copied) return; // Prevent multiple clicks while in copied state
-    
+
     try {
       // Generate article URL
       const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug || '')}`;
-      
+
       // Copy to clipboard
       await copyToClipboard(articleUrl);
-      
+
       // Show success state
       setCopied(true);
-      
+
       // Reset after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -114,7 +115,7 @@ function ArticlePageContent() {
   const generateShareUrls = (articleUrl: string, title: string) => {
     const encodedUrl = encodeURIComponent(articleUrl);
     const encodedTitle = encodeURIComponent(title);
-    
+
     return {
       twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
@@ -131,13 +132,13 @@ function ArticlePageContent() {
     // Generate article URL
     const articleUrl = `${window.location.origin}${ROUTES.ARTICLE_WITH_ID(articleSlug || '')}`;
     const shareUrls = generateShareUrls(articleUrl, article?.title || 'Article');
-    
+
     // Open sharing URL in new tab
     const url = shareUrls[platform as keyof typeof shareUrls];
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
-    
+
     // Close popup
     setIsShareOpen(false);
   };
@@ -147,13 +148,12 @@ function ArticlePageContent() {
     return (
       <RequireAuth redirectTo="/">
         <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <p className="font-medium">Loading article...</p>
-              </div>
+          <div className="max-w-4xl mx-auto py-8 space-y-6">
+            {/* Back Button Skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
             </div>
+            <ArticleSkeleton />
           </div>
         </AppLayout>
       </RequireAuth>
@@ -289,7 +289,7 @@ function ArticlePageContent() {
                           variant="engagement"
                         />
                       )}
-                      
+
                       {/* Copy Link Button */}
                       <Button
                         variant="ghost"
@@ -314,7 +314,7 @@ function ArticlePageContent() {
                         >
                           <Share className="size-4 text-gray-600" />
                         </Button>
-                        
+
                         {/* Share Popup */}
                         {isShareOpen && (
                           <div className="absolute top-full right-0 mt-1 w-56 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-w-[calc(100vw-2rem)]">
@@ -332,7 +332,7 @@ function ArticlePageContent() {
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                               </button>
-                              
+
                               <button
                                 onClick={() => handleSharePlatform('linkedin')}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -346,7 +346,7 @@ function ArticlePageContent() {
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                               </button>
-                              
+
                               <button
                                 onClick={() => handleSharePlatform('facebook')}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -360,7 +360,7 @@ function ArticlePageContent() {
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                               </button>
-                              
+
                               <button
                                 onClick={() => handleSharePlatform('reddit')}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -374,9 +374,9 @@ function ArticlePageContent() {
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                               </button>
-                              
+
                               <hr className="my-1" />
-                              
+
                               <button
                                 onClick={handleCopyLink}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -399,7 +399,7 @@ function ArticlePageContent() {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Support Button */}
                       {article?.publicationId ? (
                         <button
@@ -640,15 +640,15 @@ function ArticlePageContent() {
 
         {/* Click outside to close share popup */}
         {isShareOpen && (
-          <div 
-            className="fixed inset-0 z-0" 
+          <div
+            className="fixed inset-0 z-0"
             onClick={() => setIsShareOpen(false)}
           />
         )}
 
         {/* Tip Dialog */}
         {article?.publicationId && isTipDialogOpen && (
-          <TipButton 
+          <TipButton
             publicationId={article.publicationId}
             articleTitle={article.title || 'Untitled Article'}
             isOpen={isTipDialogOpen}
@@ -665,13 +665,12 @@ export default function ArticlePage() {
     <Suspense fallback={
       <RequireAuth redirectTo="/">
         <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="bg-white rounded-2xl p-8">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <p className="font-medium">Loading article...</p>
-              </div>
+          <div className="max-w-4xl mx-auto py-8 space-y-6">
+            {/* Back Button Skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
             </div>
+            <ArticleSkeleton />
           </div>
         </AppLayout>
       </RequireAuth>
