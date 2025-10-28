@@ -17,29 +17,29 @@ function FeedPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { categories } = useCategories()
-  
+
   // Extract feed type and category from URL params
   const [feedType, setFeedType] = useState<FeedType>(() => {
     const typeParam = searchParams.get('type') as FeedType
     return ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
   })
-  
+
   // Get category from URL and find the corresponding category ID
   const categorySlug = searchParams.get('category')
   const selectedCategory = categories.find(cat => cat.slug === categorySlug)
-  
+
   // Popular feed always uses week timeframe (as requested)
   const timeframe: TimeFrame = 'week'
 
-  const { 
-    articles, 
-    isLoading, 
-    error, 
-    hasMore, 
-    loadMore, 
-    refresh, 
+  const {
+    articles,
+    isLoading,
+    error,
+    hasMore,
+    loadMore,
+    refresh,
     clearError,
-    formatArticleForDisplay 
+    formatArticleForDisplay
   } = useFeedArticles(feedType, timeframe, selectedCategory?.id)
 
   const handleArticleClick = (slug: string) => {
@@ -56,7 +56,7 @@ function FeedPageContent() {
   useEffect(() => {
     const typeParam = searchParams.get('type') as FeedType
     const newType = ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
-    
+
     if (newType !== feedType) {
       setFeedType(newType)
     }
@@ -65,12 +65,13 @@ function FeedPageContent() {
   }, [searchParams, feedType])
 
   return (
-    <AppLayout 
+    <AppLayout
       currentPage="feed"
       rightSidebar={
         <RightSidebar>
           <TopWriters />
-          <PopularComments />
+          {/* TODO: Temporary disable this until we implemented it */}
+          {/* <PopularComments /> */}
         </RightSidebar>
       }
     >

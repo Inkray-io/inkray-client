@@ -58,7 +58,7 @@ export function useTopWriters(): UseTopWritersReturn {
       return {
         rank: index + 1,
         name: publication.name,
-        subscribers: `${publication.followerCount} subscriber${publication.followerCount !== 1 ? 's' : ''}`,
+        subscribers: `${publication.followerCount} follower${publication.followerCount !== 1 ? 's' : ''}`,
         avatar: avatarConfig.src || '', // Use configured avatar for backward compatibility
         avatarConfig, // Include full avatar config
       };
@@ -69,9 +69,9 @@ export function useTopWriters(): UseTopWritersReturn {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await publicationsAPI.getTopWriters(3);
-      
+
       if (response.data.success) {
         const transformedWriters = transformApiDataToWriters(response.data.data.topWriters);
         setWriters(transformedWriters);
@@ -81,7 +81,7 @@ export function useTopWriters(): UseTopWritersReturn {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load top writers';
       setError(errorMessage);
-      
+
       // Keep existing data on error, or use empty array if no data
       if (writers.length === 0) {
         setWriters([]);

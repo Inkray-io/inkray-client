@@ -94,20 +94,21 @@ const PublicationPageContent: React.FC = () => {
   const rightSidebar = (
     <div className="space-y-5">
       <TopWriters />
-      <PopularComments />
+      {/* TODO: Temporary disable this until we implemented it */}
+      {/* <PopularComments /> */}
     </div>
   );
 
   return (
-    <AppLayout 
-      currentPage="publication" 
+    <AppLayout
+      currentPage="publication"
       rightSidebar={rightSidebar}
       showRightSidebar={true}
     >
       <div className="bg-white rounded-2xl overflow-hidden">
         {/* Publication Profile Section */}
         {publication && (
-          <PublicationHeader 
+          <PublicationHeader
             publication={publication}
             isLoading={publicationLoading}
           />
@@ -116,129 +117,129 @@ const PublicationPageContent: React.FC = () => {
         {/* Articles Feed */}
         {!publicationLoading && publication && (
           <div className="px-6 pt-6 pb-10 border-t border-gray-200">
-              {/* Articles Error Alert */}
-              {articlesError && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {articlesError}
-                  </AlertDescription>
-                </Alert>
-              )}
+            {/* Articles Error Alert */}
+            {articlesError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {articlesError}
+                </AlertDescription>
+              </Alert>
+            )}
 
-              {/* Articles Loading State */}
-              {articlesLoading && articles.length === 0 && (
-                <div className="space-y-6">
-                  {[...Array(2)].map((_, index) => (
-                    <div key={index} className="animate-pulse">
-                      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                          <div className="space-y-2">
-                            <div className="h-4 bg-gray-200 rounded w-32"></div>
-                            <div className="h-3 bg-gray-200 rounded w-24"></div>
-                          </div>
+            {/* Articles Loading State */}
+            {articlesLoading && articles.length === 0 && (
+              <div className="space-y-6">
+                {[...Array(2)].map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                          <div className="h-3 bg-gray-200 rounded w-24"></div>
                         </div>
-                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-full"></div>
-                        <div className="h-80 bg-gray-200 rounded-xl"></div>
                       </div>
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-full"></div>
+                      <div className="h-80 bg-gray-200 rounded-xl"></div>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Empty State */}
-              {isEmpty && !articlesLoading && !articlesError && (
-                <div className="text-center py-20">
-                  <div className="space-y-3">
-                    <p className="text-gray-900 text-lg font-medium">
-                      No articles published yet
-                    </p>
-                    <p className="text-gray-500 text-sm">
-                      This publication hasn&apos;t shared any articles. Check back later!
-                    </p>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {isEmpty && !articlesLoading && !articlesError && (
+              <div className="text-center py-20">
+                <div className="space-y-3">
+                  <p className="text-gray-900 text-lg font-medium">
+                    No articles published yet
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    This publication hasn&apos;t shared any articles. Check back later!
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Articles List */}
-              {articles.length > 0 && (
-                <div className="space-y-6">
-                  {articles.map((article) => {
-                    // Format article data for FeedPost component
-                    const formattedArticle = {
-                      author: {
-                        name: article.authorShortAddress,
-                        avatar: createUserAvatarConfig({
-                          publicKey: article.author,
-                          // Don't pass short address as name - let the function detect it's an address
-                        }, 'md').src,
-                        address: article.author, // Add full address for consistent gradient generation
-                        date: article.timeAgo,
-                        readTime: "2 min",
-                        mintedBy: 0,
-                      },
-                      title: article.title,
-                      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
-                      engagement: article.engagement,
-                      slug: article.slug,
-                      publication: publication ? {
-                        id: publication.id,
-                        name: publication.name,
-                      } : undefined,
-                    };
+            {/* Articles List */}
+            {articles.length > 0 && (
+              <div className="space-y-6">
+                {articles.map((article) => {
+                  // Format article data for FeedPost component
+                  const formattedArticle = {
+                    author: {
+                      name: article.authorShortAddress,
+                      avatar: createUserAvatarConfig({
+                        publicKey: article.author,
+                        // Don't pass short address as name - let the function detect it's an address
+                      }, 'md').src,
+                      address: article.author, // Add full address for consistent gradient generation
+                      date: article.timeAgo,
+                      readTime: "2 min",
+                      mintedBy: 0,
+                    },
+                    title: article.title,
+                    description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+                    engagement: article.engagement,
+                    slug: article.slug,
+                    publication: publication ? {
+                      id: publication.id,
+                      name: publication.name,
+                    } : undefined,
+                  };
 
-                    return (
-                      <FeedPost 
-                        key={article.articleId} 
-                        {...formattedArticle}
-                        articleId={article.articleId}
-                        publicationId={article.publicationId}
-                        totalTips={article.totalTips}
-                      />
-                    );
-                  })}
+                  return (
+                    <FeedPost
+                      key={article.articleId}
+                      {...formattedArticle}
+                      articleId={article.articleId}
+                      publicationId={article.publicationId}
+                      totalTips={article.totalTips}
+                    />
+                  );
+                })}
 
-                  {/* Load More Button */}
-                  {hasMore && (
-                    <div className="text-center pt-4">
-                      <Button
-                        onClick={loadMore}
-                        disabled={!canLoadMore}
-                        variant="outline"
-                        className="gap-2"
-                      >
-                        {articlesLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading...
-                          </>
-                        ) : (
-                          'Load More Articles'
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="text-center pt-4">
+                    <Button
+                      onClick={loadMore}
+                      disabled={!canLoadMore}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      {articlesLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Articles'
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* Retry Button for Articles */}
-              {articlesError && (
-                <div className="text-center pt-4">
-                  <Button
-                    onClick={() => {
-                      clearArticlesError();
-                      refreshArticles();
-                    }}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Try Again
-                  </Button>
-                </div>
-              )}
+            {/* Retry Button for Articles */}
+            {articlesError && (
+              <div className="text-center pt-4">
+                <Button
+                  onClick={() => {
+                    clearArticlesError();
+                    refreshArticles();
+                  }}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
