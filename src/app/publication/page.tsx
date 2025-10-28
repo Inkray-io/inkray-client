@@ -203,6 +203,7 @@ const PublicationPageContent: React.FC = () => {
                       articleId={article.articleId}
                       publicationId={article.publicationId}
                       totalTips={article.totalTips}
+                      showFollowButton={false} // Hide follow button on publication-specific feeds
                     />
                   );
                 })}

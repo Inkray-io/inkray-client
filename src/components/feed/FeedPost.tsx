@@ -63,6 +63,8 @@ interface FeedPostProps {
   // Follow information
   isFollowing?: boolean
   followerCount?: number
+  // Control whether to show follow button (hide on publication-specific feeds)
+  showFollowButton?: boolean
 }
 
 export function FeedPost({
@@ -80,7 +82,8 @@ export function FeedPost({
   totalTips,
   subscriptionInfo,
   isFollowing,
-  followerCount
+  followerCount,
+  showFollowButton = true // Default to true for backward compatibility
 }: FeedPostProps) {
   const router = useRouter()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
@@ -271,7 +274,7 @@ export function FeedPost({
           )}
 
           {/* Follow Button */}
-          {publicationId && (
+          {publicationId && showFollowButton && (
             <FollowButton
               isFollowing={followsHook.isFollowing}
               isLoading={followsHook.isLoading}
