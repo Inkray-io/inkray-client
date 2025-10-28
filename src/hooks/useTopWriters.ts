@@ -13,6 +13,7 @@ interface TopWriterData {
 
 interface Writer {
   rank: number;
+  id: string;
   name: string;
   subscribers: string;
   avatar: string;
@@ -57,6 +58,7 @@ export function useTopWriters(): UseTopWritersReturn {
 
       return {
         rank: index + 1,
+        id: publication.id,
         name: publication.name,
         subscribers: `${publication.followerCount} follower${publication.followerCount !== 1 ? 's' : ''}`,
         avatar: avatarConfig.src || '', // Use configured avatar for backward compatibility

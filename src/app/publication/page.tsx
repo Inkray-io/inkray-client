@@ -116,10 +116,10 @@ const PublicationPageContent: React.FC = () => {
 
         {/* Articles Feed */}
         {!publicationLoading && publication && (
-          <div className="px-6 pt-6 pb-10 border-t border-gray-200">
+          <div className="pt-6 pb-10 border-t border-gray-200">
             {/* Articles Error Alert */}
             {articlesError && (
-              <Alert variant="destructive" className="mb-4">
+              <Alert variant="destructive" className="mb-4 mx-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   {articlesError}
@@ -151,7 +151,7 @@ const PublicationPageContent: React.FC = () => {
 
             {/* Empty State */}
             {isEmpty && !articlesLoading && !articlesError && (
-              <div className="text-center py-20">
+              <div className="text-center py-20 px-6">
                 <div className="space-y-3">
                   <p className="text-gray-900 text-lg font-medium">
                     No articles published yet
@@ -232,7 +232,7 @@ const PublicationPageContent: React.FC = () => {
 
             {/* Retry Button for Articles */}
             {articlesError && (
-              <div className="text-center pt-4">
+              <div className="text-center pt-4 px-6">
                 <Button
                   onClick={() => {
                     clearArticlesError();

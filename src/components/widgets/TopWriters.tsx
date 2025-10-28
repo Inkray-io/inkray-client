@@ -3,9 +3,12 @@
 import { useTopWriters } from '@/hooks/useTopWriters';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/constants/routes';
 
 interface Writer {
   rank: number
+  id: string
   name: string
   subscribers: string
   avatar: string
@@ -24,9 +27,14 @@ interface TopWritersProps {
 
 export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   const { writers: apiWriters, isLoading, error, refetch } = useTopWriters();
+  const router = useRouter();
 
   // Use props writers if provided, otherwise use API data
   const displayWriters = propsWriters || apiWriters;
+
+  const handleWriterClick = (writerId: string) => {
+    router.push(ROUTES.PUBLICATION_WITH_ID(writerId));
+  };
 
   // Loading state
   if (isLoading && displayWriters.length === 0) {
@@ -105,7 +113,11 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
       
       <div className="space-y-4">
         {displayWriters.map((writer) => (
-          <div key={writer.rank} className="flex items-center gap-3">
+          <div 
+            key={writer.rank} 
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+            onClick={() => handleWriterClick(writer.id)}
+          >
             {/* Rank number */}
             <div className="w-6 text-center">
               <span className="text-black font-medium text-sm">
