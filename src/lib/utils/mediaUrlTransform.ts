@@ -1,57 +1,116 @@
 /**
  * Utility functions for transforming media URLs in article content
  * 
- * This module handles the transformation of media URLs generated during article creation
- * to include the required articleId query parameter for backend media serving.
+ * This module handles the transformation of media URLs to use the Walrus CDN for optimized
+ * content delivery. It transforms both backend media URLs and direct Walrus blob URLs
+ * to use the CDN endpoint with proper blob ID and filename parameters.
  */
 
+import { CONFIG } from '@/lib/config';
+
 /**
- * Transform media URLs in markdown content to include articleId query parameter
+ * Transform media URLs in markdown content to use Walrus CDN
  * 
- * This function finds media URLs that match the pattern:
- * - http://localhost:3000/articles/media/media{N}
- * - process.env.NEXT_PUBLIC_API_URL/articles/media/media{N}
+ * This function finds media URLs and transforms them to use the CDN endpoint:
+ * - Backend media URLs: /articles/media/media{N} -> CDN blob URLs
+ * - Direct Walrus URLs: aggregator URLs -> CDN URLs  
+ * - Walrus blob IDs: blob_id -> CDN URLs
  * 
- * And transforms them to include the articleId parameter:
- * - http://localhost:3000/articles/media/media{N}?articleId={articleId}
+ * CDN URL format: https://testnet-cdn.inkray.xyz/blob/{blobId}?file={filename}
  * 
  * @param content - The markdown content containing media URLs
- * @param articleId - The article ID to append as query parameter
- * @returns Transformed content with updated media URLs
+ * @param quiltBlobId - The Walrus quilt blob ID for the article (used for all media files)
+ * @returns Transformed content with CDN URLs
  * 
  * @example
  * ```typescript
  * const content = "![image](http://localhost:3000/articles/media/media0)";
- * const transformed = transformMediaUrls(content, "0x123abc");
- * // Result: "![image](http://localhost:3000/articles/media/media0?articleId=0x123abc)"
+ * const transformed = transformMediaUrls(content, "SnUh_kFSKmJxKUiVoWI6bR4PRWgp69LA5GMdMerQYo0");
+ * // Result: "![image](https://testnet-cdn.inkray.xyz/blob/SnUh_kFSKmJxKUiVoWI6bR4PRWgp69LA5GMdMerQYo0?file=media0)"
  * ```
  */
-export function transformMediaUrls(content: string, articleId: string): string {
-  if (!content || !articleId) {
+export function transformMediaUrls(
+  content: string, 
+  quiltBlobId?: string
+): string {
+  if (!content) {
     return content;
   }
 
-  // Get the base URL from environment or fallback to localhost
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  let transformedContent = content;
   
-  // Create regex pattern to match media URLs
-  // Matches both localhost and environment API URLs
-  // Pattern: (localhost:3000|api_url)/articles/media/media\d+
-  const localhostPattern = 'http://localhost:3000/articles/media/media\\d+';
-  const apiUrlEscaped = apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special regex chars
-  const apiPattern = `${apiUrlEscaped}/articles/media/media\\d+`;
+  // Transform backend media URLs to CDN URLs using the article's quilt blob ID
+  transformedContent = transformBackendMediaUrls(transformedContent, quiltBlobId);
   
-  // Combine patterns with OR
-  const mediaUrlRegex = new RegExp(`(${localhostPattern}|${apiPattern})(?!\\?articleId=)`, 'g');
+  // Transform direct Walrus aggregator URLs to CDN URLs
+  transformedContent = transformWalrusAggregatorUrls(transformedContent);
   
-  // Transform URLs by appending articleId parameter
-  const transformedContent = content.replace(mediaUrlRegex, (match) => {
-    // Check if URL already has query parameters
-    const separator = match.includes('?') ? '&' : '?';
-    return `${match}${separator}articleId=${encodeURIComponent(articleId)}`;
-  });
-
   return transformedContent;
+}
+
+/**
+ * Transform backend media URLs to CDN URLs
+ * Converts /articles/media/media{N} URLs to CDN blob URLs using the article's quilt blob ID
+ * 
+ * @param content - Content to transform
+ * @param quiltBlobId - The Walrus quilt blob ID for the article
+ * @returns Content with transformed backend media URLs
+ */
+function transformBackendMediaUrls(
+  content: string, 
+  quiltBlobId?: string
+): string {
+  const apiUrl = CONFIG.API_URL;
+  
+  // Pattern to match backend media URLs
+  const localhostPattern = 'http://localhost:3000/articles/media/(media\\d+)';
+  const apiUrlEscaped = apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const apiPattern = `${apiUrlEscaped}/articles/media/(media\\d+)`;
+  
+  const mediaUrlRegex = new RegExp(`(${localhostPattern}|${apiPattern})`, 'g');
+  
+  return content.replace(mediaUrlRegex, (_match, ...groups) => {
+    // Extract filename from the last capture group that contains media{N}
+    const filename = groups.find(group => group && group.startsWith('media')) || 'media';
+    
+    // Use the article's quilt blob ID for all media files
+    // All media files in an article are part of the same Walrus quilt
+    const blobId = quiltBlobId || 'PLACEHOLDER_BLOB_ID';
+    
+    return `${CONFIG.WALRUS_CDN_URL}/blob/${blobId}?file=${filename}`;
+  });
+}
+
+/**
+ * Transform Walrus aggregator URLs to CDN URLs
+ * Converts aggregator.walrus.space/v1/{blobId} URLs to CDN URLs
+ * 
+ * @param content - Content to transform
+ * @returns Content with transformed Walrus URLs
+ */
+function transformWalrusAggregatorUrls(content: string): string {
+  // Pattern to match Walrus aggregator URLs
+  // Matches: https://aggregator-devnet.walrus.space/v1/{blobId}
+  //          https://aggregator.walrus.space/v1/{blobId}
+  const walrusUrlRegex = /https:\/\/aggregator(?:-devnet)?\.walrus\.space\/v1\/([a-zA-Z0-9_-]+)/g;
+  
+  return content.replace(walrusUrlRegex, (_match, blobId) => {
+    // Extract filename from URL if available, otherwise use generic filename
+    const filename = 'media'; // Could be enhanced to extract actual filename
+    return `${CONFIG.WALRUS_CDN_URL}/blob/${blobId}?file=${filename}`;
+  });
+}
+
+/**
+ * Create a CDN URL for a specific blob ID and filename
+ * 
+ * @param blobId - The Walrus blob ID
+ * @param filename - Optional filename for the file parameter
+ * @returns CDN URL for the blob
+ */
+export function createCdnUrl(blobId: string, filename?: string): string {
+  const file = filename || 'media';
+  return `${CONFIG.WALRUS_CDN_URL}/blob/${blobId}?file=${file}`;
 }
 
 /**
@@ -65,14 +124,17 @@ export function hasMediaUrls(content: string): boolean {
     return false;
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  // Check for backend media URLs
+  const apiUrl = CONFIG.API_URL;
   const localhostPattern = 'http://localhost:3000/articles/media/media\\d+';
   const apiUrlEscaped = apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const apiPattern = `${apiUrlEscaped}/articles/media/media\\d+`;
+  const backendMediaRegex = new RegExp(`(${localhostPattern}|${apiPattern})`, 'g');
   
-  const mediaUrlRegex = new RegExp(`(${localhostPattern}|${apiPattern})`, 'g');
+  // Check for Walrus aggregator URLs
+  const walrusUrlRegex = /https:\/\/aggregator(?:-devnet)?\.walrus\.space\/v1\/[a-zA-Z0-9_-]+/g;
   
-  return mediaUrlRegex.test(content);
+  return backendMediaRegex.test(content) || walrusUrlRegex.test(content);
 }
 
 /**
@@ -86,12 +148,54 @@ export function extractMediaUrls(content: string): string[] {
     return [];
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const urls: string[] = [];
+  
+  // Extract backend media URLs
+  const apiUrl = CONFIG.API_URL;
   const localhostPattern = 'http://localhost:3000/articles/media/media\\d+';
   const apiUrlEscaped = apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const apiPattern = `${apiUrlEscaped}/articles/media/media\\d+`;
+  const backendMediaRegex = new RegExp(`(${localhostPattern}|${apiPattern})`, 'g');
   
-  const mediaUrlRegex = new RegExp(`(${localhostPattern}|${apiPattern})`, 'g');
+  const backendUrls = content.match(backendMediaRegex) || [];
+  urls.push(...backendUrls);
   
-  return content.match(mediaUrlRegex) || [];
+  // Extract Walrus aggregator URLs
+  const walrusUrlRegex = /https:\/\/aggregator(?:-devnet)?\.walrus\.space\/v1\/[a-zA-Z0-9_-]+/g;
+  const walrusUrls = content.match(walrusUrlRegex) || [];
+  urls.push(...walrusUrls);
+  
+  return urls;
+}
+
+/**
+ * Fetch raw content from Walrus CDN for encrypted articles
+ * 
+ * @param quiltBlobId - The Walrus quilt blob ID containing the encrypted article content
+ * @returns Promise<ArrayBuffer> - The raw encrypted content
+ * 
+ * @example
+ * ```typescript
+ * const rawContent = await getRawContentFromCdn("SnUh_kFSKmJxKUiVoWI6bR4PRWgp69LA5GMdMerQYo0");
+ * const encryptedData = new Uint8Array(rawContent);
+ * ```
+ */
+export async function getRawContentFromCdn(quiltBlobId: string): Promise<ArrayBuffer> {
+  if (!quiltBlobId) {
+    throw new Error('Quilt blob ID is required');
+  }
+
+  const cdnUrl = `${CONFIG.WALRUS_CDN_URL}/blob/${quiltBlobId}?file=article`;
+  
+  try {
+    const response = await fetch(cdnUrl);
+    
+    if (!response.ok) {
+      throw new Error(`CDN request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.arrayBuffer();
+  } catch (error) {
+    throw new Error(`Failed to fetch raw content from CDN: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

@@ -29,6 +29,7 @@ const ConfigSchema = z.object({
   // Walrus Configuration
   WALRUS_AGGREGATOR_URL: z.string().url('NEXT_PUBLIC_WALRUS_AGGREGATOR_URL must be a valid URL'),
   WALRUS_PUBLISHER_URL: z.string().url('NEXT_PUBLIC_WALRUS_PUBLISHER_URL must be a valid URL'),
+  WALRUS_CDN_URL: z.string().url('NEXT_PUBLIC_WALRUS_CDN_URL must be a valid URL'),
 
   // Seal Configuration
   SEAL_API_URL: z.string().url('NEXT_PUBLIC_SEAL_API_URL must be a valid URL'),
@@ -45,21 +46,25 @@ const getDefaultConfig = (network: string) => {
     testnet: {
       WALRUS_AGGREGATOR_URL: 'https://aggregator-devnet.walrus.space',
       WALRUS_PUBLISHER_URL: 'https://publisher-devnet.walrus.space',
+      WALRUS_CDN_URL: 'https://testnet-cdn.inkray.xyz',
       SEAL_API_URL: 'https://seal-testnet.mystenlabs.com',
     },
     mainnet: {
       WALRUS_AGGREGATOR_URL: 'https://aggregator.walrus.space',
       WALRUS_PUBLISHER_URL: 'https://publisher.walrus.space',
+      WALRUS_CDN_URL: 'https://mainnet-cdn.inkray.xyz',
       SEAL_API_URL: 'https://seal.mystenlabs.com',
     },
     devnet: {
       WALRUS_AGGREGATOR_URL: 'https://aggregator-devnet.walrus.space',
       WALRUS_PUBLISHER_URL: 'https://publisher-devnet.walrus.space',
+      WALRUS_CDN_URL: 'https://devnet-cdn.inkray.xyz',
       SEAL_API_URL: 'https://seal-devnet.mystenlabs.com',
     },
     localnet: {
       WALRUS_AGGREGATOR_URL: 'http://localhost:8080',
       WALRUS_PUBLISHER_URL: 'http://localhost:8081',
+      WALRUS_CDN_URL: 'http://localhost:8082',
       SEAL_API_URL: 'http://localhost:8082',
     },
   };
@@ -82,6 +87,7 @@ function loadAndValidateConfig() {
       NETWORK: rawNetwork,
       WALRUS_AGGREGATOR_URL: process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || defaults.WALRUS_AGGREGATOR_URL,
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || defaults.WALRUS_PUBLISHER_URL,
+      WALRUS_CDN_URL: process.env.NEXT_PUBLIC_WALRUS_CDN_URL || defaults.WALRUS_CDN_URL,
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || defaults.SEAL_API_URL,
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -150,6 +156,7 @@ try {
       NETWORK: (process.env.NEXT_PUBLIC_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet') || 'testnet',
       WALRUS_AGGREGATOR_URL: process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || 'https://aggregator-devnet.walrus.space',
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || 'https://publisher-devnet.walrus.space',
+      WALRUS_CDN_URL: process.env.NEXT_PUBLIC_WALRUS_CDN_URL || 'https://testnet-cdn.inkray.xyz',
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || 'https://seal-testnet.mystenlabs.com',
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -190,6 +197,7 @@ export const getEnvironmentInfo = () => ({
   walrusEndpoints: {
     aggregator: CONFIG.WALRUS_AGGREGATOR_URL,
     publisher: CONFIG.WALRUS_PUBLISHER_URL,
+    cdn: CONFIG.WALRUS_CDN_URL,
   },
   sealEndpoint: CONFIG.SEAL_API_URL,
   apiEndpoint: CONFIG.API_URL,
@@ -206,6 +214,7 @@ export const validateConfiguration = (): { valid: boolean; errors: string[] } =>
       NETWORK: CONFIG.NETWORK,
       WALRUS_AGGREGATOR_URL: CONFIG.WALRUS_AGGREGATOR_URL,
       WALRUS_PUBLISHER_URL: CONFIG.WALRUS_PUBLISHER_URL,
+      WALRUS_CDN_URL: CONFIG.WALRUS_CDN_URL,
       SEAL_API_URL: CONFIG.SEAL_API_URL,
       API_URL: CONFIG.API_URL,
       APP_NAME: CONFIG.APP_NAME,
@@ -236,6 +245,7 @@ export const logConfigurationStatus = () => {
     packageId: info.hasPackageId ? 'Set' : 'Missing',
     walrusAggregator: info.walrusEndpoints.aggregator,
     walrusPublisher: info.walrusEndpoints.publisher,
+    walrusCDN: info.walrusEndpoints.cdn,
     sealAPI: info.sealEndpoint,
     backendAPI: info.apiEndpoint,
     isValid: validation.valid,

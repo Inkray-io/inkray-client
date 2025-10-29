@@ -10,7 +10,7 @@ import { EncryptedObject } from '@mysten/seal';
 import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
 import { transformMediaUrls } from '@/lib/utils/mediaUrlTransform';
-import { Article, ArticleState } from '@/types/article';
+import { Article, ArticleState, ArticleContentResponse } from '@/types/article';
 
 // Loading stages for better UX feedback
 type LoadingStage = 'idle' | 'metadata' | 'content' | 'decrypting' | 'waiting-wallet';
@@ -468,10 +468,10 @@ export const useArticle = (articleSlug: string | null) => {
         // Fallback: if no content seal ID, try to get parsed content from backend
 
         const response = await articlesAPI.getContent(article.quiltBlobId);
-        const content = response.data.content;
-
-        // Transform media URLs to include articleId parameter (even for unencrypted content)
-        const transformedContent = transformMediaUrls(content, article.articleId);
+        const result: ArticleContentResponse = response.data;
+        
+        // Transform media URLs to CDN format with real blob IDs
+        const transformedContent = transformMediaUrls(result.content, article.quiltBlobId);
 
         return transformedContent;
       }
@@ -789,8 +789,9 @@ export const useArticle = (articleSlug: string | null) => {
         // Decrypt content
         const decryptedContent = await stableDecryptContent(decryptionParams);
 
-        // Transform media URLs to include articleId parameter
-        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
+
+        // Transform media URLs to CDN format with real blob IDs
+        const transformedContent = transformMediaUrls(decryptedContent, article.quiltBlobId);
 
         // Update state with decrypted content
         setState(prev => ({
@@ -1020,17 +1021,18 @@ export const useArticle = (articleSlug: string | null) => {
 
         const decryptedContent = await stableDecryptContent(manualDecryptionParams);
 
-        // Transform media URLs to include articleId parameter
-        const transformedContent = transformMediaUrls(decryptedContent, article.articleId);
+
+        // Transform media URLs to CDN format with real blob IDs
+        const transformedContent = transformMediaUrls(decryptedContent, article.quiltBlobId);
 
         return transformedContent;
       } else {
         // Fallback: if no content seal ID, try to get parsed content from backend
         const response = await articlesAPI.getContent(article.quiltBlobId);
-        const content = response.data.content;
+        const result: ArticleContentResponse = response.data;
 
-        // Transform media URLs to include articleId parameter (even for unencrypted content)
-        const transformedContent = transformMediaUrls(content, article.articleId);
+        // Transform media URLs to CDN format with real blob IDs
+        const transformedContent = transformMediaUrls(result.content, article.quiltBlobId);
 
         return transformedContent;
       }

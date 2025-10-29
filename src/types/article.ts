@@ -350,7 +350,7 @@ export interface PublicationArticle {
   createdAt: string;
   transactionHash: string;
   quiltObjectId?: string;
-  quiltBlobId?: string;
+  quiltBlobId: string;
   gated: boolean;
   timeAgo: string;
   totalTips: number;

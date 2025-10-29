@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
-import { CONFIG } from '@/lib/config';
+import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 
 /**
  * Publication page content component
@@ -156,8 +156,8 @@ const PublicationPageContent: React.FC = () => {
               <div className="space-y-6">
                 {articles.map((article) => {
                   // Format article data for FeedPost component
-                  const coverImage = article.hasCover
-                    ? `${CONFIG.API_URL}/articles/media/media0?articleId=${encodeURIComponent(article.articleId)}`
+                  const coverImage = article.hasCover && article.quiltBlobId
+                    ? createCdnUrl(article.quiltBlobId, 'media0')
                     : undefined;
 
                   const formattedArticle = {

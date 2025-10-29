@@ -3,7 +3,7 @@ import { feedAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
-import { CONFIG } from '@/lib/config';
+import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed
@@ -181,8 +181,10 @@ export const useFeedArticles = (
       // Don't pass the short address as name - let the function detect it's an address
     }, 'md');
     const hasCover = Boolean(article.hasCover);
-    const coverImage = hasCover
-      ? `${CONFIG.API_URL}/articles/media/media0?articleId=${encodeURIComponent(article.articleId)}`
+    // Use CDN for cover images with the article's quilt blob ID
+    // Example: https://testnet-cdn.inkray.xyz/blob/{quiltBlobId}?file=media0
+    const coverImage = hasCover && article.quiltBlobId
+      ? createCdnUrl(article.quiltBlobId, 'media0')
       : undefined;
 
     return {
