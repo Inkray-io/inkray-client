@@ -16,7 +16,8 @@ import {
   Tag,
   Link,
   Share,
-  Check
+  Check,
+  Trash2
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
@@ -30,10 +31,13 @@ import { useLikes } from "@/hooks/useLikes";
 import { SubscriptionPaywall } from "@/components/subscription";
 import { copyToClipboard } from "@/utils/address";
 import { ROUTES } from "@/constants/routes";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { useArticleDeletion } from "@/hooks/useArticleDeletion";
 
 function ArticlePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { address } = useWalletConnection();
   const [articleSlug, setArticleSlug] = useState<string | null>(null);
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -77,6 +81,20 @@ function ArticlePageContent() {
       likeCount: 0, // TODO: Get from article data when backend supports it
     } : undefined
   );
+
+  // Article deletion hook
+  const { deleteArticle, isDeletingArticle } = useArticleDeletion({
+    onSuccess: () => {
+      // Navigate back to feed after successful deletion with a small delay
+      setTimeout(() => {
+        router.push('/feed');
+      }, 1000);
+    },
+    onError: (error) => {
+      // Handle deletion error - could show toast notification here
+      console.error('Failed to delete article:', error);
+    }
+  });
 
   const handleBack = () => {
     router.push('/feed');
@@ -140,6 +158,23 @@ function ArticlePageContent() {
 
     // Close popup
     setIsShareOpen(false);
+  };
+
+  // Check if current user can delete this article (publication owner)
+  const canDeleteArticle = article && 
+    address === article.publicationOwner && 
+    article.articleId && 
+    article.publicationId && 
+    article.vaultId;
+
+  const handleDeleteArticle = () => {
+    if (canDeleteArticle && article.articleId && article.publicationId && article.vaultId) {
+      deleteArticle({
+        articleId: article.articleId,
+        publicationId: article.publicationId,
+        vaultId: article.vaultId
+      });
+    }
   };
 
   // Show loading state during hydration to prevent SSR mismatch
@@ -398,6 +433,19 @@ function ArticlePageContent() {
                           </div>
                         )}
                       </div>
+
+                      {/* Delete Button - Only show for publication owners */}
+                      {canDeleteArticle && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="size-9 sm:size-8 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors min-h-[36px] min-w-[36px]"
+                          onClick={handleDeleteArticle}
+                          disabled={isDeletingArticle(article.articleId)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
 
                       {/* Support Button */}
                       {article?.publicationId ? (
