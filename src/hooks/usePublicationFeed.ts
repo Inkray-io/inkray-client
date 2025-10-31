@@ -75,7 +75,8 @@ export const usePublicationFeed = (publicationId: string) => {
           author: article.author,
           authorShortAddress: article.authorShortAddress,
           publicationId: publicationId, // Use the publication ID from hook
-          vaultId: '', // Not provided in publication feed, but required by interface
+          vaultId: article.vaultId || '', // Now provided in publication feed
+          publicationOwner: (article as { publicationOwner?: string }).publicationOwner,
           gated: article.gated,
           quiltBlobId: article.quiltBlobId || '',
           quiltObjectId: article.quiltObjectId || '',

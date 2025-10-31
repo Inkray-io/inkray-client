@@ -71,12 +71,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           log.debug('Token validation successful', { userId: response.data?.id }, 'AuthContext');
 
-          setState({
-            account: response.data,
-            accessToken: token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
+          // If profile returns null but token is valid, we still have authentication
+          // This can happen if the account record doesn't exist in the database yet
+          if (response.data) {
+            setState({
+              account: response.data,
+              accessToken: token,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          } else {
+            // Token is valid but no profile data - try to decode token to get basic info
+            try {
+              const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+              const basicAccount = {
+                id: tokenPayload.sub || 'unknown',
+                publicKey: tokenPayload.publicKey || tokenPayload.address || 'unknown',
+                wallet: tokenPayload.wallet || 'unknown',
+                blockchain: 'sui',
+                username: tokenPayload.username,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              
+              log.debug('Using token payload for account info', { publicKey: basicAccount.publicKey }, 'AuthContext');
+              
+              setState({
+                account: basicAccount,
+                accessToken: token,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+            } catch (decodeError) {
+              log.error('Failed to decode token, treating as invalid', decodeError, 'AuthContext');
+              throw new Error('Invalid token format');
+            }
+          }
         } catch (error) {
           log.warn('Token validation failed, clearing stored token', error, 'AuthContext');
 

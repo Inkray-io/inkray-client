@@ -12,6 +12,7 @@ import { FeedType, TimeFrame } from "@/components/feed/FeedTypeSelector"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useArticleDeletion } from "@/hooks/useArticleDeletion"
 
 function FeedPageContent() {
   const router = useRouter()
@@ -42,6 +43,18 @@ function FeedPageContent() {
     formatArticleForDisplay
   } = useFeedArticles(feedType, timeframe, selectedCategory?.id)
 
+  // Article deletion hook
+  const { deleteArticle, isDeletingArticle } = useArticleDeletion({
+    onSuccess: (articleId) => {
+      // Refresh the feed after successful deletion
+      refresh()
+    },
+    onError: (error, articleId) => {
+      // Handle deletion error - could show toast notification here
+      console.error('Failed to delete article:', error)
+    }
+  })
+
   const handleArticleClick = (slug: string) => {
     router.push(`/article?id=${encodeURIComponent(slug)}`)
   }
@@ -49,6 +62,10 @@ function FeedPageContent() {
   const handleRetry = () => {
     clearError()
     refresh()
+  }
+
+  const handleDeleteArticle = (articleId: string, publicationId: string, vaultId: string) => {
+    deleteArticle({ articleId, publicationId, vaultId })
   }
 
 
@@ -113,6 +130,13 @@ function FeedPageContent() {
         {/* Articles */}
         {articles.map((article) => {
           const displayArticle = formatArticleForDisplay(article)
+          const publicationObj = {
+            id: article.publicationId,
+            name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`,
+            avatar: article.followInfo?.publicationAvatar || null,
+            owner: (article as { publicationOwner?: string }).publicationOwner
+          };
+          
           return (
             <FeedPost
               key={article.articleId}
@@ -124,17 +148,16 @@ function FeedPageContent() {
               hasReadMore={true}
               slug={article.slug}
               onClick={() => handleArticleClick(article.slug)}
-              publication={{
-                id: article.publicationId,
-                name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`,
-                avatar: article.followInfo?.publicationAvatar || null
-              }}
+              publication={publicationObj}
               articleId={article.articleId}
               publicationId={article.publicationId}
               totalTips={article.totalTips}
               isFollowing={article.followInfo?.isFollowing}
               followerCount={article.followInfo?.followerCount}
               showFollowButton={true} // Show follow button on home feed
+              vaultId={article.vaultId}
+              onDelete={handleDeleteArticle}
+              isDeleting={isDeletingArticle(article.articleId)}
             />
           )
         })}

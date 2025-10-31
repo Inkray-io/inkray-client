@@ -63,6 +63,8 @@ export interface Article {
   totalLikes: number;
   /** Whether the current user has liked this article (only set when authenticated) */
   isLiked?: boolean;
+  /** Publication owner address for ownership validation */
+  publicationOwner?: string;
   /** Whether this article requires a publication subscription to access */
   requiresPublicationSubscription?: boolean;
   /** Whether the current user has an active publication subscription for this publication */
@@ -356,4 +358,7 @@ export interface PublicationArticle {
   totalTips: number;
   totalLikes: number;
   isLiked?: boolean;
+  publicationOwner?: string;
+  vaultId?: string;
+  publicationId?: string;
 }
