@@ -50,11 +50,11 @@ const PublicationPageContent: React.FC = () => {
 
   // Article deletion hook
   const { deleteArticle, isDeletingArticle } = useArticleDeletion({
-    onSuccess: (articleId) => {
+    onSuccess: (_articleId) => {
       // Refresh the publication feed after successful deletion
       refreshArticles()
     },
-    onError: (error, articleId) => {
+    onError: (error, _articleId) => {
       // Handle deletion error - could show toast notification here
       console.error('Failed to delete article:', error)
     }

@@ -45,11 +45,11 @@ function FeedPageContent() {
 
   // Article deletion hook
   const { deleteArticle, isDeletingArticle } = useArticleDeletion({
-    onSuccess: (articleId) => {
+    onSuccess: (_articleId) => {
       // Refresh the feed after successful deletion
       refresh()
     },
-    onError: (error, articleId) => {
+    onError: (error, _articleId) => {
       // Handle deletion error - could show toast notification here
       console.error('Failed to delete article:', error)
     }
@@ -136,7 +136,7 @@ function FeedPageContent() {
             avatar: article.followInfo?.publicationAvatar || null,
             owner: (article as { publicationOwner?: string }).publicationOwner
           };
-          
+
           return (
             <FeedPost
               key={article.articleId}
