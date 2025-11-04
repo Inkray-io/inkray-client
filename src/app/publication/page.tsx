@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
 import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
+import { useArticleDeletion } from '@/hooks/useArticleDeletion';
 
 /**
  * Publication page content component
@@ -46,6 +47,22 @@ const PublicationPageContent: React.FC = () => {
     canLoadMore,
     isEmpty,
   } = usePublicationFeed(publicationId || '');
+
+  // Article deletion hook
+  const { deleteArticle, isDeletingArticle } = useArticleDeletion({
+    onSuccess: (articleId) => {
+      // Refresh the publication feed after successful deletion
+      refreshArticles()
+    },
+    onError: (error, articleId) => {
+      // Handle deletion error - could show toast notification here
+      console.error('Failed to delete article:', error)
+    }
+  })
+
+  const handleDeleteArticle = (articleId: string, publicationId: string, vaultId: string) => {
+    deleteArticle({ articleId, publicationId, vaultId })
+  }
 
   // Handle missing publication ID
   if (!publicationId) {
@@ -181,6 +198,7 @@ const PublicationPageContent: React.FC = () => {
                       id: publication.id,
                       name: publication.name,
                       avatar: publication.avatar ?? null,
+                      owner: publication.owner,
                     } : undefined,
                   };
 
@@ -192,6 +210,9 @@ const PublicationPageContent: React.FC = () => {
                       publicationId={article.publicationId}
                       totalTips={article.totalTips}
                       showFollowButton={false} // Hide follow button on publication-specific feeds
+                      vaultId={article.vaultId}
+                      onDelete={handleDeleteArticle}
+                      isDeleting={isDeletingArticle(article.articleId)}
                     />
                   );
                 })}

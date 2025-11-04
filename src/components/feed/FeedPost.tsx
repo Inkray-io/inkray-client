@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink } from "lucide-react"
+import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -17,6 +17,7 @@ import { SubscriptionButton } from "@/components/subscription"
 import { log } from "@/lib/utils/Logger"
 import { useFollows } from "@/hooks/useFollows"
 import { FollowButton } from "@/components/follow/FollowButton"
+import { useWalletConnection } from "@/hooks/useWalletConnection"
 
 interface FeedPostProps {
   author: {
@@ -46,6 +47,7 @@ interface FeedPostProps {
     id: string
     name: string
     avatar?: string | null
+    owner?: string
   }
   // Article information for tipping
   articleId?: string
@@ -65,6 +67,10 @@ interface FeedPostProps {
   followerCount?: number
   // Control whether to show follow button (hide on publication-specific feeds)
   showFollowButton?: boolean
+  // Article deletion props
+  vaultId?: string
+  onDelete?: (articleId: string, publicationId: string, vaultId: string) => void
+  isDeleting?: boolean
 }
 
 export function FeedPost({
@@ -83,9 +89,13 @@ export function FeedPost({
   subscriptionInfo,
   isFollowing,
   followerCount,
-  showFollowButton = true // Default to true for backward compatibility
+  showFollowButton = true, // Default to true for backward compatibility
+  vaultId,
+  onDelete,
+  isDeleting = false
 }: FeedPostProps) {
   const router = useRouter()
+  const { address } = useWalletConnection()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -131,6 +141,14 @@ export function FeedPost({
   const displayAuthor = author.address
     ? formatAddress(author.address)
     : author.name;
+
+  // Check if current user can delete this article (publication owner)
+  const canDeleteArticle = publication && 
+    address === publication.owner && 
+    articleId && 
+    publicationId && 
+    vaultId && 
+    onDelete;
   
   const handleArticleClick = () => {
     if (onClick) {
@@ -228,6 +246,12 @@ export function FeedPost({
     // Close popup
     setIsShareOpen(false)
   }
+
+  const handleDeleteArticle = () => {
+    if (canDeleteArticle && articleId && publicationId && vaultId && onDelete) {
+      onDelete(articleId, publicationId, vaultId)
+    }
+  }
   
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6">
@@ -284,9 +308,21 @@ export function FeedPost({
               className="min-h-[36px]"
             />
           )}
-          <Button variant="ghost" size="icon" className="min-h-[36px] min-w-[36px]">
-            <MoreHorizontal className="size-5" />
-          </Button>
+          {canDeleteArticle ? (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="min-h-[36px] min-w-[36px] text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleDeleteArticle}
+              disabled={isDeleting}
+            >
+              <Trash2 className="size-5" />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" className="min-h-[36px] min-w-[36px]">
+              <MoreHorizontal className="size-5" />
+            </Button>
+          )}
         </div>
       </div>
       
