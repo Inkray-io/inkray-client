@@ -72,7 +72,7 @@ function LeaderboardPageContent() {
                 Leaderboard
               </h1>
               <p className="text-gray-600">
-                Top contributors on the Inkray platform
+                Top 50 contributors on the Inkray platform
               </p>
             </div>
             <Button
@@ -82,9 +82,9 @@ function LeaderboardPageContent() {
               disabled={isLoading}
             >
               <RefreshCw
-                className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")}
+                className={cn("w-4 h-4", isLoading && "animate-spin", "md:mr-2")}
               />
-              Refresh
+              <span className="hidden md:inline">Refresh</span>
             </Button>
           </div>
         </div>
@@ -106,9 +106,9 @@ function LeaderboardPageContent() {
         {!error && (
           <>
             <div>
-              <h2 className="text-xl font-bold text-black mb-3 px-2">
+              {/* <h2 className="text-xl font-bold text-black mb-3 px-2">
                 Top 50 Contributors
-              </h2>
+              </h2> */}
               <LeaderboardTable
                 entries={topEntries}
                 currentUserId={account?.id}
