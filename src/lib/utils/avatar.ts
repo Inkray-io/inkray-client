@@ -213,8 +213,8 @@ export function createUserAvatarConfig(
   gradientColors: string;
   size: AvatarSize;
 } {
-  // Use user ID if available, otherwise use publicKey as identifier
-  const identifier = user.id || user.publicKey || 'unknown';
+  // Use publicKey if available, otherwise use user ID as identifier
+  const identifier = user.publicKey || user.id || 'unknown';
   
   return createAvatarConfig({
     identifier,

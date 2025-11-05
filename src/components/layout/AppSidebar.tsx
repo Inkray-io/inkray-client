@@ -56,6 +56,13 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       icon: "🖱️",
       active: currentPage === "feed" && currentFeedType === "my",
       href: ROUTES.FEED_MY_FEED
+    },
+    {
+      id: "leaderboard",
+      label: "Leaderboard",
+      icon: "🏆",
+      active: currentPage === "leaderboard",
+      href: ROUTES.LEADERBOARD
     }
   ]
 

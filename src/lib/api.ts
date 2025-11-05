@@ -244,9 +244,26 @@ export const nftAPI = {
 export const tipsAPI = {
   // Future endpoint possibilities:
   // - getTipHistory: (articleId: string) => api.get(`/tips/article/${articleId}/history`)
-  // - getTipStats: (publicationId: string) => api.get(`/tips/publication/${publicationId}/stats`)  
+  // - getTipStats: (publicationId: string) => api.get(`/tips/publication/${publicationId}/stats`)
   // - getTopTippers: () => api.get('/tips/analytics/top-tippers')
 } as const;
+
+/**
+ * Leaderboard API endpoints
+ */
+export const leaderboardAPI = {
+  getLeaderboard: (params?: { limit?: number; offset?: number }) =>
+    api.get('/xp/leaderboard', { params }),
+
+  getMyXP: () => api.get('/xp/me'),
+
+  getUserXP: (publicKey: string) => api.get(`/xp/user/${publicKey}`),
+
+  getLeaderboardStats: () => api.get('/xp/stats'),
+
+  getAroundMe: (range?: number) =>
+    api.get('/xp/around-me', { params: range ? { range } : {} }),
+};
 
 export const likesAPI = {
   likeArticle: (articleId: string) => 
