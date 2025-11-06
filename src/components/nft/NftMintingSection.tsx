@@ -27,7 +27,7 @@ export function NftMintingSection({
       try {
         setLoadingCount(true);
         const response = await nftAPI.getMintCount(articleId);
-        
+
         // Handle the API response structure: { success: true, data: { articleId, count } }
         if (response.data.success && response.data.data?.count !== undefined) {
           setMintCount(response.data.data.count);
@@ -46,8 +46,8 @@ export function NftMintingSection({
   }, [articleId, refreshKey]);
 
   const handleMintSuccess = () => {
-    // Refresh the mint count and recent mints
-    setRefreshKey(prev => prev + 1);
+    // Optimistically increment the counter immediately for instant feedback
+    setMintCount(prev => prev + 1);
   };
 
   return (

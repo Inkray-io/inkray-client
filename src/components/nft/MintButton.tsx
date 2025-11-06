@@ -32,12 +32,6 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
       setIsMinting(true);
       setMintError(null);
 
-      log.debug("Starting NFT mint transaction", {
-        articleId,
-        userAddress: account.address,
-        packageId: INKRAY_CONFIG.PACKAGE_ID,
-      }, "MintButton");
-
       // Build NFT mint transaction
       const tx = new Transaction();
       
@@ -65,11 +59,9 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
       tx.transferObjects([nft], account.address);
 
       // Execute transaction
-      const result = await signAndExecuteTransaction({
+      await signAndExecuteTransaction({
         transaction: tx,
       });
-
-      log.debug("NFT mint successful", { result }, "MintButton");
 
       // On successful mint, call the success callback
       onMintSuccess?.();

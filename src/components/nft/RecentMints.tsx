@@ -29,7 +29,7 @@ export function RecentMints({ articleId, refreshKey }: RecentMintsProps) {
       try {
         setLoading(true);
         const response = await nftAPI.getRecentMints(articleId, 4);
-        
+
         // Handle the API response structure: { success: true, data: { data: mints, total: count } }
         if (response.data.success && response.data.data?.data) {
           setMints(response.data.data.data);
