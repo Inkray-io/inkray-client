@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { likesAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 
@@ -40,6 +40,19 @@ export const useLikes = (
     isLoading: false,
     error: null,
   });
+
+  /**
+   * Sync state with initialLikeInfo when it changes (e.g., when article data loads)
+   */
+  useEffect(() => {
+    if (initialLikeInfo) {
+      setLikeState(prev => ({
+        ...prev,
+        isLiked: initialLikeInfo.isLiked,
+        likeCount: initialLikeInfo.likeCount,
+      }));
+    }
+  }, [initialLikeInfo?.isLiked, initialLikeInfo?.likeCount]);
 
   /**
    * Clear error state

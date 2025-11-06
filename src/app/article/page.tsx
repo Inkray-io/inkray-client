@@ -161,10 +161,10 @@ function ArticlePageContent() {
   };
 
   // Check if current user can delete this article (publication owner)
-  const canDeleteArticle = article && 
-    address === article.publicationOwner && 
-    article.articleId && 
-    article.publicationId && 
+  const canDeleteArticle = article &&
+    address === article.publicationOwner &&
+    article.articleId &&
+    article.publicationId &&
     article.vaultId;
 
   const handleDeleteArticle = () => {
@@ -319,7 +319,7 @@ function ArticlePageContent() {
                           isLoading={likesHook.isLoading}
                           likeCount={likesHook.likeCount}
                           onToggleLike={handleLikeToggle}
-                          showLikeCount={false}
+                          showLikeCount={true}
                           variant="engagement"
                         />
                       )}
@@ -436,9 +436,9 @@ function ArticlePageContent() {
 
                       {/* Delete Button - Only show for publication owners */}
                       {canDeleteArticle && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="size-9 sm:size-8 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors min-h-[36px] min-w-[36px]"
                           onClick={handleDeleteArticle}
                           disabled={isDeletingArticle(article.articleId)}
