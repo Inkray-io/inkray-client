@@ -20,7 +20,6 @@ export function NftMintingSection({
 }: NftMintingSectionProps) {
   const [mintCount, setMintCount] = useState<number>(0);
   const [loadingCount, setLoadingCount] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchMintCount = async () => {
@@ -43,7 +42,7 @@ export function NftMintingSection({
     };
 
     fetchMintCount();
-  }, [articleId, refreshKey]);
+  }, [articleId]);
 
   const handleMintSuccess = () => {
     // Optimistically increment the counter immediately for instant feedback
@@ -90,9 +89,8 @@ export function NftMintingSection({
 
         {/* Right Column - Verification */}
         <div>
-          <VerificationSection 
+          <VerificationSection
             articleId={articleId}
-            refreshKey={refreshKey}
           />
         </div>
       </div>

@@ -16,10 +16,9 @@ interface MintTransaction {
 
 interface RecentMintsProps {
   articleId: string;
-  refreshKey?: number;
 }
 
-export function RecentMints({ articleId, refreshKey }: RecentMintsProps) {
+export function RecentMints({ articleId }: RecentMintsProps) {
   const [mints, setMints] = useState<MintTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +44,7 @@ export function RecentMints({ articleId, refreshKey }: RecentMintsProps) {
     };
 
     fetchRecentMints();
-  }, [articleId, refreshKey]);
+  }, [articleId]);
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
