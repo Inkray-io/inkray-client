@@ -69,6 +69,7 @@ export default function CreateArticlePage() {
   const [gated, setGated] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [tempImages, setTempImages] = useState<TemporaryImage[]>([])
+  const [isWaitingForRedirect, setIsWaitingForRedirect] = useState(false)
 
   // Editor ref to access temporary images
   const editorRef = useRef<ArticleEditorRef>(null)
@@ -138,12 +139,12 @@ export default function CreateArticlePage() {
       const currentTempImages = editorRef.current?.getTemporaryImages() || []
 
       const result = await createAndPublishArticle(
-        title.trim(), 
-        content.trim(), 
-        summary.trim(), 
-        categoryId, 
+        title.trim(),
+        content.trim(),
+        summary.trim(),
+        categoryId,
         [], // existing media files
-        gated, 
+        gated,
         currentTempImages // temporary images from editor
       )
 
@@ -152,13 +153,15 @@ export default function CreateArticlePage() {
       editorRef.current?.clearTemporaryImages()
       setTempImages([])
 
-      toast({
-        title: "Article Published!",
-        description: `Your article "${title}" has been published successfully.`,
-      })
+      // Keep loading state during the wait period
+      setIsWaitingForRedirect(true)
 
       // Navigate to the published article (wait 5s for blockchain event processing)
       setTimeout(() => {
+        toast({
+          title: "Article Published!",
+          description: `Your article "${title}" has been published successfully.`,
+        })
         router.push(`/article?id=${result.slug}`)
       }, 5000)
 
@@ -205,13 +208,13 @@ export default function CreateArticlePage() {
 
                   <Button
                     onClick={handlePublish}
-                    disabled={isProcessing || !title.trim() || !content.trim() || !summary.trim() || !categoryId}
+                    disabled={isProcessing || isWaitingForRedirect || !title.trim() || !content.trim() || !summary.trim() || !categoryId}
                     className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50 min-h-[40px] flex-1 sm:flex-initial"
                   >
-                    {isProcessing ? (
+                    {(isProcessing || isWaitingForRedirect) ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        {uploadProgress > 0 ? `Uploading... ${uploadProgress}%` : 'Processing...'}
+                        {isWaitingForRedirect ? 'Publishing...' : uploadProgress > 0 ? `Uploading... ${uploadProgress}%` : 'Processing...'}
                       </>
                     ) : (
                       <>

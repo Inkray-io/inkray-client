@@ -77,8 +77,8 @@ function ArticlePageContent() {
   const likesHook = useLikes(
     article?.articleId || '',
     article ? {
-      isLiked: false, // TODO: Get from article data when backend supports it
-      likeCount: 0, // TODO: Get from article data when backend supports it
+      isLiked: article.isLiked || false,
+      likeCount: article.totalLikes || 0,
     } : undefined
   );
 
