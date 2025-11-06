@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { clearOnWalletChange, clearOnDisconnect } from '@/lib/cache-manager';
+import { clearPublicationCache, clearDraftCache } from '@/lib/cache-manager';
 import { log } from '@/lib/utils/Logger';
 
 /**
@@ -38,15 +38,13 @@ export const useWalletChangeDetection = () => {
         action: currentAddress ? 'switch' : 'disconnect'
       }, 'useWalletChangeDetection');
 
-      if (currentAddress) {
-        // User switched to a different wallet account
-        log.debug('Account switch detected - clearing user-specific cache', {}, 'useWalletChangeDetection');
-        clearOnWalletChange(lastKnownAddress.current, currentAddress);
-      } else {
-        // User disconnected wallet
-        log.debug('Wallet disconnect detected - clearing all cache', {}, 'useWalletChangeDetection');
-        clearOnDisconnect();
-      }
+      // Clear user-specific cache data but preserve session key
+      // Session keys are validated against wallet address during use,
+      // so preemptive clearing on wallet change is unnecessary and
+      // causes issues with autoconnect after page refresh
+      log.debug('Clearing wallet-specific cache (preserving session key)', {}, 'useWalletChangeDetection');
+      clearPublicationCache();
+      clearDraftCache();
 
       // Update the last known address
       lastKnownAddress.current = currentAddress;

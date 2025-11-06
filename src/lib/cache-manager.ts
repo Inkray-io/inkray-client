@@ -78,6 +78,11 @@ export function isCacheValid(cachedData: { packageId?: string }): boolean {
  * Clear all Inkray-related localStorage entries
  */
 export function clearInkrayCache(): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   log.debug('Clearing all Inkray cache entries', {}, 'CacheManager');
 
   Object.values(CACHE_KEYS).forEach(key => {
@@ -94,6 +99,11 @@ export function clearInkrayCache(): void {
  * Get cached publication data with validation
  */
 export function getCachedPublication(): CachedPublicationData | null {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const cached = localStorage.getItem(CACHE_KEYS.PUBLICATION);
     if (!cached) {
@@ -131,6 +141,11 @@ export function getCachedPublication(): CachedPublicationData | null {
  * Store publication data in cache with current package ID
  */
 export function setCachedPublication(data: Omit<CachedPublicationData, 'packageId' | 'timestamp'>): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     const cachedData: CachedPublicationData = {
       ...data,
@@ -150,6 +165,11 @@ export function setCachedPublication(data: Omit<CachedPublicationData, 'packageI
  * Get cached article draft with validation
  */
 export function getCachedDraft(): CachedDraftData | null {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const cached = localStorage.getItem(CACHE_KEYS.ARTICLE_DRAFT);
     if (!cached) {
@@ -179,6 +199,11 @@ export function getCachedDraft(): CachedDraftData | null {
  * Store article draft in cache with current package ID
  */
 export function setCachedDraft(data: Omit<CachedDraftData, 'packageId' | 'timestamp'>): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     const cachedData: CachedDraftData = {
       ...data,
@@ -198,6 +223,11 @@ export function setCachedDraft(data: Omit<CachedDraftData, 'packageId' | 'timest
  * Clear only the publication cache
  */
 export function clearPublicationCache(): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   localStorage.removeItem(CACHE_KEYS.PUBLICATION);
   log.debug('Publication cache cleared', {}, 'CacheManager');
 }
@@ -206,6 +236,11 @@ export function clearPublicationCache(): void {
  * Clear only the draft cache
  */
 export function clearDraftCache(): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   localStorage.removeItem(CACHE_KEYS.ARTICLE_DRAFT);
   log.debug('Draft cache cleared', {}, 'CacheManager');
 }
@@ -214,6 +249,11 @@ export function clearDraftCache(): void {
  * Get cached session key with validation using safe deserialization
  */
 export function getCachedSessionKey(): CachedSessionKeyData | null {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const cached = localStorage.getItem(CACHE_KEYS.SESSION_KEY);
     if (!cached) {
@@ -304,6 +344,11 @@ function deserializeExportedSessionKey(data: SerializableSessionKeyData): Export
  * Store session key in cache with current package ID using safe serialization
  */
 export function setCachedSessionKey(exportedSessionKey: ExportedSessionKey): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     log.debug('Attempting to cache session key', {}, 'CacheManager');
 
@@ -331,6 +376,11 @@ export function setCachedSessionKey(exportedSessionKey: ExportedSessionKey): voi
  * Clear only the session key cache
  */
 export function clearSessionKeyCache(): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   localStorage.removeItem(CACHE_KEYS.SESSION_KEY);
   log.debug('Session key cache cleared', {}, 'CacheManager');
 }
@@ -340,6 +390,11 @@ export function clearSessionKeyCache(): void {
  * Preserves non-user-specific data like package ID
  */
 export function clearUserSpecificCache(): void {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   log.debug('Clearing user-specific cache data', {}, 'CacheManager');
 
   const userSpecificKeys = [
@@ -390,6 +445,11 @@ export function clearOnDisconnect(): void {
  * This can be used to detect contract redeployments
  */
 export function checkPackageIdChange(): { hasChanged: boolean; oldPackageId?: string; newPackageId: string } {
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return { hasChanged: false, newPackageId: CONFIG.PACKAGE_ID };
+  }
+
   const lastPackageId = localStorage.getItem(CACHE_KEYS.PACKAGE_ID);
   const currentPackageId = CONFIG.PACKAGE_ID;
 
@@ -441,10 +501,21 @@ export function getCacheStats(): {
   packageId: string;
   cacheEntries: string[];
 } {
-  const cacheEntries = Object.values(CACHE_KEYS).filter(key => 
+  // SSR guard - localStorage only available in browser
+  if (typeof window === 'undefined') {
+    return {
+      hasPublication: false,
+      hasDraft: false,
+      hasSessionKey: false,
+      packageId: CONFIG.PACKAGE_ID,
+      cacheEntries: [],
+    };
+  }
+
+  const cacheEntries = Object.values(CACHE_KEYS).filter(key =>
     localStorage.getItem(key) !== null
   );
-  
+
   return {
     hasPublication: !!getCachedPublication(),
     hasDraft: !!getCachedDraft(),
