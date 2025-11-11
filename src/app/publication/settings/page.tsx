@@ -8,6 +8,8 @@ import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { usePublication } from "@/hooks/usePublication"
 import { useUserPublications } from "@/hooks/useUserPublications"
 import { useSubscriptionSettings } from "@/hooks/useSubscriptionSettings"
+import { useSubscriptionBalance } from "@/hooks/useSubscriptionBalance"
+import { useSubscriptionWithdrawal } from "@/hooks/useSubscriptionWithdrawal"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { Button } from "@/components/ui/button"
 import { HiCog6Tooth, HiCurrencyDollar, HiUserGroup, HiChartBarSquare, HiCheckCircle, HiExclamationCircle } from "react-icons/hi2"
@@ -30,6 +32,7 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
   const [isEnabled, setIsEnabled] = useState(false);
   const [priceInput, setPriceInput] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
   // Get owner cap ID from user publications
   const ownerCapId = firstPublication?.ownerCapId;
@@ -57,6 +60,42 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
       refreshPublication();
       // Clear success message after 3 seconds
       setTimeout(clearSuccess, 3000);
+    },
+  });
+
+  // Fetch subscription balance from blockchain
+  const {
+    balance,
+    balanceInSui,
+    isLoading: isLoadingBalance,
+    error: balanceError,
+    refresh: refreshBalance,
+    hasBalance,
+  } = useSubscriptionBalance({
+    publicationId,
+    enabled: !!publicationId,
+  });
+
+  // Withdrawal hook
+  const {
+    isWithdrawing,
+    error: withdrawalError,
+    success: withdrawalSuccess,
+    canWithdraw,
+    withdrawFullBalance,
+    clearError: clearWithdrawalError,
+    clearSuccess: clearWithdrawalSuccess,
+  } = useSubscriptionWithdrawal({
+    publicationId,
+    ownerCapId,
+    currentBalance: balance,
+    onSuccess: () => {
+      // Refresh balance and publication data after successful withdrawal
+      refreshBalance();
+      refreshPublication();
+      setShowWithdrawDialog(false);
+      // Clear success message after 3 seconds
+      setTimeout(clearWithdrawalSuccess, 3000);
     },
   });
 
@@ -129,6 +168,19 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
     } catch (err) {
       // Error handling is done in the hook
       log.error('Failed to save subscription settings', { error: err }, 'PublicationSettingsPage');
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!canWithdraw) {
+      return;
+    }
+
+    try {
+      await withdrawFullBalance();
+    } catch (err) {
+      // Error handling is done in the hook
+      log.error('Failed to withdraw subscription balance', { error: err }, 'PublicationSettingsPage');
     }
   };
 
@@ -235,8 +287,8 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
                   disabled={isSaving}
                   className={cn(
                     "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent",
-                    inputError 
-                      ? "border-red-300 focus:ring-red-500" 
+                    inputError
+                      ? "border-red-300 focus:ring-red-500"
                       : "border-gray-300 focus:ring-blue-500",
                     isSaving && "opacity-50 cursor-not-allowed"
                   )}
@@ -254,7 +306,7 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
 
           {/* Save Button */}
           <div className="pt-4 border-t">
-            <Button 
+            <Button
               onClick={handleSave}
               disabled={isSaving || (!isEnabled && !isSubscriptionEnabled)}
               className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -268,15 +320,126 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
                 'Save Subscription Settings'
               )}
             </Button>
-            
+
             {/* Current Status */}
             <p className="text-sm text-gray-600 mt-2">
-              Current status: {isSubscriptionEnabled 
-                ? `Subscription enabled (${currentPriceInSui} SUI/month)` 
+              Current status: {isSubscriptionEnabled
+                ? `Subscription enabled (${currentPriceInSui} SUI/month)`
                 : 'Subscription disabled (free access)'
               }
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Subscription Balance Section - Separate Card */}
+      <div className="bg-white rounded-lg border p-6">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Subscription Balance</h3>
+            <p className="text-sm text-gray-600">
+              View and withdraw accumulated subscription payments
+            </p>
+          </div>
+
+          {/* Balance Display */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            {isLoadingBalance ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                <span className="text-gray-600">Loading balance...</span>
+              </div>
+            ) : balanceError ? (
+              <div className="text-red-600 text-sm">
+                <p className="font-medium">Failed to load balance</p>
+                <p className="mt-1">{balanceError}</p>
+              </div>
+            ) : (
+              <div>
+                <div className="text-3xl font-bold text-gray-900">
+                  {balanceInSui.toFixed(4)} SUI
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Available to withdraw</p>
+              </div>
+            )}
+          </div>
+
+          {/* Withdrawal Success Message */}
+          {withdrawalSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+              <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
+              <p className="text-green-800">
+                Balance withdrawn successfully! Funds have been transferred to your wallet.
+              </p>
+            </div>
+          )}
+
+          {/* Withdrawal Error Message */}
+          {withdrawalError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+              <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-red-800 font-medium">Failed to withdraw balance</p>
+                <p className="text-red-600 text-sm mt-1">{withdrawalError}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearWithdrawalError}
+                className="text-red-600 hover:text-red-700"
+              >
+                Dismiss
+              </Button>
+            </div>
+          )}
+
+          {/* Withdraw Button */}
+          {!showWithdrawDialog && (
+            <Button
+              onClick={() => setShowWithdrawDialog(true)}
+              disabled={!hasBalance || isLoadingBalance || isWithdrawing}
+              className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Withdraw Balance
+            </Button>
+          )}
+
+          {/* Withdrawal Confirmation Dialog */}
+          {showWithdrawDialog && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+              <div>
+                <p className="text-blue-900 font-medium">Confirm Withdrawal</p>
+                <p className="text-blue-800 text-sm mt-1">
+                  You are about to withdraw <strong>{balanceInSui.toFixed(4)} SUI</strong> from your publication subscription balance.
+                  The funds will be transferred to your connected wallet.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleWithdraw}
+                  disabled={isWithdrawing}
+                  className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                >
+                  {isWithdrawing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    'Confirm Withdrawal'
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setShowWithdrawDialog(false)}
+                  disabled={isWithdrawing}
+                  variant="ghost"
+                  className="border border-gray-300 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

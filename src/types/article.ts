@@ -305,6 +305,8 @@ export interface Publication {
   articleTips?: number;
   /** Monthly subscription price in MIST (0 = no subscription required) */
   subscriptionPrice?: number;
+  /** Subscription balance in MIST (accumulated from subscription payments) */
+  subscriptionBalance?: number;
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { AppLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useArticle } from "@/hooks/useArticle";
@@ -43,6 +43,7 @@ function ArticlePageContent() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const subscriptionFoundRef = useRef(false);
 
   // Mark as hydrated after mount to prevent SSR/client mismatch
   useEffect(() => {
@@ -128,6 +129,61 @@ function ArticlePageContent() {
       console.error('Failed to copy link:', error);
     }
   };
+
+  /**
+   * Handle subscription success with polling
+   * After a successful subscription payment, we need to wait for the backend
+   * to index the blockchain transaction before the subscription will appear.
+   * This function polls the subscription status until it's detected or times out.
+   */
+  const handleSubscriptionSuccess = async () => {
+    const maxAttempts = 10; // Poll for up to 10 seconds
+    const delayMs = 1000; // 1 second between attempts
+
+    // Reset the found flag
+    subscriptionFoundRef.current = false;
+
+    // Start polling for subscription status
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Check if subscription was found by the useEffect (which runs on article updates)
+      if (subscriptionFoundRef.current) {
+        return; // Stop polling, subscription detected!
+      }
+
+      // Wait before checking (1 second delay even on first attempt to give backend time)
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+
+      // Refetch subscription status from backend
+      await refetchSubscription();
+
+      // Give a moment for subscription state to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Check again before retry
+      if (subscriptionFoundRef.current) {
+        return;
+      }
+
+      // Reload article metadata to check if subscription is now reflected
+      // The retry() function will reload the article and check subscription status
+      retry();
+
+      // Wait for article to reload and state to update
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    // After polling attempts, do one final retry if not found
+    if (!subscriptionFoundRef.current) {
+      retry();
+    }
+  };
+
+  // Detect when subscription becomes active and stop polling
+  useEffect(() => {
+    if (article?.hasActivePublicationSubscription) {
+      subscriptionFoundRef.current = true;
+    }
+  }, [article?.hasActivePublicationSubscription]);
 
   const generateShareUrls = (articleUrl: string, title: string) => {
     const encodedUrl = encodeURIComponent(articleUrl);
@@ -569,11 +625,7 @@ function ArticlePageContent() {
                             }}
                             isSubscribed={article.hasActivePublicationSubscription}
                             subscriptionExpiresAt={article.publicationSubscriptionExpiresAt ? new Date(article.publicationSubscriptionExpiresAt) : undefined}
-                            onSubscriptionSuccess={() => {
-                              // Reload both article data and subscription status
-                              retry();
-                              refetchSubscription();
-                            }}
+                            onSubscriptionSuccess={handleSubscriptionSuccess}
                             articleTitle={article.title}
                           />
                         </div>

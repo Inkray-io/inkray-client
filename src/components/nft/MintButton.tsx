@@ -34,22 +34,19 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
 
       // Build NFT mint transaction
       const tx = new Transaction();
-      
-      // Reference article object directly by ID
-      const article = tx.object(articleId);
-      
+
       // Get MintConfig shared object ID from configuration
       const mintConfig = tx.object(INKRAY_CONFIG.NFT_MINT_CONFIG_ID);
-      
+
       // Create zero payment coin since minting is free
       const [coin] = tx.splitCoins(tx.gas, [0]);
-      
+
       // Call NFT mint function
       const [nft] = tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::nft::mint`,
         arguments: [
           tx.pure.address(account.address), // recipient
-          article,                          // article reference
+          tx.pure.id(articleId),                          // article reference
           mintConfig,                       // mint config
           coin,                            // payment (zero SUI)
         ],
@@ -89,7 +86,7 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
         disabled={isMinting}
         className={cn(
           "w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
-          isMinting 
+          isMinting
             ? "bg-gray-50 text-gray-400 cursor-not-allowed"
             : "bg-blue-50 text-primary hover:bg-blue-100"
         )}
