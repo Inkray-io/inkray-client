@@ -73,7 +73,7 @@ export const useSubscriptionBalance = ({
 
       // Extract subscription_balance from content fields
       const content = publicationObject.data.content;
-      const fields = content.fields as any;
+      const fields = content.fields as Record<string, unknown>;
 
       if (!fields || typeof fields.subscription_balance === 'undefined') {
         throw new Error('Subscription balance field not found in publication object');
@@ -84,7 +84,8 @@ export const useSubscriptionBalance = ({
 
       if (typeof fields.subscription_balance === 'object' && fields.subscription_balance !== null) {
         // Balance struct has a 'value' field
-        balanceInMist = Number(fields.subscription_balance.value || 0);
+        const balanceObj = fields.subscription_balance as Record<string, unknown>;
+        balanceInMist = Number(balanceObj.value || 0);
       } else if (typeof fields.subscription_balance === 'string' || typeof fields.subscription_balance === 'number') {
         // Direct value
         balanceInMist = Number(fields.subscription_balance);

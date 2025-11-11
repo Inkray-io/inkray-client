@@ -453,7 +453,7 @@ function SubscriptionSettings({ publicationId }: { publicationId: string }) {
 // Tips Settings component with tip balance and withdrawal
 function TipsSettings({ publicationId }: { publicationId: string }) {
   const { firstPublication } = useUserPublications();
-  const { publication, refresh: refreshPublication } = usePublication(publicationId);
+  const { refresh: refreshPublication } = usePublication(publicationId);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
   // Get owner cap ID from user publications

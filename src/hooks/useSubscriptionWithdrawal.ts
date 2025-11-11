@@ -150,7 +150,7 @@ export const useSubscriptionWithdrawal = ({
 
       throw error;
     }
-  }, [publicationId, ownerCapId, currentBalance, signAndExecuteTransaction, onSuccess]);
+  }, [publicationId, ownerCapId, currentBalance, signAndExecuteTransaction, currentAccount?.address, onSuccess]);
 
   /**
    * Withdraw full available balance

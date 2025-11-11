@@ -79,7 +79,7 @@ export const useTipBalance = ({
 
       // Extract tip_balance and statistics from content fields
       const content = publicationObject.data.content;
-      const fields = content.fields as any;
+      const fields = content.fields as Record<string, unknown>;
 
       if (!fields || typeof fields.tip_balance === 'undefined') {
         throw new Error('Tip balance field not found in publication object');
@@ -90,7 +90,8 @@ export const useTipBalance = ({
 
       if (typeof fields.tip_balance === 'object' && fields.tip_balance !== null) {
         // Balance struct has a 'value' field
-        balanceInMist = Number(fields.tip_balance.value || 0);
+        const balanceObj = fields.tip_balance as Record<string, unknown>;
+        balanceInMist = Number(balanceObj.value || 0);
       } else if (typeof fields.tip_balance === 'string' || typeof fields.tip_balance === 'number') {
         // Direct value
         balanceInMist = Number(fields.tip_balance);
