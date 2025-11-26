@@ -249,23 +249,43 @@ export const tipsAPI = {
 } as const;
 
 export const likesAPI = {
-  likeArticle: (articleId: string) => 
+  likeArticle: (articleId: string) =>
     api.post(`/likes/${articleId}`),
-  
-  unlikeArticle: (articleId: string) => 
+
+  unlikeArticle: (articleId: string) =>
     api.delete(`/likes/${articleId}`),
-  
-  toggleLike: (articleId: string) => 
+
+  toggleLike: (articleId: string) =>
     api.post(`/likes/${articleId}/toggle`),
-  
-  getLikeStatus: (articleId: string) => 
+
+  getLikeStatus: (articleId: string) =>
     api.get(`/likes/${articleId}/status`),
-  
-  getArticleLikeCount: (articleId: string) => 
+
+  getArticleLikeCount: (articleId: string) =>
     api.get(`/likes/${articleId}/count`),
-  
-  getMyLikedArticles: (params: { cursor?: string; limit?: number }) => 
+
+  getMyLikedArticles: (params: { cursor?: string; limit?: number }) =>
     api.get('/likes/my-likes', { params }),
+};
+
+export const bookmarksAPI = {
+  bookmarkArticle: (articleId: string) =>
+    api.post(`/bookmarks/${articleId}`),
+
+  unbookmarkArticle: (articleId: string) =>
+    api.delete(`/bookmarks/${articleId}`),
+
+  toggleBookmark: (articleId: string) =>
+    api.post(`/bookmarks/${articleId}/toggle`),
+
+  getBookmarkStatus: (articleId: string) =>
+    api.get(`/bookmarks/${articleId}/status`),
+
+  getArticleBookmarkCount: (articleId: string) =>
+    api.get(`/bookmarks/${articleId}/count`),
+
+  getMyBookmarkedArticles: (params: { cursor?: string; limit?: number }) =>
+    api.get('/bookmarks/my-bookmarks', { params }),
 };
 
 export const subscriptionsAPI = {

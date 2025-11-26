@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { HiChevronDown, HiFire, HiClock, HiUserGroup } from 'react-icons/hi2';
 
-export type FeedType = 'fresh' | 'popular' | 'my';
+export type FeedType = 'fresh' | 'popular' | 'my' | 'bookmarks';
 export type TimeFrame = 'day' | 'week' | 'month';
 
 interface FeedTypeSelectorProps {
