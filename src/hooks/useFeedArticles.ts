@@ -69,6 +69,7 @@ export const useFeedArticles = (
         const result = response.data;
 
         // Transform bookmarked articles to match FeedArticle format
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const articles = (result.data?.articles || []).map((article: any) => ({
           ...article,
           isBookmarked: true,
@@ -230,7 +231,7 @@ export const useFeedArticles = (
       engagement: {
         likes: article.totalLikes,
         comments: 0, // TODO: Implement comments count from backend
-        views: 0, // TODO: Implement views count from backend
+        views: article.viewCount ?? 0,
         isLiked: article.isLiked,
         isBookmarked: article.isBookmarked,
         bookmarkCount: article.totalBookmarks,

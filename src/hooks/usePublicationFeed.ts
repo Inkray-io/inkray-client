@@ -98,7 +98,7 @@ export const usePublicationFeed = (publicationId: string) => {
           engagement: {
             likes: article.totalLikes,
             comments: 0,
-            views: 0,
+            views: article.viewCount ?? 0,
             isLiked: article.isLiked,
           },
         }));

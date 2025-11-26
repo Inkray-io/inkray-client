@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { articlesAPI } from '@/lib/api';
+import { articlesAPI, viewsAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
 import type { DecryptionParams } from '@/lib/services/SealService';
 import { useUserPublications } from './useUserPublications';
@@ -649,6 +649,17 @@ export const useArticle = (articleSlug: string | null) => {
       setEncryptedContentData(null);
     }
   }, [articleSlug]); // Remove loadArticle from dependencies
+
+  /**
+   * Record view when article is loaded and user is authenticated
+   */
+  useEffect(() => {
+    if (state.article?.articleId && currentAccount) {
+      viewsAPI.recordView(state.article.articleId).catch(() => {
+        // Silently fail - view recording is non-critical
+      });
+    }
+  }, [state.article?.articleId, currentAccount]);
 
   /**
    * Update stable owner data when firstPublication changes

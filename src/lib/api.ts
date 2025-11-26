@@ -288,6 +288,14 @@ export const bookmarksAPI = {
     api.get('/bookmarks/my-bookmarks', { params }),
 };
 
+export const viewsAPI = {
+  recordView: (articleId: string) =>
+    api.post(`/views/${articleId}`),
+
+  getViewCount: (articleId: string) =>
+    api.get(`/views/${articleId}/count`),
+};
+
 export const subscriptionsAPI = {
   // Get user's active subscriptions
   getMySubscriptions: (params: { cursor?: string; limit?: number }) => 
