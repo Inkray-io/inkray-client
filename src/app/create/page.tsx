@@ -6,13 +6,10 @@ import { AppLayout } from '@/components/layout'
 import { ArticleEditor, ArticleEditorRef } from '@/components/editor/ArticleEditor'
 import { MilkdownEditorWrapper } from '@/components/editor/MilkdownEditorWrapper'
 import { Button } from '@/components/ui/button'
-import { CategorySelector } from '@/components/ui/category-selector'
-import { SummaryInput } from '@/components/ui/summary-input'
 import { HiDocumentText } from 'react-icons/hi2'
 import { RequireAuth } from '@/components/auth/RequireAuth'
 import { RequirePublication } from '@/components/auth/RequirePublication'
 import { useArticleCreation } from '@/hooks/useArticleCreation'
-import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { getCachedDraft, setCachedDraft, clearDraftCache } from '@/lib/cache-manager'
@@ -64,8 +61,6 @@ export default function CreateArticlePage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [summary, setSummary] = useState('')
-  const [categoryId, setCategoryId] = useState('')
   const [gated, setGated] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [tempImages, setTempImages] = useState<TemporaryImage[]>([])
@@ -74,23 +69,19 @@ export default function CreateArticlePage() {
   // Editor ref to access temporary images
   const editorRef = useRef<ArticleEditorRef>(null)
 
-  const { categories, isLoading: categoriesLoading, error: categoriesError } = useCategories()
-
   // Auto-save draft to localStorage
   useEffect(() => {
-    if (title || content || summary || categoryId) {
+    if (title || content) {
       const draft = {
         title,
         content,
-        summary,
-        categoryId,
         gated
       }
 
       setCachedDraft(draft)
       setLastSaved(new Date())
     }
-  }, [title, content, summary, categoryId, gated])
+  }, [title, content, gated])
 
   // Load saved draft on mount
   useEffect(() => {
@@ -100,8 +91,6 @@ export default function CreateArticlePage() {
         if (draft) {
           setTitle(draft.title || '')
           setContent(draft.content || '')
-          setSummary(draft.summary || '')
-          setCategoryId(draft.categoryId || '')
           setGated(draft.gated || false)
           setLastSaved(new Date(draft.timestamp))
         }
@@ -114,19 +103,10 @@ export default function CreateArticlePage() {
   }, [])
 
   const handlePublish = async () => {
-    if (!title.trim() || !content.trim() || !summary.trim() || !categoryId) {
+    if (!title.trim() || !content.trim()) {
       toast({
         title: "Missing Content",
-        description: "Please fill in all required fields: title, content, summary, and category.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (summary.length < 10) {
-      toast({
-        title: "Summary Too Short",
-        description: "Summary must be at least 10 characters long.",
+        description: "Please fill in both title and content to publish.",
         variant: "destructive",
       })
       return
@@ -141,8 +121,6 @@ export default function CreateArticlePage() {
       const result = await createAndPublishArticle(
         title.trim(),
         content.trim(),
-        summary.trim(),
-        categoryId,
         [], // existing media files
         gated,
         currentTempImages // temporary images from editor
@@ -179,8 +157,6 @@ export default function CreateArticlePage() {
       clearDraftCache()
       setTitle('')
       setContent('')
-      setSummary('')
-      setCategoryId('')
       setGated(false)
       setLastSaved(null)
     }
@@ -208,7 +184,7 @@ export default function CreateArticlePage() {
 
                   <Button
                     onClick={handlePublish}
-                    disabled={isProcessing || isWaitingForRedirect || !title.trim() || !content.trim() || !summary.trim() || !categoryId}
+                    disabled={isProcessing || isWaitingForRedirect || !title.trim() || !content.trim()}
                     className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50 min-h-[40px] flex-1 sm:flex-initial"
                   >
                     {(isProcessing || isWaitingForRedirect) ? (
@@ -264,39 +240,6 @@ export default function CreateArticlePage() {
                   />
                 </div>
 
-                {/* Summary */}
-                <div>
-                  <SummaryInput
-                    value={summary}
-                    onChange={setSummary}
-                    placeholder="Add a short description..."
-                    label=""
-                    maxLength={280}
-                    minLength={10}
-                    showOverlayCounter={true}
-                    className="border-0 border-b border-gray-200 bg-transparent shadow-none rounded-none focus-visible:ring-0 focus-visible:border-b focus-visible:border-gray-400 focus:border-gray-400 hover:border-gray-300 min-h-[100px] px-0 pb-4"
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  {categoriesError ? (
-                    <div className="text-red-600 text-sm pb-4 border-b border-gray-200">
-                      Failed to load categories: {categoriesError}
-                    </div>
-                  ) : (
-                    <CategorySelector
-                      value={categoryId}
-                      onValueChange={setCategoryId}
-                      categories={categories}
-                      placeholder={categoriesLoading ? "Loading categories..." : "Select a category..."}
-                      disabled={categoriesLoading}
-                      required
-                      className="w-full border-0 border-b border-gray-200 bg-transparent shadow-none rounded-none focus-visible:ring-0 focus-visible:border-b focus-visible:border-gray-400 focus:border-gray-400 hover:border-gray-300 px-0 pb-3"
-                    />
-                  )}
-                </div>
-
                 {/* Content Editor */}
                 <div>
                   <MilkdownEditorWrapper>
@@ -325,6 +268,13 @@ export default function CreateArticlePage() {
                     </div>
                   </div>
                 )}
+
+                {/* AI Processing Note */}
+                <div className="p-4 bg-purple-50/50 rounded-lg border border-purple-100">
+                  <div className="text-sm text-purple-700">
+                    <strong>Note:</strong> Summary, tags, and category will be automatically generated by AI after publishing.
+                  </div>
+                </div>
 
                 {/* Footer Stats and Actions */}
                 <div className="pt-6 border-t border-gray-100">

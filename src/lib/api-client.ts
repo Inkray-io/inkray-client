@@ -243,12 +243,11 @@ export const api = {
   },
 
   // Article endpoints
+  // Note: summary and categoryId are no longer required - AI generates them after publishing
   articles: {
     create: (data: {
       title: string;
       content: string;
-      summary: string;
-      categoryId: string;
       publicationId: string;
       authorAddress: string;
       gated?: boolean;

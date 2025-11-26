@@ -25,6 +25,8 @@ export interface Article {
   vaultId: string;
   /** Whether the article is gated (access restricted) */
   gated: boolean;
+  /** Whether the article content appears to be AI-generated (null = not analyzed) */
+  aiGenerated?: boolean;
   /** Walrus blob ID for content storage */
   quiltBlobId: string;
   /** Walrus object ID for content storage */
@@ -47,6 +49,8 @@ export interface Article {
   tags?: string[];
   /** Optional article summary/excerpt */
   summary?: string;
+  /** AI-generated article highlights (3 key sentences) */
+  highlights?: string[];
   /** Whether the article has at least one media file that can be used as cover */
   hasCover?: boolean;
   /** Publication follow information */

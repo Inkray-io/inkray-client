@@ -528,9 +528,26 @@ function ArticlePageContent() {
 
                     {/* Article Summary */}
                     {article.summary && (
-                      <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                      <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
                         {article.summary}
                       </p>
+                    )}
+
+                    {/* Article Highlights */}
+                    {article.highlights && article.highlights.length > 0 && (
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                          Key Highlights
+                        </h3>
+                        <ul className="space-y-2">
+                          {article.highlights.map((highlight, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-primary mt-1.5 text-sm">•</span>
+                              <span className="text-gray-700 text-sm sm:text-base">{highlight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
 
                   </div>
