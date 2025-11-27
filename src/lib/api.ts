@@ -166,31 +166,44 @@ export const articlesAPI = {
 };
 
 export const followsAPI = {
-  followPublication: (publicationId: string) => 
+  followPublication: (publicationId: string) =>
     api.post(`/follows/${publicationId}`),
-  
-  unfollowPublication: (publicationId: string) => 
+
+  unfollowPublication: (publicationId: string) =>
     api.delete(`/follows/${publicationId}`),
-  
-  toggleFollow: (publicationId: string) => 
+
+  toggleFollow: (publicationId: string) =>
     api.post(`/follows/${publicationId}/toggle`),
-  
-  getFollowStatus: (publicationId: string) => 
+
+  getFollowStatus: (publicationId: string) =>
     api.get(`/follows/${publicationId}/status`),
-  
-  getPublicationInfo: (publicationId: string, userId?: string) => 
-    api.get(`/follows/${publicationId}/info`, { 
-      params: userId ? { userId } : {} 
+
+  getPublicationInfo: (publicationId: string, userId?: string) =>
+    api.get(`/follows/${publicationId}/info`, {
+      params: userId ? { userId } : {}
     }),
-  
-  getFollowerCount: (publicationId: string) => 
+
+  getFollowerCount: (publicationId: string) =>
     api.get(`/follows/${publicationId}/count`),
-  
-  getMyFollows: (params: { cursor?: string; limit?: number }) => 
+
+  getMyFollows: (params: { cursor?: string; limit?: number }) =>
     api.get('/follows/my-follows', { params }),
-  
-  getPublicationStats: (publicationId: string) => 
+
+  getPublicationStats: (publicationId: string) =>
     api.get(`/follows/${publicationId}/stats`),
+
+  // Export endpoints (owner only)
+  getExportPreview: (publicationId: string, params: {
+    dataType: 'email' | 'wallet';
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get(`/follows/${publicationId}/export/preview`, { params }),
+
+  getExportData: (publicationId: string, params: {
+    dataType: 'email' | 'wallet';
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get(`/follows/${publicationId}/export/data`, { params }),
 };
 
 export const publicationsAPI = {

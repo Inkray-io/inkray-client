@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HiEnvelope, HiWallet, HiArrowDownTray, HiClipboard, HiCheckCircle } from "react-icons/hi2";
+import { HiEnvelope, HiWallet, HiArrowDownTray, HiClipboard, HiCheckCircle, HiExclamationCircle } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
 import { SegmentedControl } from "./SegmentedControl";
+import { useExportFollowers } from "@/hooks/useExportFollowers";
 
 interface ExportSettingsProps {
   publicationId: string;
@@ -15,22 +16,6 @@ interface ExportSettingsProps {
 
 type DataType = "email" | "wallet";
 type DateRange = "week" | "month" | "year" | "all" | "custom";
-
-// Mock data for frontend demonstration
-const MOCK_DATA = {
-  email: {
-    week: { count: 12, samples: ["j***@gmail.com", "s***@outlook.com", "m***@yahoo.com"] },
-    month: { count: 45, samples: ["j***@gmail.com", "s***@outlook.com", "m***@yahoo.com"] },
-    year: { count: 156, samples: ["j***@gmail.com", "s***@outlook.com", "m***@yahoo.com"] },
-    all: { count: 234, samples: ["j***@gmail.com", "s***@outlook.com", "m***@yahoo.com"] },
-  },
-  wallet: {
-    week: { count: 8, samples: ["0x1a2b...c3d4", "0x5e6f...g7h8", "0x9i0j...k1l2"] },
-    month: { count: 32, samples: ["0x1a2b...c3d4", "0x5e6f...g7h8", "0x9i0j...k1l2"] },
-    year: { count: 98, samples: ["0x1a2b...c3d4", "0x5e6f...g7h8", "0x9i0j...k1l2"] },
-    all: { count: 187, samples: ["0x1a2b...c3d4", "0x5e6f...g7h8", "0x9i0j...k1l2"] },
-  },
-};
 
 const DATE_PRESETS: { id: DateRange; label: string }[] = [
   { id: "week", label: "Last Week" },
@@ -45,71 +30,46 @@ const DATA_TYPE_OPTIONS = [
   { id: "wallet", label: "Wallet Addresses", icon: HiWallet },
 ];
 
-export function ExportSettings({ publicationId: _publicationId }: ExportSettingsProps) {
+export function ExportSettings({ publicationId }: ExportSettingsProps) {
   const [dataType, setDataType] = useState<DataType>("email");
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [copied, setCopied] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
-  // Get mock results based on current selection
-  const results = useMemo(() => {
-    if (dateRange === "custom") {
-      // For custom range, show a mock count based on date difference
-      if (customStartDate && customEndDate) {
-        const start = new Date(customStartDate);
-        const end = new Date(customEndDate);
-        const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const count = Math.max(0, Math.floor(daysDiff * 0.5)); // Rough estimate
-        return {
-          count,
-          samples: MOCK_DATA[dataType].all.samples,
-        };
-      }
-      return { count: 0, samples: [] };
-    }
-    return MOCK_DATA[dataType][dateRange];
-  }, [dataType, dateRange, customStartDate, customEndDate]);
+  // Use the export hook for real API data
+  const {
+    count,
+    samples,
+    isLoadingPreview,
+    previewError,
+    exportToCsv,
+    copyToClipboard,
+    isExporting,
+    exportError,
+  } = useExportFollowers({
+    publicationId,
+    dataType,
+    dateRange,
+    customStartDate,
+    customEndDate,
+  });
 
   const handleExport = async () => {
-    setExporting(true);
-
-    // Simulate export delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Create mock CSV content
-    const header = dataType === "email" ? "Email Address" : "Wallet Address";
-    const mockItems = dataType === "email"
-      ? ["john@example.com", "sarah@example.com", "mike@example.com"]
-      : ["0x1a2b3c4d5e6f7g8h9i0j", "0x2b3c4d5e6f7g8h9i0j1a", "0x3c4d5e6f7g8h9i0j1a2b"];
-
-    const csvContent = [header, ...mockItems].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    // Trigger download
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `export-${dataType}s-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    setExporting(false);
+    await exportToCsv();
   };
 
   const handleCopyToClipboard = async () => {
-    // Mock copy action
-    const mockItems = dataType === "email"
-      ? ["john@example.com", "sarah@example.com", "mike@example.com"]
-      : ["0x1a2b3c4d5e6f7g8h9i0j", "0x2b3c4d5e6f7g8h9i0j1a", "0x3c4d5e6f7g8h9i0j1a2b"];
-
-    await navigator.clipboard.writeText(mockItems.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await copyToClipboard();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Error is handled by the hook
+    }
   };
+
+  const error = previewError || exportError;
 
   return (
     <SettingsSection
@@ -184,18 +144,38 @@ export function ExportSettings({ publicationId: _publicationId }: ExportSettings
             )}
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <HiExclamationCircle className="size-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">Error</p>
+                  <p className="text-sm text-destructive/80">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Results Preview */}
           <div className="bg-muted/30 rounded-lg p-4 border border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-muted-foreground">Results found</span>
-              <Badge variant="secondary" className="font-semibold">
-                {results.count} {dataType === "email" ? "emails" : "wallets"}
-              </Badge>
+              {isLoadingPreview ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
+                  <span className="text-sm text-muted-foreground">Loading...</span>
+                </div>
+              ) : (
+                <Badge variant="secondary" className="font-semibold">
+                  {count} {dataType === "email" ? "emails" : "wallets"}
+                </Badge>
+              )}
             </div>
 
-            {results.count > 0 && (
+            {!isLoadingPreview && count > 0 && (
               <div className="space-y-1">
-                {results.samples.slice(0, 3).map((item, index) => (
+                {samples.slice(0, 3).map((item, index) => (
                   <div
                     key={index}
                     className="text-sm text-muted-foreground font-mono truncate"
@@ -203,15 +183,15 @@ export function ExportSettings({ publicationId: _publicationId }: ExportSettings
                     {item}
                   </div>
                 ))}
-                {results.count > 3 && (
+                {count > 3 && (
                   <div className="text-xs text-muted-foreground pt-1">
-                    ...and {results.count - 3} more
+                    ...and {count - 3} more
                   </div>
                 )}
               </div>
             )}
 
-            {results.count === 0 && (
+            {!isLoadingPreview && count === 0 && !error && (
               <p className="text-sm text-muted-foreground">
                 {dateRange === "custom" && (!customStartDate || !customEndDate)
                   ? "Select a date range to see results"
@@ -225,10 +205,10 @@ export function ExportSettings({ publicationId: _publicationId }: ExportSettings
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button
               onClick={handleExport}
-              disabled={results.count === 0 || exporting}
+              disabled={count === 0 || isExporting || isLoadingPreview}
               className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
             >
-              {exporting ? (
+              {isExporting && !copied ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                   Exporting...
@@ -242,13 +222,18 @@ export function ExportSettings({ publicationId: _publicationId }: ExportSettings
             </Button>
             <Button
               onClick={handleCopyToClipboard}
-              disabled={results.count === 0}
+              disabled={count === 0 || isExporting || isLoadingPreview}
               variant="outline"
             >
               {copied ? (
                 <>
                   <HiCheckCircle className="size-4 mr-2 text-green-600" />
                   Copied!
+                </>
+              ) : isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  Copying...
                 </>
               ) : (
                 <>
