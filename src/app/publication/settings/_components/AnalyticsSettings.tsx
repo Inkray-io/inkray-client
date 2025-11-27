@@ -18,7 +18,7 @@ interface AnalyticsSettingsProps {
   publicationId: string;
 }
 
-export function AnalyticsSettings({ publicationId: _publicationId }: AnalyticsSettingsProps) {
+export function AnalyticsSettings({ publicationId }: AnalyticsSettingsProps) {
   const [activeMetric, setActiveMetric] = useState<MetricType>("views");
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
@@ -33,6 +33,7 @@ export function AnalyticsSettings({ publicationId: _publicationId }: AnalyticsSe
   );
 
   const analyticsData = useAnalyticsData({
+    publicationId,
     metric: activeMetric,
     range: timeRange,
     customStartDate,
@@ -61,21 +62,30 @@ export function AnalyticsSettings({ publicationId: _publicationId }: AnalyticsSe
         </div>
 
         {/* Metric Summary Card */}
-        <MetricCard
-          metric={activeMetric}
-          total={analyticsData.total}
-          percentChange={analyticsData.percentChange}
-          averagePerDay={analyticsData.averagePerDay}
-          range={timeRange}
-        />
+        {analyticsData.isLoading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-32 bg-muted rounded-xl" />
+            <div className="h-64 bg-muted rounded-xl" />
+          </div>
+        ) : (
+          <>
+            <MetricCard
+              metric={activeMetric}
+              total={analyticsData.total}
+              percentChange={analyticsData.percentChange}
+              averagePerDay={analyticsData.averagePerDay}
+              range={timeRange}
+            />
 
-        {/* Chart */}
-        <div className="pt-2">
-          <AnalyticsChart
-            data={analyticsData.chartData}
-            metric={activeMetric}
-          />
-        </div>
+            {/* Chart */}
+            <div className="pt-2">
+              <AnalyticsChart
+                data={analyticsData.chartData}
+                metric={activeMetric}
+              />
+            </div>
+          </>
+        )}
       </SettingsCard>
     </SettingsSection>
   );

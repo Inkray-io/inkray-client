@@ -1,14 +1,13 @@
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   subDays,
   subYears,
   format,
-  eachDayOfInterval,
-  eachWeekOfInterval,
-  eachMonthOfInterval,
   differenceInDays,
   startOfDay,
+  parseISO,
 } from "date-fns";
+import { analyticsAPI } from "@/lib/api";
 
 export type MetricType = "views" | "likes" | "follows";
 export type TimeRange = "7d" | "1m" | "1y" | "all" | "custom";
@@ -25,54 +24,16 @@ export interface AnalyticsData {
   previousTotal: number;
   percentChange: number;
   averagePerDay: number;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 interface UseAnalyticsDataParams {
+  publicationId: string;
   metric: MetricType;
   range: TimeRange;
   customStartDate?: Date;
   customEndDate?: Date;
-}
-
-// Seed-based random for consistent mock data
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-function generateMockValue(
-  date: Date,
-  metric: MetricType,
-  baseValue: number
-): number {
-  const seed = date.getTime() + metric.charCodeAt(0);
-  const random = seededRandom(seed);
-
-  // Add day-of-week pattern (weekends slightly lower)
-  const dayOfWeek = date.getDay();
-  const weekendFactor = dayOfWeek === 0 || dayOfWeek === 6 ? 0.7 : 1;
-
-  // Add growth trend over time
-  const daysSinceEpoch = Math.floor(date.getTime() / (1000 * 60 * 60 * 24));
-  const growthFactor = 1 + (daysSinceEpoch % 365) * 0.001;
-
-  // Combine factors with randomness
-  const value = Math.floor(
-    baseValue * weekendFactor * growthFactor * (0.5 + random)
-  );
-
-  return Math.max(1, value);
-}
-
-function getBaseValue(metric: MetricType): number {
-  switch (metric) {
-    case "views":
-      return 150;
-    case "likes":
-      return 25;
-    case "follows":
-      return 8;
-  }
 }
 
 function getDateRange(
@@ -99,7 +60,11 @@ function getDateRange(
   }
 }
 
-function formatDateForRange(date: Date, range: TimeRange, totalDays: number): string {
+function formatDateForRange(
+  date: Date,
+  range: TimeRange,
+  totalDays: number
+): string {
   if (range === "7d") {
     return format(date, "EEE");
   }
@@ -112,92 +77,89 @@ function formatDateForRange(date: Date, range: TimeRange, totalDays: number): st
   return format(date, "MMM yyyy");
 }
 
+async function fetchAnalytics(
+  publicationId: string,
+  metric: MetricType,
+  startDate: Date,
+  endDate: Date
+) {
+  const startStr = format(startDate, "yyyy-MM-dd");
+  const endStr = format(endDate, "yyyy-MM-dd");
+
+  let response;
+  switch (metric) {
+    case "views":
+      response = await analyticsAPI.getViews(publicationId, startStr, endStr);
+      break;
+    case "likes":
+      response = await analyticsAPI.getLikes(publicationId, startStr, endStr);
+      break;
+    case "follows":
+      response = await analyticsAPI.getFollows(publicationId, startStr, endStr);
+      break;
+  }
+
+  return response.data.data;
+}
+
 export function useAnalyticsData({
+  publicationId,
   metric,
   range,
   customStartDate,
   customEndDate,
 }: UseAnalyticsDataParams): AnalyticsData {
-  return useMemo(() => {
-    const { start, end } = getDateRange(range, customStartDate, customEndDate);
-    const totalDays = differenceInDays(end, start) + 1;
-    const baseValue = getBaseValue(metric);
+  const { start, end } = getDateRange(range, customStartDate, customEndDate);
+  const totalDays = differenceInDays(end, start) + 1;
 
-    let intervals: Date[];
-    let aggregationType: "day" | "week" | "month" = "day";
+  const query = useQuery({
+    queryKey: [
+      "analytics",
+      publicationId,
+      metric,
+      format(start, "yyyy-MM-dd"),
+      format(end, "yyyy-MM-dd"),
+    ],
+    queryFn: () => fetchAnalytics(publicationId, metric, start, end),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!publicationId,
+  });
 
-    // Determine aggregation based on range
-    if (totalDays <= 31) {
-      intervals = eachDayOfInterval({ start, end });
-      aggregationType = "day";
-    } else if (totalDays <= 120) {
-      intervals = eachWeekOfInterval({ start, end });
-      aggregationType = "week";
-    } else {
-      intervals = eachMonthOfInterval({ start, end });
-      aggregationType = "month";
-    }
+  // Transform API response to chart format with formatted dates
+  if (query.data) {
+    const apiData = query.data;
 
-    // Generate chart data
-    const chartData: ChartDataPoint[] = intervals.map((date) => {
-      let value: number;
-
-      if (aggregationType === "day") {
-        value = generateMockValue(date, metric, baseValue);
-      } else if (aggregationType === "week") {
-        // Sum 7 days for weekly aggregation
-        value = eachDayOfInterval({
-          start: date,
-          end: subDays(new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000), 1),
-        }).reduce((sum, d) => sum + generateMockValue(d, metric, baseValue), 0);
-      } else {
-        // Sum days in month for monthly aggregation
-        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        value = eachDayOfInterval({ start: date, end: monthEnd }).reduce(
-          (sum, d) => sum + generateMockValue(d, metric, baseValue),
-          0
-        );
+    // Transform chart data to include rawDate and formatted date labels
+    const chartData: ChartDataPoint[] = apiData.chartData.map(
+      (point: { date: string; value: number }) => {
+        const rawDate = parseISO(point.date);
+        return {
+          date: formatDateForRange(rawDate, range, totalDays),
+          value: point.value,
+          rawDate,
+        };
       }
-
-      return {
-        date: formatDateForRange(date, range, totalDays),
-        value,
-        rawDate: date,
-      };
-    });
-
-    // Calculate totals
-    const allDays = eachDayOfInterval({ start, end });
-    const total = allDays.reduce(
-      (sum, d) => sum + generateMockValue(d, metric, baseValue),
-      0
     );
-
-    // Calculate previous period for comparison
-    const previousStart = subDays(start, totalDays);
-    const previousEnd = subDays(end, totalDays);
-    const previousDays = eachDayOfInterval({
-      start: previousStart,
-      end: previousEnd,
-    });
-    const previousTotal = previousDays.reduce(
-      (sum, d) => sum + generateMockValue(d, metric, baseValue),
-      0
-    );
-
-    const percentChange =
-      previousTotal === 0
-        ? 100
-        : ((total - previousTotal) / previousTotal) * 100;
-
-    const averagePerDay = total / totalDays;
 
     return {
       chartData,
-      total,
-      previousTotal,
-      percentChange,
-      averagePerDay,
+      total: apiData.total,
+      previousTotal: apiData.previousTotal,
+      percentChange: apiData.percentChange,
+      averagePerDay: apiData.averagePerDay,
+      isLoading: false,
+      error: null,
     };
-  }, [metric, range, customStartDate, customEndDate]);
+  }
+
+  // Return loading/error state or empty data
+  return {
+    chartData: [],
+    total: 0,
+    previousTotal: 0,
+    percentChange: 0,
+    averagePerDay: 0,
+    isLoading: query.isLoading,
+    error: query.error as Error | null,
+  };
 }

@@ -323,6 +323,26 @@ export const subscriptionsAPI = {
     api.get(`/subscriptions/publications/${publicationId}/info`),
   
   // Get subscription stats for publication owners
-  getPublicationSubscriptionStats: (publicationId: string) => 
+  getPublicationSubscriptionStats: (publicationId: string) =>
     api.get(`/subscriptions/publications/${publicationId}/stats`),
+};
+
+export const analyticsAPI = {
+  // Get views analytics for a publication
+  getViews: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/views`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get likes analytics for a publication
+  getLikes: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/likes`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get follows analytics for a publication
+  getFollows: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/follows`, {
+      params: { startDate, endDate },
+    }),
 };
