@@ -346,3 +346,10 @@ export const analyticsAPI = {
       params: { startDate, endDate },
     }),
 };
+
+export const notificationsAPI = {
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  getPaginated: (page: number = 1, limit: number = 20) =>
+    api.get('/notifications', { params: { page, limit } }),
+  markAllAsRead: () => api.patch('/notifications/all/seen'),
+};
