@@ -1,6 +1,6 @@
 "use client"
 
-import { HiMagnifyingGlass, HiBell, HiPlus, HiBars3 } from "react-icons/hi2"
+import { HiMagnifyingGlass, HiPlus, HiBars3 } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@mysten/dapp-kit"
 import { MobileMenu } from "./MobileMenu"
@@ -8,6 +8,7 @@ import { UserProfile } from "@/components/wallet/UserProfile"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
+import NotificationsBell from "@/components/layout/NotificationsBell";
 
 interface AppHeaderProps {
   currentPage?: string
@@ -44,9 +45,7 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
               <Button variant="ghost" size="icon" className="size-10">
                 <HiMagnifyingGlass className="size-6" />
               </Button>
-              <Button variant="ghost" size="icon" className="size-10">
-                <HiBell className="size-6" />
-              </Button>
+             <NotificationsBell />
               <UserProfile />
             </>
           ) : (
