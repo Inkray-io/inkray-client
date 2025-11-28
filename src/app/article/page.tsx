@@ -24,6 +24,7 @@ import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
+import { CommentsSection } from "@/components/comments";
 import { TipButton } from "@/components/article/TipButton";
 import { TipDisplay } from "@/components/ui/TipDisplay";
 import { LikeButton } from "@/components/like/LikeButton";
@@ -699,6 +700,14 @@ function ArticlePageContent() {
                     followerCount: article.followInfo.followerCount,
                     followedAt: article.followInfo.followedAt,
                   }}
+                  className="mb-6"
+                />
+              )}
+
+              {/* Comments Section */}
+              {article.articleId && (
+                <CommentsSection
+                  articleId={article.articleId}
                   className="mb-6"
                 />
               )}

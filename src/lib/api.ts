@@ -301,6 +301,20 @@ export const bookmarksAPI = {
     api.get('/bookmarks/my-bookmarks', { params }),
 };
 
+export const commentsAPI = {
+  createComment: (articleId: string, content: string) =>
+    api.post(`/comments/${articleId}`, { content }),
+
+  getComments: (articleId: string, params: { limit?: number; cursor?: string }) =>
+    api.get(`/comments/${articleId}`, { params }),
+
+  deleteComment: (commentId: string) =>
+    api.delete(`/comments/${commentId}`),
+
+  getCommentCount: (articleId: string) =>
+    api.get(`/comments/${articleId}/count`),
+};
+
 export const viewsAPI = {
   recordView: (articleId: string) =>
     api.post(`/views/${articleId}`),
