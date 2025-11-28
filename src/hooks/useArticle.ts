@@ -89,12 +89,17 @@ export const useArticle = (articleSlug: string | null) => {
 
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const { decryptContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
-  
+  const { decryptContent, decryptFreeContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
+
   // Stable reference to decryptContent to prevent useEffect loops
   const stableDecryptContent = useCallback((params: DecryptionParams) => {
     return decryptContent(params);
   }, [decryptContent]);
+
+  // Stable reference to decryptFreeContent
+  const stableDecryptFreeContent = useCallback((params: DecryptionParams) => {
+    return decryptFreeContent(params);
+  }, [decryptFreeContent]);
 
 
   // Get user's publication info for owner cap ID
@@ -711,39 +716,51 @@ export const useArticle = (articleSlug: string | null) => {
       return;
     }
 
-    // Check if wallet is ready
-    if (!isWalletReady || !currentAccount) {
-      log.debug('Waiting for wallet connection', {
-        isWalletReady,
-        hasAccount: !!currentAccount
-      }, 'useArticle');
-      return;
-    }
+    // Check if content is FREE (no subscription required)
+    const isFreeContent = !stableSubscriptionData.current.requiresSubscription;
 
-    // Check if we're still loading publication data
-    if (isLoadingUserPublications || isLoadingPublication) {
-      log.debug('Waiting for publication data to load', {
-        isLoadingUserPublications,
-        isLoadingPublication
-      }, 'useArticle');
-      return;
-    }
+    // For FREE content: No wallet required - use local keypair decryption
+    // For PAID content: Wallet is required
+    if (!isFreeContent) {
+      // Check if wallet is ready for paid content
+      if (!isWalletReady || !currentAccount) {
+        log.debug('Waiting for wallet connection (paid content)', {
+          isWalletReady,
+          hasAccount: !!currentAccount
+        }, 'useArticle');
+        return;
+      }
 
-    // Use stable owner data to prevent dependency loops
-    const isOwnerOfPublication = stableOwnerData.current?.publicationId === article.publicationId;
-    const hasOwnerCapData = isOwnerOfPublication ? !!stableOwnerData.current?.ownerCapId : true;
-    const hasSubscriptionData = currentPublicationId ? !!currentPublication : true;
+      // Check if we're still loading publication data for paid content
+      if (isLoadingUserPublications || isLoadingPublication) {
+        log.debug('Waiting for publication data to load', {
+          isLoadingUserPublications,
+          isLoadingPublication
+        }, 'useArticle');
+        return;
+      }
 
-    // Ensure we have all required data
-    if (!hasOwnerCapData || !hasSubscriptionData) {
-      log.debug('Waiting for complete publication data', {
-        isOwnerOfPublication,
-        hasOwnerCapData,
-        hasSubscriptionData,
-        stableOwnerData: stableOwnerData.current,
-        currentPublication: !!currentPublication
+      // Use stable owner data to prevent dependency loops
+      const isOwnerOfPublication = stableOwnerData.current?.publicationId === article.publicationId;
+      const hasOwnerCapData = isOwnerOfPublication ? !!stableOwnerData.current?.ownerCapId : true;
+      const hasSubscriptionData = currentPublicationId ? !!currentPublication : true;
+
+      // Ensure we have all required data for paid content
+      if (!hasOwnerCapData || !hasSubscriptionData) {
+        log.debug('Waiting for complete publication data', {
+          isOwnerOfPublication,
+          hasOwnerCapData,
+          hasSubscriptionData,
+          stableOwnerData: stableOwnerData.current,
+          currentPublication: !!currentPublication
+        }, 'useArticle');
+        return;
+      }
+    } else {
+      log.debug('FREE content detected - no wallet required', {
+        articleId: article.articleId,
+        isFreeContent
       }, 'useArticle');
-      return;
     }
 
     // All data is ready - trigger decryption
@@ -785,7 +802,11 @@ export const useArticle = (articleSlug: string | null) => {
           subscriptionId: stableSubscriptionData.current.subscriptionId,
         };
 
+        // Check if this is FREE content (no subscription required)
+        const isFreeContent = !stableSubscriptionData.current.requiresSubscription;
+
         log.debug('FINAL POLICY SELECTION INPUT', {
+          isFreeContent,
           ownerCapId: decryptionParams.ownerCapId,
           subscriptionPrice: decryptionParams.subscriptionPrice,
           subscriptionId: decryptionParams.subscriptionId,
@@ -793,12 +814,24 @@ export const useArticle = (articleSlug: string | null) => {
           hasActiveSubscription: subscriptionStatus?.hasActiveSubscription,
           subscriptionPriceFromAPI: subscriptionInfo?.subscriptionPrice,
           subscriptionPriceFromPublication: currentPublication?.subscriptionPrice,
-          expectedPolicy: decryptionParams.ownerCapId ? 'OWNER' :
+          expectedPolicy: isFreeContent ? 'FREE (wallet-free)' :
+            decryptionParams.ownerCapId ? 'OWNER' :
             (decryptionParams.subscriptionPrice && decryptionParams.subscriptionPrice > 0 && decryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
         }, 'useArticle');
 
-        // Decrypt content
-        const decryptedContent = await stableDecryptContent(decryptionParams);
+        // Decrypt content - use wallet-free decryption for FREE content
+        let decryptedContent: string;
+        if (isFreeContent) {
+          log.debug('Using FREE decryption (no wallet required)', {
+            articleId: article.articleId,
+          }, 'useArticle');
+          decryptedContent = await stableDecryptFreeContent(decryptionParams);
+        } else {
+          log.debug('Using PAID decryption (wallet required)', {
+            articleId: article.articleId,
+          }, 'useArticle');
+          decryptedContent = await stableDecryptContent(decryptionParams);
+        }
 
 
         // Transform media URLs to CDN format with real blob IDs
@@ -850,6 +883,7 @@ export const useArticle = (articleSlug: string | null) => {
     isLoadingPublication,
     currentPublicationId,
     stableDecryptContent,
+    stableDecryptFreeContent,
     shouldAttemptDecryption
   ]);
 
@@ -1110,7 +1144,12 @@ export const useArticle = (articleSlug: string | null) => {
     hasContent: !!state.content,
     hasArticle: !!state.article,
     canLoadContent: !!state.article?.quiltBlobId,
-    needsWalletForContent: !!(state.article?.contentSealId && !isWalletReady),
+    // Free content doesn't need wallet - only paid encrypted content does
+    needsWalletForContent: !!(
+      state.article?.contentSealId &&
+      !isWalletReady &&
+      stableSubscriptionData.current.requiresSubscription
+    ),
     hasDecryptionAccess,
   };
 };

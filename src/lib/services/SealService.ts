@@ -13,6 +13,7 @@ import {
   DEFAULT_SESSION_KEY_TTL_MINUTES
 } from '../seal-config';
 import { log } from '../utils/Logger';
+import { getOrCreateFreeSessionKey } from '../free-session-key-cache';
 
 /**
  * Unified Seal Service for Content Encryption and Decryption
@@ -536,6 +537,128 @@ export class SealService {
   }
 
   /**
+   * Decrypt FREE content without wallet interaction
+   *
+   * This method uses a locally-generated keypair to auto-sign session keys,
+   * allowing users to decrypt free articles without connecting a wallet.
+   *
+   * Only use this for free content (publications without subscription requirement).
+   */
+  public async decryptFreeContent(params: DecryptionParams): Promise<string> {
+    const traceId = `seal-free-decrypt-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    log.debug(`SEAL FREE DECRYPT TRACE [${traceId}]`, { timestamp: new Date().toISOString() }, 'SealService');
+
+    try {
+      // Input validation
+      if (!params.contentId || params.contentId.length === 0) {
+        log.error('Content ID validation failed: empty or null', {}, 'SealService');
+        throw new Error('Invalid content ID: empty or null');
+      }
+
+      if (!params.contentId.startsWith('0x')) {
+        log.error('Content ID validation failed: missing 0x prefix', {}, 'SealService');
+        throw new Error('Content ID must be a hex string starting with 0x');
+      }
+
+      // BCS Validation of encrypted data
+      try {
+        const encObj = EncryptedObject.parse(params.encryptedData);
+        if (encObj.id !== params.contentId) {
+          log.warn('Content ID mismatch', {
+            fromEncryptedObject: encObj.id,
+            fromParameters: params.contentId
+          }, 'SealService');
+        }
+      } catch (bcsError) {
+        log.error('BCS validation failed', bcsError, 'SealService');
+        throw new Error(`BCS validation failed: ${bcsError instanceof Error ? bcsError.message : 'Invalid encrypted object format'}`);
+      }
+
+      // Convert content ID from hex
+      const contentIdBytes = fromHex(params.contentId);
+
+      // Get key server configuration
+      const serverConfigs = getKeyServerConfigs();
+      if (serverConfigs.length === 0) {
+        log.error('No key servers configured for network', { network: CONFIG.NETWORK }, 'SealService');
+        throw new Error(`No key servers configured for network: ${CONFIG.NETWORK}`);
+      }
+
+      const sealClient = new SealClient({
+        suiClient: this.suiClient,
+        serverConfigs,
+        verifyKeyServers: false,
+      });
+
+      // Get or create FREE session key (auto-signed by local keypair - NO WALLET POPUP!)
+      log.debug('Getting free session key (no wallet required)', {}, 'SealService');
+      const sessionKey = await getOrCreateFreeSessionKey(this.suiClient);
+
+      // Build FREE approval transaction
+      log.debug('Building FREE approval transaction', {
+        contentIdBytesLength: contentIdBytes.length,
+        publicationId: params.publicationId,
+      }, 'SealService');
+
+      const tx = this.buildFreeApprovalTransaction(contentIdBytes, params.publicationId);
+      log.debug('Free transaction built successfully', {}, 'SealService');
+
+      // Build transaction bytes for Seal
+      const txBytes = await tx.build({
+        client: this.suiClient,
+        onlyTransactionKind: true
+      });
+
+      // Decrypt using Seal SDK
+      const decrypted = await sealClient.decrypt({
+        data: params.encryptedData,
+        sessionKey,
+        txBytes,
+      });
+
+      // Convert decrypted bytes to string
+      const decryptedContent = new TextDecoder().decode(decrypted);
+      log.debug('SEAL FREE DECRYPT SUCCESS', { contentLength: decryptedContent.length, traceId }, 'SealService');
+      return decryptedContent;
+
+    } catch (error) {
+      // Enhanced error logging
+      log.error('SEAL FREE DECRYPT ERROR', {
+        traceId,
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        inputParams: {
+          encryptedDataLength: params.encryptedData?.length || 0,
+          contentId: params.contentId,
+          publicationId: params.publicationId
+        },
+        environment: {
+          timestamp: new Date().toISOString(),
+          network: CONFIG.NETWORK,
+          packageId: CONFIG.PACKAGE_ID
+        }
+      }, 'SealService');
+
+      let errorMessage = 'Failed to decrypt free content';
+
+      if (error instanceof Error) {
+        if (error.message.includes('key server')) {
+          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('threshold')) {
+          errorMessage = 'Insufficient key servers available for decryption.';
+        } else if (error.message.includes('approve_free')) {
+          errorMessage = 'Access denied. Content may not support free access.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
    * Utility: Estimate encrypted size for UI progress indicators
    */
   public static estimateEncryptedSize(originalSize: number): number {
@@ -568,4 +691,22 @@ export class SealService {
  */
 export function createSealService(suiClient: SuiClient, currentAccount: WalletAccount): SealService {
   return new SealService(suiClient, currentAccount);
+}
+
+/**
+ * Factory function to create SealService for FREE content decryption
+ *
+ * This creates a SealService with a placeholder account since free content
+ * decryption doesn't require wallet interaction. The decryptFreeContent method
+ * uses a locally-generated keypair instead of the wallet.
+ */
+export function createFreeSealService(suiClient: SuiClient): SealService {
+  // Create a placeholder account - not used for free decryption
+  const placeholderAccount: WalletAccount = {
+    address: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    publicKey: new Uint8Array(32),
+    chains: [],
+    features: [],
+  };
+  return new SealService(suiClient, placeholderAccount);
 }
