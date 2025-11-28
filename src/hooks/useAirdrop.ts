@@ -165,7 +165,7 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
   }, [publicationId, state.dateRange, state.customStartDate, state.customEndDate]);
 
   // Execute airdrop transaction
-  const executeAirdrop = useCallback(async (decimals: number = 9) => {
+  const executeAirdrop = useCallback(async (decimals: number = 9): Promise<void> => {
     if (!currentAccount?.address) {
       setState(prev => ({ ...prev, error: 'Wallet not connected', status: 'error' }));
       return;
@@ -182,7 +182,7 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
     }
 
     const totalAmountInSmallestUnit = parseAmountToSmallestUnit(state.totalAmount, decimals);
-    if (totalAmountInSmallestUnit <= 0n) {
+    if (totalAmountInSmallestUnit <= BigInt(0)) {
       setState(prev => ({ ...prev, error: 'Invalid amount', status: 'error' }));
       return;
     }
@@ -209,7 +209,7 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
       const tx = new Transaction();
 
       // Reference the primary coin
-      let primaryCoin = tx.object(coins.data[0].coinObjectId);
+      const primaryCoin = tx.object(coins.data[0].coinObjectId);
 
       // Merge all coins into one if there are multiple
       if (coins.data.length > 1) {
@@ -247,19 +247,20 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
       // Sign and execute the transaction
       const result = await signAndExecuteTransaction({ transaction: tx });
 
-      log.info('Airdrop transaction successful', {
-        digest: result.digest,
-        recipientCount: state.recipients.length,
-      }, 'useAirdrop');
+      // Handle the result (can be void if using callback pattern)
+      if (result && 'digest' in result) {
+        log.info('Airdrop transaction successful', {
+          digest: result.digest,
+          recipientCount: state.recipients.length,
+        }, 'useAirdrop');
 
-      setState(prev => ({
-        ...prev,
-        status: 'success',
-        txDigest: result.digest,
-        error: null,
-      }));
-
-      return result;
+        setState(prev => ({
+          ...prev,
+          status: 'success',
+          txDigest: result.digest,
+          error: null,
+        }));
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Airdrop transaction failed';
       log.error('Airdrop transaction failed', error, 'useAirdrop');
@@ -269,8 +270,6 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
         status: 'error',
         error: errorMessage,
       }));
-
-      throw error;
     }
   }, [currentAccount, state.selectedCoinType, state.totalAmount, state.recipients, suiClient, signAndExecuteTransaction]);
 

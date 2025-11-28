@@ -100,6 +100,8 @@ function TokenCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <button
       onClick={onSelect}
@@ -115,13 +117,22 @@ function TokenCard({
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              "flex items-center justify-center size-10 rounded-full font-bold text-sm",
+              "flex items-center justify-center size-10 rounded-full font-bold text-sm overflow-hidden",
               isSelected
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground"
             )}
           >
-            {token.symbol.slice(0, 2)}
+            {token.iconUrl && !imageError ? (
+              <img
+                src={token.iconUrl}
+                alt={token.symbol}
+                className="size-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              token.symbol.slice(0, 2)
+            )}
           </div>
           <div>
             <p className="font-medium text-foreground">{token.name}</p>
@@ -447,6 +458,7 @@ function Step3Review({
   onPrev: () => void;
   onReset: () => void;
 }) {
+  const [imageError, setImageError] = useState(false);
   const isLoading = status === "loading";
   const isSuccess = status === "success";
 
@@ -492,8 +504,17 @@ function Step3Review({
           <div className="flex justify-between items-center py-3 border-b border-border/50">
             <span className="text-muted-foreground">Token</span>
             <span className="font-medium text-foreground flex items-center gap-2">
-              <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                {selectedToken?.symbol.slice(0, 2)}
+              <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary/20 text-primary text-xs font-bold overflow-hidden">
+                {selectedToken?.iconUrl && !imageError ? (
+                  <img
+                    src={selectedToken.iconUrl}
+                    alt={selectedToken.symbol}
+                    className="size-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  selectedToken?.symbol.slice(0, 2)
+                )}
               </span>
               {selectedToken?.name}
             </span>

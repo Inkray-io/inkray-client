@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSuiClient } from '@mysten/dapp-kit';
-import { CoinBalance } from '@mysten/sui/client';
+import { CoinBalance, CoinMetadata } from '@mysten/sui/client';
 import { log } from '@/lib/utils/Logger';
 
 export interface TokenBalance {
@@ -19,7 +19,7 @@ interface UseWalletBalancesState {
 }
 
 /**
- * Extract token symbol from coin type
+ * Extract token symbol from coin type (fallback when metadata unavailable)
  * e.g., "0x2::sui::SUI" -> "SUI"
  */
 function extractSymbolFromCoinType(coinType: string): string {
@@ -28,7 +28,7 @@ function extractSymbolFromCoinType(coinType: string): string {
 }
 
 /**
- * Extract readable name from coin type
+ * Extract readable name from coin type (fallback when metadata unavailable)
  * e.g., "0x2::sui::SUI" -> "SUI"
  * e.g., "0xabc123::my_token::MY_TOKEN" -> "MY TOKEN"
  */
@@ -39,19 +39,11 @@ function extractNameFromCoinType(coinType: string): string {
 }
 
 /**
- * Get decimals for known coin types (defaults to 9 for most Sui tokens)
- */
-function getDecimalsForCoinType(coinType: string): number {
-  // SUI uses 9 decimals, most tokens on Sui follow this convention
-  // In a production app, you'd fetch this from the coin metadata
-  return 9;
-}
-
-/**
  * Hook for fetching all token balances in a user's wallet
  *
  * Uses suiClient.getAllBalances() to retrieve all coin balances,
- * then formats them for display with symbol, name, and formatted balance.
+ * then fetches metadata for each coin type using getCoinMetadata()
+ * for accurate decimals, names, symbols, and icons.
  */
 export function useWalletBalances(address: string | undefined) {
   const suiClient = useSuiClient();
@@ -86,22 +78,36 @@ export function useWalletBalances(address: string | undefined) {
         owner: address,
       });
 
-      // Transform to our TokenBalance format
-      const tokenBalances: TokenBalance[] = allBalances
-        .filter(balance => BigInt(balance.totalBalance) > 0n)
-        .map(balance => ({
+      // Filter to only coins with positive balance
+      const nonZeroBalances = allBalances.filter(
+        balance => BigInt(balance.totalBalance) > BigInt(0)
+      );
+
+      // Fetch metadata for each coin type in parallel
+      const metadataPromises = nonZeroBalances.map(balance =>
+        suiClient.getCoinMetadata({ coinType: balance.coinType })
+          .catch(() => null) // Handle errors gracefully - return null if metadata unavailable
+      );
+      const metadataResults: (CoinMetadata | null)[] = await Promise.all(metadataPromises);
+
+      // Combine balance + metadata into TokenBalance
+      const tokenBalances: TokenBalance[] = nonZeroBalances.map((balance, index) => {
+        const metadata = metadataResults[index];
+        return {
           coinType: balance.coinType,
-          symbol: extractSymbolFromCoinType(balance.coinType),
-          name: extractNameFromCoinType(balance.coinType),
           totalBalance: BigInt(balance.totalBalance),
-          decimals: getDecimalsForCoinType(balance.coinType),
-        }))
-        .sort((a, b) => {
-          // Sort SUI first, then by balance descending
-          if (a.coinType === '0x2::sui::SUI') return -1;
-          if (b.coinType === '0x2::sui::SUI') return 1;
-          return Number(b.totalBalance - a.totalBalance);
-        });
+          // Use metadata if available, fallback to extracted values
+          symbol: metadata?.symbol || extractSymbolFromCoinType(balance.coinType),
+          name: metadata?.name || extractNameFromCoinType(balance.coinType),
+          decimals: metadata?.decimals ?? 9, // Default to 9 decimals (SUI standard)
+          iconUrl: metadata?.iconUrl || undefined,
+        };
+      }).sort((a, b) => {
+        // Sort SUI first, then by balance descending
+        if (a.coinType === '0x2::sui::SUI') return -1;
+        if (b.coinType === '0x2::sui::SUI') return 1;
+        return Number(b.totalBalance - a.totalBalance);
+      });
 
       log.debug('Wallet balances fetched successfully', {
         address,
