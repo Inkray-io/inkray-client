@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationsCount } from '@/hooks/useNotificationsCount';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,16 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 export default function NotificationsPage() {
     const [page, setPage] = useState(1);
     const { notifications, isLoading, error, total, limit, markAllAsRead } = useNotifications(page);
+    const { mutate: mutateCount } = useNotificationsCount();
 
     // Calculate pagination states
     const hasPrevious = page > 1;
     const hasNext = page * limit < total;
+
+    const handleMarkAllAsRead = async () => {
+        await markAllAsRead();
+        mutateCount(); // Reload notifications count after marking all as read
+    };
 
     return (
         <RequireAuth redirectTo="/">
@@ -23,10 +30,11 @@ export default function NotificationsPage() {
                 <div className="max-w-2xl mx-auto py-8 px-4">
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-2xl font-bold">Notifications</h1>
-                        <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                        <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
                             Mark all as read
                         </Button>
                     </div>
+                    {/* Optionally display count somewhere, e.g. <span>Unread: {count}</span> */}
                     {isLoading ? (
                         <div className="space-y-4">
                             {[ ...Array(5) ].map((_, i) => (
