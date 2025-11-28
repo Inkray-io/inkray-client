@@ -8,3 +8,4 @@ export { ExportSettings } from "./ExportSettings";
 export { GeneralSettings } from "./GeneralSettings";
 export { SubscribersSettings } from "./SubscribersSettings";
 export { AnalyticsSettings } from "./AnalyticsSettings";
+export { AirdropSettings } from "./AirdropSettings";

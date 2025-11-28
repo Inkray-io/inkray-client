@@ -15,6 +15,7 @@ import {
   HiChartBarSquare,
   HiGift,
   HiArrowDownTray,
+  HiPaperAirplane,
 } from "react-icons/hi2";
 import { addressesEqual } from "@/utils/address";
 import Link from "next/link";
@@ -26,6 +27,7 @@ import {
   GeneralSettings,
   SubscribersSettings,
   AnalyticsSettings,
+  AirdropSettings,
 } from "./_components";
 
 interface TabConfig {
@@ -47,6 +49,12 @@ const TABS: TabConfig[] = [
     label: "Export",
     icon: HiArrowDownTray,
     component: ExportSettings,
+  },
+  {
+    id: "airdrop",
+    label: "Airdrop",
+    icon: HiPaperAirplane,
+    component: AirdropSettings,
   },
   {
     id: "tips",
