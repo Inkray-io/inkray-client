@@ -22,7 +22,7 @@ function FeedPageContent() {
   // Extract feed type and category from URL params
   const [feedType, setFeedType] = useState<FeedType>(() => {
     const typeParam = searchParams.get('type') as FeedType
-    return ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
+    return ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'fresh'
   })
 
   // Get category from URL and find the corresponding category ID
@@ -72,7 +72,7 @@ function FeedPageContent() {
   // Sync state with URL params when they change
   useEffect(() => {
     const typeParam = searchParams.get('type') as FeedType
-    const newType = ['fresh', 'popular', 'my'].includes(typeParam) ? typeParam : 'fresh'
+    const newType = ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'fresh'
 
     if (newType !== feedType) {
       setFeedType(newType)
@@ -175,12 +175,14 @@ function FeedPageContent() {
                   {!selectedCategory && feedType === 'fresh' && 'No Articles Found'}
                   {!selectedCategory && feedType === 'popular' && 'No Popular Articles This Week'}
                   {!selectedCategory && feedType === 'my' && 'No Articles in Your Feed'}
+                  {!selectedCategory && feedType === 'bookmarks' && 'No Bookmarked Articles'}
                 </h2>
                 <p className="text-muted-foreground">
                   {selectedCategory && `No articles have been published in the ${selectedCategory.name} category yet.`}
                   {!selectedCategory && feedType === 'fresh' && 'No articles have been published yet. Be the first to create content!'}
                   {!selectedCategory && feedType === 'popular' && `No articles have gained popularity in the selected timeframe. Try a different timeframe or check back later.`}
                   {!selectedCategory && feedType === 'my' && 'You haven\'t followed any publications yet, or they haven\'t published articles recently.'}
+                  {!selectedCategory && feedType === 'bookmarks' && 'You haven\'t bookmarked any articles yet. Bookmark articles you want to read later!'}
                 </p>
               </div>
               <div className="flex gap-3 justify-center">
@@ -202,6 +204,11 @@ function FeedPageContent() {
                 {!selectedCategory && feedType === 'popular' && (
                   <Button onClick={() => router.push('/feed')} variant="outline">
                     Browse Fresh Articles
+                  </Button>
+                )}
+                {!selectedCategory && feedType === 'bookmarks' && (
+                  <Button onClick={() => router.push('/feed')} variant="outline">
+                    Browse Articles
                   </Button>
                 )}
               </div>

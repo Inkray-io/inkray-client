@@ -17,6 +17,7 @@ export const ROUTES = {
   FEED_POPULAR: '/feed?type=popular',
   FEED_FRESH: '/feed',
   FEED_MY_FEED: '/feed?type=my',
+  FEED_BOOKMARKS: '/feed?type=bookmarks',
   
   // Category feeds
   FEED_CATEGORY: (categorySlug: string) => `/feed?category=${categorySlug}`,

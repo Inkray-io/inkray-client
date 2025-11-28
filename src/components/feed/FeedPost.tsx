@@ -10,7 +10,9 @@ import { Avatar } from "@/components/ui/Avatar"
 import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/utils/avatar"
 import { SuiIcon } from "@/components/ui/SuiIcon"
 import { LikeButton } from "@/components/like/LikeButton"
+import { BookmarkButton } from "@/components/bookmark/BookmarkButton"
 import { useLikes } from "@/hooks/useLikes"
+import { useBookmarks } from "@/hooks/useBookmarks"
 import { useState } from "react"
 import { copyToClipboard, formatAddress } from "@/utils/address"
 import { SubscriptionButton } from "@/components/subscription"
@@ -37,6 +39,8 @@ interface FeedPostProps {
     comments: number
     views: number
     isLiked?: boolean
+    isBookmarked?: boolean
+    bookmarkCount?: number
   }
   // Optional slug for navigation - if not provided, will generate from title
   slug?: string
@@ -118,6 +122,15 @@ export function FeedPost({
       likeCount: engagement?.likes || 0,
     } : undefined
   )
+
+  // Initialize bookmarks hook if articleId is available
+  const bookmarksHook = useBookmarks(
+    articleId || '',
+    articleId ? {
+      isBookmarked: engagement?.isBookmarked || false,
+      bookmarkCount: engagement?.bookmarkCount || 0,
+    } : undefined
+  )
   
   // Create proper avatar config for the author
   const authorAvatarConfig = createUserAvatarConfig({
@@ -177,6 +190,10 @@ export function FeedPost({
 
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
+  }
+
+  const handleBookmarkToggle = async () => {
+    await bookmarksHook.toggleBookmark();
   }
 
   const handleFollowToggle = async () => {
@@ -412,15 +429,15 @@ export function FeedPost({
                     )}
                   </Button>
                   <div className="relative">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="size-8 hover:bg-gray-100 transition-colors"
                       onClick={handleShareClick}
                     >
                       <Share className="size-4 text-gray-600" />
                     </Button>
-                    
+
                     {/* Share Popup */}
                     {isShareOpen && (
                       <div className="absolute top-full right-0 mt-1 w-56 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-w-[calc(100vw-2rem)]">
@@ -438,7 +455,7 @@ export function FeedPost({
                             </div>
                             <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                           </button>
-                          
+
                           <button
                             onClick={() => handleSharePlatform('linkedin')}
                             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -452,7 +469,7 @@ export function FeedPost({
                             </div>
                             <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                           </button>
-                          
+
                           <button
                             onClick={() => handleSharePlatform('facebook')}
                             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -466,7 +483,7 @@ export function FeedPost({
                             </div>
                             <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                           </button>
-                          
+
                           <button
                             onClick={() => handleSharePlatform('reddit')}
                             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -480,9 +497,9 @@ export function FeedPost({
                             </div>
                             <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
                           </button>
-                          
+
                           <hr className="my-1" />
-                          
+
                           <button
                             onClick={handleCopyLink}
                             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -505,6 +522,16 @@ export function FeedPost({
                       </div>
                     )}
                   </div>
+                  {articleId && (
+                    <BookmarkButton
+                      isBookmarked={bookmarksHook.isBookmarked}
+                      isLoading={bookmarksHook.isLoading}
+                      bookmarkCount={bookmarksHook.bookmarkCount}
+                      onToggleBookmark={handleBookmarkToggle}
+                      showBookmarkCount={true}
+                      variant="engagement"
+                    />
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="size-2 bg-primary rounded"></div>

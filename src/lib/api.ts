@@ -166,31 +166,44 @@ export const articlesAPI = {
 };
 
 export const followsAPI = {
-  followPublication: (publicationId: string) => 
+  followPublication: (publicationId: string) =>
     api.post(`/follows/${publicationId}`),
-  
-  unfollowPublication: (publicationId: string) => 
+
+  unfollowPublication: (publicationId: string) =>
     api.delete(`/follows/${publicationId}`),
-  
-  toggleFollow: (publicationId: string) => 
+
+  toggleFollow: (publicationId: string) =>
     api.post(`/follows/${publicationId}/toggle`),
-  
-  getFollowStatus: (publicationId: string) => 
+
+  getFollowStatus: (publicationId: string) =>
     api.get(`/follows/${publicationId}/status`),
-  
-  getPublicationInfo: (publicationId: string, userId?: string) => 
-    api.get(`/follows/${publicationId}/info`, { 
-      params: userId ? { userId } : {} 
+
+  getPublicationInfo: (publicationId: string, userId?: string) =>
+    api.get(`/follows/${publicationId}/info`, {
+      params: userId ? { userId } : {}
     }),
-  
-  getFollowerCount: (publicationId: string) => 
+
+  getFollowerCount: (publicationId: string) =>
     api.get(`/follows/${publicationId}/count`),
-  
-  getMyFollows: (params: { cursor?: string; limit?: number }) => 
+
+  getMyFollows: (params: { cursor?: string; limit?: number }) =>
     api.get('/follows/my-follows', { params }),
-  
-  getPublicationStats: (publicationId: string) => 
+
+  getPublicationStats: (publicationId: string) =>
     api.get(`/follows/${publicationId}/stats`),
+
+  // Export endpoints (owner only)
+  getExportPreview: (publicationId: string, params: {
+    dataType: 'email' | 'wallet';
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get(`/follows/${publicationId}/export/preview`, { params }),
+
+  getExportData: (publicationId: string, params: {
+    dataType: 'email' | 'wallet';
+    fromDate?: string;
+    toDate?: string;
+  }) => api.get(`/follows/${publicationId}/export/data`, { params }),
 };
 
 export const publicationsAPI = {
@@ -249,23 +262,51 @@ export const tipsAPI = {
 } as const;
 
 export const likesAPI = {
-  likeArticle: (articleId: string) => 
+  likeArticle: (articleId: string) =>
     api.post(`/likes/${articleId}`),
-  
-  unlikeArticle: (articleId: string) => 
+
+  unlikeArticle: (articleId: string) =>
     api.delete(`/likes/${articleId}`),
-  
-  toggleLike: (articleId: string) => 
+
+  toggleLike: (articleId: string) =>
     api.post(`/likes/${articleId}/toggle`),
-  
-  getLikeStatus: (articleId: string) => 
+
+  getLikeStatus: (articleId: string) =>
     api.get(`/likes/${articleId}/status`),
-  
-  getArticleLikeCount: (articleId: string) => 
+
+  getArticleLikeCount: (articleId: string) =>
     api.get(`/likes/${articleId}/count`),
-  
-  getMyLikedArticles: (params: { cursor?: string; limit?: number }) => 
+
+  getMyLikedArticles: (params: { cursor?: string; limit?: number }) =>
     api.get('/likes/my-likes', { params }),
+};
+
+export const bookmarksAPI = {
+  bookmarkArticle: (articleId: string) =>
+    api.post(`/bookmarks/${articleId}`),
+
+  unbookmarkArticle: (articleId: string) =>
+    api.delete(`/bookmarks/${articleId}`),
+
+  toggleBookmark: (articleId: string) =>
+    api.post(`/bookmarks/${articleId}/toggle`),
+
+  getBookmarkStatus: (articleId: string) =>
+    api.get(`/bookmarks/${articleId}/status`),
+
+  getArticleBookmarkCount: (articleId: string) =>
+    api.get(`/bookmarks/${articleId}/count`),
+
+  getMyBookmarkedArticles: (params: { cursor?: string; limit?: number }) =>
+    api.get('/bookmarks/my-bookmarks', { params }),
+};
+
+export const viewsAPI = {
+  recordView: (articleId: string) =>
+    api.post(`/views/${articleId}`),
+
+  getViewCount: (articleId: string) =>
+    api.get(`/views/${articleId}/count`),
 };
 
 export const subscriptionsAPI = {
@@ -282,8 +323,28 @@ export const subscriptionsAPI = {
     api.get(`/subscriptions/publications/${publicationId}/info`),
   
   // Get subscription stats for publication owners
-  getPublicationSubscriptionStats: (publicationId: string) => 
+  getPublicationSubscriptionStats: (publicationId: string) =>
     api.get(`/subscriptions/publications/${publicationId}/stats`),
+};
+
+export const analyticsAPI = {
+  // Get views analytics for a publication
+  getViews: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/views`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get likes analytics for a publication
+  getLikes: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/likes`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get follows analytics for a publication
+  getFollows: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/follows`, {
+      params: { startDate, endDate },
+    }),
 };
 
 export const notificationsAPI = {

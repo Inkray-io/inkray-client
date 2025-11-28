@@ -27,7 +27,9 @@ import { NftMintingSection } from "@/components/nft";
 import { TipButton } from "@/components/article/TipButton";
 import { TipDisplay } from "@/components/ui/TipDisplay";
 import { LikeButton } from "@/components/like/LikeButton";
+import { BookmarkButton } from "@/components/bookmark/BookmarkButton";
 import { useLikes } from "@/hooks/useLikes";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { SubscriptionPaywall } from "@/components/subscription";
 import { copyToClipboard } from "@/utils/address";
 import { ROUTES } from "@/constants/routes";
@@ -83,6 +85,15 @@ function ArticlePageContent() {
     } : undefined
   );
 
+  // Initialize bookmarks hook if article is available
+  const bookmarksHook = useBookmarks(
+    article?.articleId || '',
+    article ? {
+      isBookmarked: article.isBookmarked || false,
+      bookmarkCount: article.totalBookmarks || 0,
+    } : undefined
+  );
+
   // Article deletion hook
   const { deleteArticle, isDeletingArticle } = useArticleDeletion({
     onSuccess: () => {
@@ -108,6 +119,10 @@ function ArticlePageContent() {
 
   const handleLikeToggle = async () => {
     await likesHook.toggleLike();
+  };
+
+  const handleBookmarkToggle = async () => {
+    await bookmarksHook.toggleBookmark();
   };
 
   const handleCopyLink = async () => {
@@ -376,6 +391,18 @@ function ArticlePageContent() {
                           likeCount={likesHook.likeCount}
                           onToggleLike={handleLikeToggle}
                           showLikeCount={true}
+                          variant="engagement"
+                        />
+                      )}
+
+                      {/* Bookmark Button */}
+                      {article.articleId && (
+                        <BookmarkButton
+                          isBookmarked={bookmarksHook.isBookmarked}
+                          isLoading={bookmarksHook.isLoading}
+                          bookmarkCount={bookmarksHook.bookmarkCount}
+                          onToggleBookmark={handleBookmarkToggle}
+                          showBookmarkCount={true}
                           variant="engagement"
                         />
                       )}

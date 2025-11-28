@@ -214,12 +214,25 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
               </SheetClose>
 
               <SheetClose asChild>
-                <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xl">🖱️</div>
-                    <span className="font-medium text-black">My feed</span>
-                  </div>
-                </button>
+                <Link href={ROUTES.FEED_MY_FEED}>
+                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl">🖱️</div>
+                      <span className="font-medium text-black">My feed</span>
+                    </div>
+                  </button>
+                </Link>
+              </SheetClose>
+
+              <SheetClose asChild>
+                <Link href={ROUTES.FEED_BOOKMARKS}>
+                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl">🔖</div>
+                      <span className="font-medium text-black">Bookmarks</span>
+                    </div>
+                  </button>
+                </Link>
               </SheetClose>
             </div>
 

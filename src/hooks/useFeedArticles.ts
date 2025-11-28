@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { feedAPI } from '@/lib/api';
+import { feedAPI, bookmarksAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
@@ -12,21 +12,21 @@ import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
  * and error handling. It provides functions to load initial articles,
  * paginate through more articles, and refresh the feed.
  * 
- * @param feedType - Type of feed to fetch ('fresh' | 'popular' | 'my')
+ * @param feedType - Type of feed to fetch ('fresh' | 'popular' | 'my' | 'bookmarks')
  * @param timeframe - Timeframe for popular feed ('day' | 'week' | 'month')
  * @param categoryId - Optional category ID to filter articles by
  * @returns Object containing feed state and management functions
- * 
+ *
  * @example
  * ```tsx
- * const { 
- *   articles, 
- *   isLoading, 
- *   hasMore, 
- *   loadMore, 
- *   refresh 
+ * const {
+ *   articles,
+ *   isLoading,
+ *   hasMore,
+ *   loadMore,
+ *   refresh
  * } = useFeedArticles('popular', 'week', 'category-id');
- * 
+ *
  * return (
  *   <div>
  *     {articles.map(article => (
@@ -42,7 +42,7 @@ import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
  * ```
  */
 export const useFeedArticles = (
-  feedType: 'fresh' | 'popular' | 'my' = 'fresh',
+  feedType: 'fresh' | 'popular' | 'my' | 'bookmarks' = 'fresh',
   timeframe: 'day' | 'week' | 'month' = 'week',
   categoryId?: string
 ) => {
@@ -60,6 +60,33 @@ export const useFeedArticles = (
    */
   const fetchArticles = useCallback(async (cursor?: string | null) => {
     try {
+      // Handle bookmarks feed separately
+      if (feedType === 'bookmarks') {
+        const response = await bookmarksAPI.getMyBookmarkedArticles({
+          limit: 20,
+          cursor: cursor || undefined,
+        });
+        const result = response.data;
+
+        // Transform bookmarked articles to match FeedArticle format
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const articles = (result.data?.articles || []).map((article: any) => ({
+          ...article,
+          isBookmarked: true,
+          // Ensure all required fields are present
+          totalLikes: article.totalLikes || 0,
+          totalTips: article.totalTips || 0,
+          isLiked: article.isLiked || false,
+        }));
+
+        return {
+          articles,
+          hasMore: result.data?.hasMore || false,
+          nextCursor: result.data?.nextCursor || null,
+          total: articles.length,
+        };
+      }
+
       const params: {
         type?: 'fresh' | 'popular' | 'my';
         limit?: number;
@@ -204,8 +231,10 @@ export const useFeedArticles = (
       engagement: {
         likes: article.totalLikes,
         comments: 0, // TODO: Implement comments count from backend
-        views: 0, // TODO: Implement views count from backend
+        views: article.viewCount ?? 0,
         isLiked: article.isLiked,
+        isBookmarked: article.isBookmarked,
+        bookmarkCount: article.totalBookmarks,
       },
       transactionHash: article.transactionHash,
       quiltBlobId: article.quiltBlobId,
