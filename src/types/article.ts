@@ -1,6 +1,6 @@
 /**
  * Unified Article Type Definitions
- * 
+ *
  * Centralized type definitions for all article-related data structures,
  * interfaces, and state management across the application.
  */
@@ -175,6 +175,8 @@ export interface MediaFile {
   mimeType: string;
   /** Optional file size in bytes */
   size?: number;
+  /** Index of the media file (media0, media1, etc.) */
+  index: number;
 }
 
 /**
@@ -374,4 +376,35 @@ export interface PublicationArticle {
   publicationOwner?: string;
   vaultId?: string;
   publicationId?: string;
+}
+
+export interface DraftImage {
+  id: string;
+  mediaIndex: number;
+  filename?: string;
+  draftArticleId: string;
+  mimeType?: string;
+  blob: Uint8Array;
+}
+
+export interface DraftArticle {
+  id: string;
+  title?: string;
+  content: string;
+  authorId: string;
+  allowDraftEditing: boolean;
+  createdAt: string;
+  updatedAt: string;
+  images?: DraftImage[]
+}
+
+export type CreateDraftArticleDto = Omit<DraftArticle, 'id' | 'authorId' | 'createdAt' | 'updatedAt' | 'images'>;
+
+export type UpdateDraftArticleDto = CreateDraftArticleDto;
+
+export interface PaginatedDraftArticles {
+  data: DraftArticle[];
+  total: number;
+  limit: number;
+  page: number;
 }

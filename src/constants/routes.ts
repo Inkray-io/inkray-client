@@ -12,6 +12,7 @@ export const ROUTES = {
   ABOUT: '/about',
   RULES: '/rules',
   ADVERTISING: '/advertising',
+  DRAFTS: '/drafts',
   
   // Feed types
   FEED_POPULAR: '/feed?type=popular',

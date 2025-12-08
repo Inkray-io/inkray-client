@@ -232,18 +232,6 @@ export function clearPublicationCache(): void {
   log.debug('Publication cache cleared', {}, 'CacheManager');
 }
 
-/**
- * Clear only the draft cache
- */
-export function clearDraftCache(): void {
-  // SSR guard - localStorage only available in browser
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  localStorage.removeItem(CACHE_KEYS.ARTICLE_DRAFT);
-  log.debug('Draft cache cleared', {}, 'CacheManager');
-}
 
 /**
  * Get cached session key with validation using safe deserialization
