@@ -57,9 +57,40 @@ export const authAPI = {
   }) => api.post('/auth', data),
 };
 
+export interface SocialAccounts {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  telegram?: string;
+  website?: string;
+}
+
+export interface UpdateProfileData {
+  username?: string;
+  description?: string;
+  avatar?: string;
+  skills?: string[];
+  socialAccounts?: SocialAccounts;
+}
+
 export const usersAPI = {
+  // Get current user's profile (authenticated)
   getProfile: () => api.get('/users/profile'),
-  updateProfile: (data: { username?: string }) => api.patch('/users/profile', data),
+
+  // Get any user's public profile by wallet address
+  getPublicProfile: (address: string) => api.get(`/users/profile/${address}`),
+
+  // Update current user's profile
+  updateProfile: (data: UpdateProfileData) => api.patch('/users/profile', data),
+
+  // Get user's articles across all publications
+  getUserArticles: (
+    address: string,
+    params: { cursor?: string; limit?: number }
+  ) => api.get(`/users/profile/${address}/articles`, { params }),
+
+  // Get available skill categories
+  getSkillCategories: () => api.get('/users/skills/categories'),
 };
 
 export const feedAPI = {
