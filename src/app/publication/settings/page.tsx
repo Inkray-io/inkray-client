@@ -154,14 +154,14 @@ function PublicationSettingsContent() {
       <AppLayout currentPage="settings">
         <div className="max-w-4xl mx-auto py-6 sm:py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-muted rounded w-64 mb-4"></div>
-            <div className="h-4 bg-muted rounded w-96 mb-8"></div>
+            <div className="h-8 bg-gray-100 rounded w-64 mb-4"></div>
+            <div className="h-4 bg-gray-100 rounded w-96 mb-8"></div>
             <div className="flex space-x-4 mb-8 overflow-hidden">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-10 bg-muted rounded w-24 flex-shrink-0"></div>
+                <div key={i} className="h-10 bg-gray-100 rounded w-24 flex-shrink-0"></div>
               ))}
             </div>
-            <div className="h-64 bg-muted rounded-xl"></div>
+            <div className="h-64 bg-gray-100 rounded-2xl"></div>
           </div>
         </div>
       </AppLayout>
@@ -198,12 +198,12 @@ function PublicationSettingsContent() {
       <div className="max-w-4xl mx-auto py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Publication Settings
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Manage settings for{" "}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-gray-900">
               {publication?.name}
             </span>
           </p>
@@ -231,9 +231,9 @@ export default function PublicationSettingsPage() {
           <AppLayout currentPage="settings">
             <div className="max-w-4xl mx-auto py-6 sm:py-8">
               <div className="animate-pulse">
-                <div className="h-8 bg-muted rounded w-64 mb-4"></div>
-                <div className="h-4 bg-muted rounded w-96 mb-8"></div>
-                <div className="h-64 bg-muted rounded-xl"></div>
+                <div className="h-8 bg-gray-100 rounded w-64 mb-4"></div>
+                <div className="h-4 bg-gray-100 rounded w-96 mb-8"></div>
+                <div className="h-64 bg-gray-100 rounded-2xl"></div>
               </div>
             </div>
           </AppLayout>

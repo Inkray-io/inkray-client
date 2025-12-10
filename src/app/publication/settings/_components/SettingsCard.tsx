@@ -8,7 +8,7 @@ interface SettingsCardProps {
 export function SettingsCard({ children, className }: SettingsCardProps) {
   return (
     <div className={cn(
-      "bg-card rounded-xl border border-border p-4 sm:p-6",
+      "bg-white rounded-2xl border border-gray-100 p-5 sm:p-6",
       className
     )}>
       {children}
