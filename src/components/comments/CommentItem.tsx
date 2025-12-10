@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/constants/routes";
 
 interface CommentItemProps {
   id: string;
@@ -31,8 +33,15 @@ export function CommentItem({
   isDeleting,
   onDelete,
 }: CommentItemProps) {
+  const router = useRouter();
   const displayName = author.username || author.shortAddress;
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+
+  const handleAuthorClick = () => {
+    if (author.publicKey) {
+      router.push(ROUTES.PROFILE_WITH_ID(author.publicKey));
+    }
+  };
 
   return (
     <div
@@ -44,7 +53,11 @@ export function CommentItem({
     >
       <div className="flex gap-3">
         {/* Avatar */}
-        <div className="flex-shrink-0">
+        <button
+          type="button"
+          onClick={handleAuthorClick}
+          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+        >
           <Avatar
             src={author.avatar}
             alt={displayName}
@@ -52,16 +65,20 @@ export function CommentItem({
             fallbackText={displayName.slice(0, 2).toUpperCase()}
             gradientColors="from-indigo-400 to-purple-500"
           />
-        </div>
+        </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-gray-900 truncate">
+              <button
+                type="button"
+                onClick={handleAuthorClick}
+                className="text-sm font-semibold text-gray-900 truncate hover:text-primary hover:underline transition-colors"
+              >
                 {displayName}
-              </span>
+              </button>
               <span className="text-gray-300">·</span>
               <span className="text-xs text-gray-400 flex-shrink-0">
                 {timeAgo}

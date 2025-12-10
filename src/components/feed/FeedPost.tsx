@@ -271,34 +271,45 @@ export function FeedPost({
   }
   
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6">
+    <div className="bg-white rounded-xl p-3 sm:p-4">
       {/* Author Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2.5">
           <Avatar
             {...displayAvatarConfig}
+            size="sm"
           />
           <div className="flex flex-col">
             {publication ? (
               <button
                 type="button"
                 onClick={handlePublicationClick}
-                className="font-semibold text-black text-sm text-left hover:text-primary transition-colors"
+                className="font-semibold text-black text-xs text-left hover:text-primary transition-colors"
               >
                 {publication.name}
               </button>
             ) : (
-              <div className="font-semibold text-black text-sm">{author.name}</div>
+              <div className="font-semibold text-black text-xs">{author.name}</div>
             )}
-            <div className="text-xs text-gray-500">
+            <div className="text-[11px] text-gray-500">
               By{" "}
-              <span className="font-semibold">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (author.address) {
+                    router.push(ROUTES.PROFILE_WITH_ID(author.address))
+                  }
+                }}
+                className="font-medium hover:text-primary hover:underline transition-colors"
+              >
                 {displayAuthor}
-              </span>
+              </button>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Subscription Button - show only if subscription is available */}
           {subscriptionInfo && publicationId && (
             <SubscriptionButton
@@ -322,44 +333,44 @@ export function FeedPost({
               followerCount={followsHook.followerCount}
               onToggleFollow={handleFollowToggle}
               showFollowerCount={false}
-              className="min-h-[36px]"
+              className="h-7 px-2.5 text-xs"
             />
           )}
           {canDeleteArticle ? (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="min-h-[36px] min-w-[36px] text-red-600 hover:text-red-700 hover:bg-red-50"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleDeleteArticle}
               disabled={isDeleting}
             >
-              <Trash2 className="size-5" />
+              <Trash2 className="size-4" />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon" className="min-h-[36px] min-w-[36px]">
-              <MoreHorizontal className="size-5" />
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <MoreHorizontal className="size-4" />
             </Button>
           )}
         </div>
       </div>
-      
+
       {/* Content */}
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         <div>
           <h2
-            className="text-base sm:text-lg font-semibold text-black cursor-pointer hover:text-primary transition-colors leading-snug"
+            className="text-sm sm:text-base font-semibold text-black cursor-pointer hover:text-primary transition-colors leading-snug"
             onClick={handleArticleClick}
           >
             {title}
           </h2>
-          <div className="text-xs text-gray-500 mt-1">
-            Minted by <span className="font-semibold">{author.mintedBy}</span> • {author.date} • {author.readTime}
+          <div className="text-[11px] text-gray-500 mt-0.5">
+            Minted by <span className="font-medium">{author.mintedBy}</span> • {author.date} • {author.readTime}
           </div>
-          <p className="text-gray-700 text-sm sm:text-base mt-3 leading-relaxed">
+          <p className="text-gray-600 text-xs sm:text-sm mt-1.5 leading-relaxed line-clamp-2">
             {description}
           </p>
         </div>
-        
+
         {image && (
           <div
             className="rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
@@ -368,25 +379,25 @@ export function FeedPost({
             <img
               src={image}
               alt="Post image"
-              className="w-full h-[200px] sm:h-[250px] md:h-[300px] lg:h-[333px] object-cover"
+              className="w-full h-[140px] sm:h-[180px] md:h-[200px] object-cover"
             />
           </div>
         )}
 
         {(hasReadMore || engagement) && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {hasReadMore && (
-              <div 
-                className="text-primary text-sm font-medium cursor-pointer hover:underline"
+              <div
+                className="text-primary text-xs font-medium cursor-pointer hover:underline"
                 onClick={handleArticleClick}
               >
                 Read more
               </div>
             )}
-            
+
             {engagement && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
                   {articleId ? (
                     <LikeButton
                       isLiked={likesHook.isLiked}
@@ -397,126 +408,111 @@ export function FeedPost({
                       variant="engagement"
                     />
                   ) : (
-                    <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
-                      <span className="text-xs text-gray-500">{engagement.likes}</span>
+                    <button className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group">
+                      <span className="text-[11px] text-gray-500">{engagement.likes}</span>
                     </button>
                   )}
-                  <button className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group">
-                    <MessageCircle className="size-4 text-gray-600 group-hover:text-gray-700" />
-                    <span className="text-gray-600 text-sm group-hover:text-gray-700">{engagement.comments}</span>
+                  <button className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group">
+                    <MessageCircle className="size-3.5 text-gray-500 group-hover:text-gray-600" />
+                    <span className="text-gray-500 text-xs group-hover:text-gray-600">{engagement.comments}</span>
                   </button>
                   {publicationId && (
-                    <button 
-                      className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group"
+                    <button
+                      className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group"
                       onClick={() => setIsTipDialogOpen(true)}
                     >
-                      <SuiIcon className="size-4 text-gray-600 group-hover:text-gray-700" />
-                      <span className="text-gray-600 text-sm group-hover:text-gray-700">
+                      <SuiIcon className="size-3.5 text-gray-500 group-hover:text-gray-600" />
+                      <span className="text-gray-500 text-xs group-hover:text-gray-600">
                         <TipDisplay amount={totalTips || 0} size="sm" showIcon={false} inheritColor={true} />
                       </span>
                     </button>
                   )}
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="size-8 hover:bg-gray-100 transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 hover:bg-gray-100 transition-colors"
                     onClick={handleCopyLink}
                   >
                     {copied ? (
-                      <Check className="size-4 text-green-600" />
+                      <Check className="size-3.5 text-green-600" />
                     ) : (
-                      <Link className="size-4 text-gray-600" />
+                      <Link className="size-3.5 text-gray-500" />
                     )}
                   </Button>
                   <div className="relative">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-8 hover:bg-gray-100 transition-colors"
+                      className="size-6 hover:bg-gray-100 transition-colors"
                       onClick={handleShareClick}
                     >
-                      <Share className="size-4 text-gray-600" />
+                      <Share className="size-3.5 text-gray-500" />
                     </Button>
 
                     {/* Share Popup */}
                     {isShareOpen && (
-                      <div className="absolute top-full right-0 mt-1 w-56 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-w-[calc(100vw-2rem)]">
-                        <div className="py-1">
+                      <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <div className="py-0.5">
                           <button
                             onClick={() => handleSharePlatform('twitter')}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-white text-xs font-bold">𝕏</span>
+                            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-[10px] font-bold">𝕏</span>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">Twitter</div>
-                              <div className="text-xs text-gray-500">Share on Twitter</div>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                            <span className="text-xs font-medium text-gray-700">Twitter</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
                           </button>
 
                           <button
                             onClick={() => handleSharePlatform('linkedin')}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-white text-xs font-bold">in</span>
+                            <div className="w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-[10px] font-bold">in</span>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">LinkedIn</div>
-                              <div className="text-xs text-gray-500">Share on LinkedIn</div>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                            <span className="text-xs font-medium text-gray-700">LinkedIn</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
                           </button>
 
                           <button
                             onClick={() => handleSharePlatform('facebook')}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-white text-xs font-bold">f</span>
+                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-[10px] font-bold">f</span>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">Facebook</div>
-                              <div className="text-xs text-gray-500">Share on Facebook</div>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                            <span className="text-xs font-medium text-gray-700">Facebook</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
                           </button>
 
                           <button
                             onClick={() => handleSharePlatform('reddit')}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-white text-xs font-bold">r</span>
+                            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-[10px] font-bold">r</span>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">Reddit</div>
-                              <div className="text-xs text-gray-500">Share on Reddit</div>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                            <span className="text-xs font-medium text-gray-700">Reddit</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
                           </button>
 
-                          <hr className="my-1" />
+                          <hr className="my-0.5" />
 
                           <button
                             onClick={handleCopyLink}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
                               {copied ? (
-                                <Check className="w-4 h-4 text-white" />
+                                <Check className="w-3 h-3 text-white" />
                               ) : (
-                                <Link className="w-4 h-4 text-white" />
+                                <Link className="w-3 h-3 text-white" />
                               )}
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {copied ? 'Copied!' : 'Copy Link'}
-                              </div>
-                              <div className="text-xs text-gray-500">Copy article link</div>
-                            </div>
+                            <span className="text-xs font-medium text-gray-700">
+                              {copied ? 'Copied!' : 'Copy Link'}
+                            </span>
                           </button>
                         </div>
                       </div>
@@ -533,9 +529,9 @@ export function FeedPost({
                     />
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="size-2 bg-primary rounded"></div>
-                  <span className="text-gray-600 text-sm">{engagement.views} views</span>
+                <div className="flex items-center gap-1">
+                  <div className="size-1.5 bg-primary rounded-full"></div>
+                  <span className="text-gray-500 text-xs">{engagement.views} views</span>
                 </div>
               </div>
             )}

@@ -1,11 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FeedArticle } from '@/types/article';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, User, Lock } from 'lucide-react';
 import { TipButton } from './TipButton';
 import { TipDisplay } from '@/components/ui/TipDisplay';
+import { ROUTES } from '@/constants/routes';
 
 interface ArticleCardProps {
   article: FeedArticle;
@@ -18,9 +20,19 @@ interface ArticleCardProps {
  * Optimized for feed display with responsive design.
  */
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+  const router = useRouter();
+
   const handleCardClick = (e: React.MouseEvent) => {
     // Allow normal link behavior
     e.stopPropagation();
+  };
+
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (article.author) {
+      router.push(ROUTES.PROFILE_WITH_ID(article.author));
+    }
   };
 
   return (
@@ -52,10 +64,14 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           {/* Article Metadata */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleAuthorClick}
+                className="flex items-center gap-1 hover:text-primary transition-colors"
+              >
                 <User className="h-3 w-3" />
-                <span>{article.authorShortAddress}</span>
-              </div>
+                <span className="hover:underline">{article.authorShortAddress}</span>
+              </button>
               
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />

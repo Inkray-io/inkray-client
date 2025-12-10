@@ -365,9 +365,17 @@ function ArticlePageContent() {
                     <div className="flex items-center gap-3">
                       <User className="size-10 text-gray-400 bg-gray-100 rounded-full p-2" />
                       <div>
-                        <div className="font-semibold text-black text-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (article.author) {
+                              router.push(ROUTES.PROFILE_WITH_ID(article.author))
+                            }
+                          }}
+                          className="font-semibold text-black text-sm hover:text-primary hover:underline transition-colors"
+                        >
                           {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}
-                        </div>
+                        </button>
                         <div className="text-xs text-gray-500 flex items-center gap-1">
                           <span>
                             {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
