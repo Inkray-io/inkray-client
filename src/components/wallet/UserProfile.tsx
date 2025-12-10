@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -123,6 +123,17 @@ export function UserProfile({ className = "" }: UserProfileProps) {
             </div>
             
             <div className="p-2">
+              <Link href={ROUTES.PROFILE} onClick={() => setIsOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-sm"
+                >
+                  <HiUser className="size-4" />
+                  My Profile
+                </Button>
+              </Link>
+
               {hasPublications && firstPublication ? (
                 <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
                   <Button
@@ -131,7 +142,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                     className="w-full justify-start gap-2 text-sm"
                   >
                     <HiCog6Tooth className="size-4" />
-                    My Publication
+                    Publication Dashboard
                   </Button>
                 </Link>
               ) : (
