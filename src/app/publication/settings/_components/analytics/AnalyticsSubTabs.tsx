@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { HiEye, HiHeart, HiUserPlus } from "react-icons/hi2";
+import { HiEye, HiHeart, HiUserPlus, HiCurrencyDollar } from "react-icons/hi2";
 import { MetricType } from "./useAnalyticsData";
 
 interface AnalyticsSubTabsProps {
@@ -13,6 +13,7 @@ const TABS: { id: MetricType; label: string; icon: React.ComponentType<{ classNa
   { id: "views", label: "Views", icon: HiEye },
   { id: "likes", label: "Likes", icon: HiHeart },
   { id: "follows", label: "Follows", icon: HiUserPlus },
+  { id: "tips", label: "Tips", icon: HiCurrencyDollar },
 ];
 
 export function AnalyticsSubTabs({ activeTab, onChange }: AnalyticsSubTabsProps) {

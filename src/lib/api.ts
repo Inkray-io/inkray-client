@@ -359,6 +359,12 @@ export const analyticsAPI = {
     api.get(`/analytics/${publicationId}/follows`, {
       params: { startDate, endDate },
     }),
+
+  // Get tips analytics for a publication
+  getTips: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/tips`, {
+      params: { startDate, endDate },
+    }),
 };
 
 export const notificationsAPI = {

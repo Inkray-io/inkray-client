@@ -38,6 +38,8 @@ function getMetricLabel(metric: MetricType): string {
       return "Likes";
     case "follows":
       return "Followers";
+    case "tips":
+      return "SUI";
   }
 }
 
@@ -53,6 +55,11 @@ function CustomTooltip({ active, payload, metric }: CustomTooltipProps) {
   const data = payload[0];
   const formattedDate = format(data.payload.rawDate, "EEEE, MMMM d, yyyy");
 
+  // Format value - show decimals for tips (SUI amounts)
+  const formattedValue = metric === "tips"
+    ? data.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    : data.value.toLocaleString();
+
   return (
     <div
       className={cn(
@@ -62,7 +69,7 @@ function CustomTooltip({ active, payload, metric }: CustomTooltipProps) {
     >
       <p className="text-muted-foreground text-xs mb-1">{formattedDate}</p>
       <p className="font-semibold text-foreground">
-        {data.value.toLocaleString()} {getMetricLabel(metric)}
+        {formattedValue} {getMetricLabel(metric)}
       </p>
     </div>
   );
@@ -91,6 +98,8 @@ export function AnalyticsChart({
         return "var(--chart-5)";
       case "follows":
         return "var(--chart-2)";
+      case "tips":
+        return "var(--chart-3)";
     }
   }, [metric]);
 

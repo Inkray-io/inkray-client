@@ -13,12 +13,16 @@ interface MetricCardProps {
   className?: string;
 }
 
-function formatNumber(num: number): string {
+function formatNumber(num: number, isTips: boolean = false): string {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
   }
   if (num >= 1000) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  }
+  // For tips, show up to 2 decimal places for fractional SUI amounts
+  if (isTips && num > 0 && num < 100) {
+    return num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   }
   return num.toLocaleString();
 }
@@ -46,6 +50,8 @@ function getMetricLabel(metric: MetricType): string {
       return "Total Likes";
     case "follows":
       return "New Followers";
+    case "tips":
+      return "Total Tips (SUI)";
   }
 }
 
@@ -59,6 +65,7 @@ export function MetricCard({
 }: MetricCardProps) {
   const isPositive = percentChange > 0;
   const isNeutral = percentChange === 0;
+  const isTips = metric === "tips";
 
   return (
     <div
@@ -94,7 +101,7 @@ export function MetricCard({
             className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground tabular-nums"
             style={{ fontFeatureSettings: "'tnum' 1" }}
           >
-            {formatNumber(total)}
+            {formatNumber(total, isTips)}
           </span>
 
           {/* Percent change badge */}
@@ -122,7 +129,7 @@ export function MetricCard({
           <span className="inline-flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-chart-1" />
             <span>
-              ~{formatNumber(Math.round(averagePerDay))} per day avg
+              ~{formatNumber(isTips ? averagePerDay : Math.round(averagePerDay), isTips)} per day avg
             </span>
           </span>
         </div>
