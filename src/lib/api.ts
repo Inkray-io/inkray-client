@@ -237,6 +237,13 @@ export const followsAPI = {
   }) => api.get(`/follows/${publicationId}/export/data`, { params }),
 };
 
+export interface UpdatePublicationData {
+  description?: string;
+  avatar?: string;
+  tags?: string[];
+  socialAccounts?: SocialAccounts;
+}
+
 export const publicationsAPI = {
   getPublication: (publicationId: string, userId?: string) =>
     api.get(`/publications/${publicationId}`, {
@@ -259,6 +266,9 @@ export const publicationsAPI = {
     api.get('/publications/top-writers', {
       params: limit ? { limit } : {},
     }),
+
+  updatePublication: (publicationId: string, data: UpdatePublicationData) =>
+    api.patch(`/publications/${publicationId}`, data),
 };
 
 export const nftAPI = {

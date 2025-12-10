@@ -1,12 +1,16 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useMemo } from 'react';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { useSearchParams } from 'next/navigation';
 import { usePublication } from '@/hooks/usePublication';
 import { usePublicationFeed } from '@/hooks/usePublicationFeed';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicationHeader } from '@/components/publication/PublicationHeader';
+import { PublicationTags } from '@/components/publication/PublicationTags';
+import { PublicationEditModal } from '@/components/publication/PublicationEditModal';
+import { ProfileSocialLinks } from '@/components/profile/ProfileSocialLinks';
 import { FeedPost } from '@/components/feed/FeedPost';
 import { FeedPostSkeleton } from '@/components/feed/FeedPostSkeleton';
 import { PublicationPageSkeleton } from '@/components/publication/PublicationPageSkeleton';
@@ -17,16 +21,19 @@ import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
 import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 import { useArticleDeletion } from '@/hooks/useArticleDeletion';
+import { addressesEqual } from '@/utils/address';
 
 /**
  * Publication page content component
- * 
+ *
  * Displays publication information in a 3-column layout matching Figma design.
  * Left sidebar: navigation, Center: publication content, Right sidebar: widgets.
  */
 const PublicationPageContent: React.FC = () => {
   const searchParams = useSearchParams();
   const publicationId = searchParams.get('id');
+  const { address: currentUserAddress } = useWalletConnection();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const {
     publication,
@@ -48,21 +55,36 @@ const PublicationPageContent: React.FC = () => {
     isEmpty,
   } = usePublicationFeed(publicationId || '');
 
+  // Check if current user is the publication owner
+  const isOwner = useMemo(() => {
+    if (!publication?.owner || !currentUserAddress) return false;
+    return addressesEqual(publication.owner, currentUserAddress);
+  }, [publication?.owner, currentUserAddress]);
+
   // Article deletion hook
   const { deleteArticle, isDeletingArticle } = useArticleDeletion({
     onSuccess: (_articleId) => {
       // Refresh the publication feed after successful deletion
-      refreshArticles()
+      refreshArticles();
     },
     onError: (error, _articleId) => {
       // Handle deletion error - could show toast notification here
-      console.error('Failed to delete article:', error)
-    }
-  })
+      console.error('Failed to delete article:', error);
+    },
+  });
 
-  const handleDeleteArticle = (articleId: string, publicationId: string, vaultId: string) => {
-    deleteArticle({ articleId, publicationId, vaultId })
-  }
+  const handleDeleteArticle = (
+    articleId: string,
+    publicationId: string,
+    vaultId: string
+  ) => {
+    deleteArticle({ articleId, publicationId, vaultId });
+  };
+
+  // Handle edit success - refresh publication data
+  const handleEditSuccess = () => {
+    refreshPublication();
+  };
 
   // Handle missing publication ID
   if (!publicationId) {
@@ -72,7 +94,8 @@ const PublicationPageContent: React.FC = () => {
           <Alert className="max-w-md mx-auto">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Publication ID is required. Please provide a valid publication ID in the URL.
+              Publication ID is required. Please provide a valid publication ID
+              in the URL.
             </AlertDescription>
           </Alert>
         </div>
@@ -88,9 +111,7 @@ const PublicationPageContent: React.FC = () => {
           <div className="text-center space-y-4">
             <Alert className="max-w-md mx-auto" variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {publicationError}
-              </AlertDescription>
+              <AlertDescription>{publicationError}</AlertDescription>
             </Alert>
             <Button
               onClick={() => {
@@ -113,8 +134,6 @@ const PublicationPageContent: React.FC = () => {
   const rightSidebar = (
     <div className="space-y-5">
       <TopWriters />
-      {/* TODO: Temporary disable this until we implemented it */}
-      {/* <PopularComments /> */}
     </div>
   );
 
@@ -124,13 +143,25 @@ const PublicationPageContent: React.FC = () => {
       rightSidebar={rightSidebar}
       showRightSidebar={true}
     >
-      <div className="bg-white rounded-2xl overflow-hidden">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
         {/* Publication Profile Section */}
         {publication && (
           <PublicationHeader
             publication={publication}
             isLoading={publicationLoading}
+            isOwner={isOwner}
+            onEditClick={() => setIsEditModalOpen(true)}
           />
+        )}
+
+        {/* Tags Section */}
+        {!publicationLoading && publication?.tags && publication.tags.length > 0 && (
+          <PublicationTags tags={publication.tags} />
+        )}
+
+        {/* Social Links Section */}
+        {!publicationLoading && publication?.socialAccounts && (
+          <ProfileSocialLinks socialAccounts={publication.socialAccounts} />
         )}
 
         {/* Articles Feed */}
@@ -140,9 +171,7 @@ const PublicationPageContent: React.FC = () => {
             {articlesError && (
               <Alert variant="destructive" className="mb-4 mx-6">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {articlesError}
-                </AlertDescription>
+                <AlertDescription>{articlesError}</AlertDescription>
               </Alert>
             )}
 
@@ -162,7 +191,8 @@ const PublicationPageContent: React.FC = () => {
                     No articles published yet
                   </p>
                   <p className="text-gray-500 text-sm">
-                    This publication hasn&apos;t shared any articles. Check back later!
+                    This publication hasn&apos;t shared any articles. Check back
+                    later!
                   </p>
                 </div>
               </div>
@@ -173,33 +203,40 @@ const PublicationPageContent: React.FC = () => {
               <div className="space-y-6">
                 {articles.map((article) => {
                   // Format article data for FeedPost component
-                  const coverImage = article.hasCover && article.quiltBlobId
-                    ? createCdnUrl(article.quiltBlobId, 'media0')
-                    : undefined;
+                  const coverImage =
+                    article.hasCover && article.quiltBlobId
+                      ? createCdnUrl(article.quiltBlobId, 'media0')
+                      : undefined;
 
                   const formattedArticle = {
                     author: {
                       name: article.authorShortAddress,
-                      avatar: createUserAvatarConfig({
-                        publicKey: article.author,
-                        // Don't pass short address as name - let the function detect it's an address
-                      }, 'md').src,
-                      address: article.author, // Add full address for consistent gradient generation
+                      avatar: createUserAvatarConfig(
+                        {
+                          publicKey: article.author,
+                        },
+                        'md'
+                      ).src,
+                      address: article.author,
                       date: article.timeAgo,
-                      readTime: "2 min",
+                      readTime: '2 min',
                       mintedBy: 0,
                     },
                     title: article.title,
                     image: coverImage,
-                    description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+                    description:
+                      article.summary ||
+                      `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
                     engagement: article.engagement,
                     slug: article.slug,
-                    publication: publication ? {
-                      id: publication.id,
-                      name: publication.name,
-                      avatar: publication.avatar ?? null,
-                      owner: publication.owner,
-                    } : undefined,
+                    publication: publication
+                      ? {
+                          id: publication.id,
+                          name: publication.name,
+                          avatar: publication.avatar ?? null,
+                          owner: publication.owner,
+                        }
+                      : undefined,
                   };
 
                   return (
@@ -209,7 +246,7 @@ const PublicationPageContent: React.FC = () => {
                       articleId={article.articleId}
                       publicationId={article.publicationId}
                       totalTips={article.totalTips}
-                      showFollowButton={false} // Hide follow button on publication-specific feeds
+                      showFollowButton={false}
                       vaultId={article.vaultId}
                       onDelete={handleDeleteArticle}
                       isDeleting={isDeletingArticle(article.articleId)}
@@ -259,13 +296,23 @@ const PublicationPageContent: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Publication Modal */}
+      {isOwner && (
+        <PublicationEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          publication={publication}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </AppLayout>
   );
 };
 
 /**
  * Publication page
- * 
+ *
  * Displays comprehensive publication information including header, stats,
  * and articles feed. Accessible at /publication?id=[PUBLICATION_ID]
  */

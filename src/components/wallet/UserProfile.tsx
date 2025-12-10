@@ -27,8 +27,9 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   
   if (!address || !isAuthenticated) return null
   
-  const { primary, secondary } = getDisplayName(suiNSName, address)
-  const displayName = account?.username || suiNSName || primary
+  const { primary } = getDisplayName(suiNSName, address)
+  // Display SuiNS name if available, otherwise show shortened address
+  const displayName = suiNSName || primary
   
   const handleCopyAddress = async () => {
     if (!address || copying) return
@@ -88,9 +89,9 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           <div className="font-medium text-black text-sm truncate">
             {suiNSLoading ? 'Loading...' : displayName}
           </div>
-          {(account?.username || suiNSName) && !suiNSLoading && (
+          {suiNSName && !suiNSLoading && (
             <div className="text-xs text-gray-500 truncate">
-              {account?.username ? primary : secondary}
+              {primary}
             </div>
           )}
         </div>
@@ -112,11 +113,6 @@ export function UserProfile({ className = "" }: UserProfileProps) {
               <div className="font-medium text-black text-sm mb-1">
                 {displayName}
               </div>
-              {account?.username && (
-                <div className="text-xs text-gray-600 mb-2">
-                  @{account.username}
-                </div>
-              )}
               <div className="text-xs text-gray-500 font-mono break-all">
                 {address}
               </div>
