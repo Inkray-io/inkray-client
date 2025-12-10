@@ -13,12 +13,22 @@ export interface UserArticle {
   hasCover: boolean;
   quiltId: string;
   publicationId: string;
+  vaultId: string;
+  gating: number;
   viewCount: number;
+  likesCount: number;
+  commentsCount: number;
+  bookmarksCount: number;
+  totalTips: number;
+  isLiked: boolean;
+  isBookmarked: boolean;
   createdAt: string;
+  author: string;
   publication: {
     id: string;
     name: string;
     avatar: string | null;
+    owner: string;
   } | null;
   category: {
     id: string;

@@ -1,15 +1,15 @@
 "use client";
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ROUTES } from '@/constants/routes';
 import { UserArticle } from '@/hooks/useUserArticles';
 import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
-import { HiEye, HiDocumentText, HiArrowRight } from 'react-icons/hi2';
+import { HiDocumentText, HiArrowRight } from 'react-icons/hi2';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FeedPost } from '@/components/feed/FeedPost';
+import { FeedPostSkeleton } from '@/components/feed/FeedPostSkeleton';
+import { formatAddress } from '@/utils/address';
+import { createUserAvatarConfig } from '@/lib/utils/avatar';
 
 interface ProfileArticlesProps {
   articles: UserArticle[];
@@ -19,86 +19,16 @@ interface ProfileArticlesProps {
   onLoadMore: () => void;
 }
 
-function ArticleCard({ article }: { article: UserArticle }) {
-  const router = useRouter();
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  const coverImage =
-    article.hasCover && article.quiltId
-      ? createCdnUrl(article.quiltId, 'media0')
-      : null;
-
-  const handleClick = () => {
-    router.push(ROUTES.ARTICLE_WITH_ID(article.slug));
-  };
-
-  return (
-    <article
-      onClick={handleClick}
-      className={cn(
-        'group flex gap-4 p-4 rounded-xl',
-        'bg-white border border-gray-100',
-        'cursor-pointer transition-all duration-200',
-        'hover:shadow-md hover:border-gray-200 hover:bg-gray-50/50'
-      )}
-    >
-      {/* Cover Image */}
-      {coverImage && (
-        <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-24 rounded-lg overflow-hidden bg-gray-100">
-          <img
-            src={coverImage}
-            alt={article.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors">
-            {article.title}
-          </h3>
-          <p className="text-gray-500 text-xs sm:text-sm mt-1 line-clamp-2">
-            {article.summary}
-          </p>
-        </div>
-
-        {/* Meta */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            {article.publication && (
-              <span className="font-medium text-primary truncate max-w-[120px]">
-                {article.publication.name}
-              </span>
-            )}
-            <span>{new Date(article.createdAt).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <HiEye className="w-3.5 h-3.5" />
-            <span>{article.viewCount.toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Arrow indicator */}
-      <div className="hidden sm:flex items-center">
-        <HiArrowRight className="w-4 h-4 text-gray-300 transition-all duration-200 group-hover:text-primary group-hover:translate-x-1" />
-      </div>
-    </article>
-  );
-}
-
-function ArticleSkeleton() {
-  return (
-    <div className="flex gap-4 p-4 rounded-xl bg-white border border-gray-100">
-      <Skeleton className="w-24 h-24 sm:w-32 sm:h-24 rounded-lg flex-shrink-0" />
-      <div className="flex-1 space-y-3">
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-3 w-1/2" />
-      </div>
-    </div>
-  );
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
 }
 
 export function ProfileArticles({
@@ -109,7 +39,7 @@ export function ProfileArticles({
   onLoadMore,
 }: ProfileArticlesProps) {
   return (
-    <section className="px-6 sm:px-8 py-6 border-t border-gray-100">
+    <section className="px-5 py-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Articles</h2>
         {articles.length > 0 && (
@@ -121,10 +51,10 @@ export function ProfileArticles({
 
       {/* Loading initial */}
       {isLoading && articles.length === 0 && (
-        <div className="space-y-3">
-          <ArticleSkeleton />
-          <ArticleSkeleton />
-          <ArticleSkeleton />
+        <div className="space-y-5">
+          <FeedPostSkeleton />
+          <FeedPostSkeleton />
+          <FeedPostSkeleton />
         </div>
       )}
 
@@ -143,10 +73,62 @@ export function ProfileArticles({
 
       {/* Articles list */}
       {articles.length > 0 && (
-        <div className="space-y-3">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
+        <div className="space-y-5">
+          {articles.map((article) => {
+            const avatarConfig = createUserAvatarConfig(
+              { publicKey: article.author },
+              'md'
+            );
+            const coverImage =
+              article.hasCover && article.quiltId
+                ? createCdnUrl(article.quiltId, 'media0')
+                : undefined;
+
+            return (
+              <FeedPost
+                key={article.id}
+                author={{
+                  name: formatAddress(article.author),
+                  avatar: avatarConfig.src,
+                  address: article.author,
+                  date: formatTimeAgo(article.createdAt),
+                  readTime: '2 min',
+                  mintedBy: 0,
+                }}
+                title={article.title}
+                description={
+                  article.summary ||
+                  `Published on Sui blockchain • ${article.gating ? '🔒 Premium content' : '📖 Free article'}`
+                }
+                image={coverImage}
+                hasReadMore={true}
+                slug={article.slug}
+                publication={
+                  article.publication
+                    ? {
+                        id: article.publication.id,
+                        name: article.publication.name,
+                        avatar: article.publication.avatar,
+                        owner: article.publication.owner,
+                      }
+                    : undefined
+                }
+                articleId={article.articleId}
+                publicationId={article.publicationId}
+                totalTips={article.totalTips}
+                engagement={{
+                  likes: article.likesCount,
+                  comments: article.commentsCount,
+                  views: article.viewCount,
+                  isLiked: article.isLiked,
+                  isBookmarked: article.isBookmarked,
+                  bookmarkCount: article.bookmarksCount,
+                }}
+                showFollowButton={false}
+                vaultId={article.vaultId}
+              />
+            );
+          })}
 
           {/* Load more */}
           {hasMore && (
