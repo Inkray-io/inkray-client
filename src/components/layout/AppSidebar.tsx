@@ -63,6 +63,13 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       icon: "🔖",
       active: currentPage === "feed" && currentFeedType === "bookmarks",
       href: ROUTES.FEED_BOOKMARKS
+    },
+    {
+      id: "drafts",
+      label: "My drafts",
+      icon: "📝",
+      active: currentPage === "drafts",
+      href: ROUTES.DRAFTS
     }
   ]
 

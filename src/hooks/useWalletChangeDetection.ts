@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { clearPublicationCache, clearDraftCache } from '@/lib/cache-manager';
+import { clearPublicationCache } from '@/lib/cache-manager';
 import { log } from '@/lib/utils/Logger';
 
 /**
@@ -44,7 +44,6 @@ export const useWalletChangeDetection = () => {
       // causes issues with autoconnect after page refresh
       log.debug('Clearing wallet-specific cache (preserving session key)', {}, 'useWalletChangeDetection');
       clearPublicationCache();
-      clearDraftCache();
 
       // Update the last known address
       lastKnownAddress.current = currentAddress;

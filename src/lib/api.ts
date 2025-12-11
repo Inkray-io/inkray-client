@@ -1,6 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { CONFIG } from './config';
+import { PaginatedDraftArticles } from "@/types/article";
+import { ApiResponse } from "@/types/api";
 
 const API_BASE_URL = CONFIG.API_URL;
 
@@ -411,6 +413,39 @@ export const analyticsAPI = {
 export const notificationsAPI = {
   getUnreadCount: () => api.get('/notifications/unread-count'),
   getPaginated: (page: number = 1, limit: number = 20) =>
-    api.get('/notifications', { params: { page, limit } }),
+      api.get('/notifications', { params: { page, limit } }),
   markAllAsRead: () => api.patch('/notifications/all/seen'),
+};
+
+export const draftsAPI = {
+  create: (data: {
+    title?: string;
+    content: string;
+  }) => api.post('/articles/draft', data),
+
+  update: (id: string, data: {
+    title?: string;
+    content?: string;
+  }) => api.patch(`/articles/draft/${id}`, data),
+
+  get: (id: string) => api.get(`/articles/draft/${id}`),
+
+  delete: (id: string) => api.delete(`/articles/draft/${id}`),
+
+  deleteImage: (draftId: string, mediaIndex: string) => api.delete(`/articles/draft/${draftId}/media/${mediaIndex}`),
+
+  uploadImage: (draftId: string, data: {
+    blob: string;
+    filename: string;
+    mimeType: string;
+    mediaIndex: number;
+  }) =>
+      api.post(`/articles/draft/${draftId}/image`, data),
+  setEditLock: (draftId: string, allow: boolean) => api.patch(`/articles/draft/${draftId}/allow-editing`, { allow }),
+  listArticles: (page: number = 1, limit: number = 20) => api.get<ApiResponse<PaginatedDraftArticles>>('/articles/draft/list', {
+    params: {
+      page,
+      limit
+    }
+  }),
 };

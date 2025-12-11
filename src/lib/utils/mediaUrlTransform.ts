@@ -199,3 +199,35 @@ export async function getRawContentFromCdn(quiltBlobId: string): Promise<ArrayBu
     throw new Error(`Failed to fetch raw content from CDN: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+
+
+/**
+ * Transform a single backend media URL to a draft-specific media URL.
+ *
+ * This mirrors `transformBackendDraftMediaUrl` but operates on a single URL
+ * instead of scanning a larger content string. If the provided `url` does not
+ * match the expected backend media URL patterns, it is returned unchanged.
+ *
+ * @param url - The single media URL to transform
+ * @param draftId - The draft ID to use in the transformed URL
+ * @returns The transformed draft media URL or the original URL if no match
+ */
+export function transformBackendDraftMediaUrlForUrl(url: string, draftId: string): string {
+  if (!url || !draftId) return url;
+  console.log('Transforming URL:', url, 'for draft ID:', draftId);
+  const apiUrl = CONFIG.API_URL;
+  const apiUrlEscaped = apiUrl.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+
+  // Anchor the pattern to match the full URL and capture "media{N}"
+  const pattern = `^(?:http://localhost:3000/articles/media/|${apiUrlEscaped}/articles/media/)(media\\d+)$`;
+  const mediaUrlRegex = new RegExp(pattern);
+
+  const match = url.match(mediaUrlRegex);
+  if (!match || !match[1]) return url;
+
+  const filename = match[1];
+  const indexMatch = filename.match(/media(\d+)/);
+  const mediaIndex = indexMatch ? indexMatch[1] : '0';
+
+  return `${apiUrl}/articles/draft/${draftId}/media/${mediaIndex}`;
+}

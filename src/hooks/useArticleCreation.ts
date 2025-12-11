@@ -3,12 +3,21 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { api } from '@/lib/api-client';
 import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptionStatus } from '@/lib/services/SealService';
-import { getCachedPublication, setCachedPublication, type CachedPublicationData } from '@/lib/cache-manager';
+import {
+  getCachedPublication,
+  setCachedPublication,
+  type CachedPublicationData
+} from '@/lib/cache-manager';
 import { CONFIG as INKRAY_CONFIG } from '@/lib/config';
 import { toBase64 } from '@mysten/bcs';
 import { log } from '@/lib/utils/Logger';
 import { parseCreationError } from '@/lib/utils/errorHandling';
-import { ArticleCreationState, MediaFile, ArticleUploadResult, TemporaryImage } from '@/types/article';
+import {
+  ArticleCreationState,
+  MediaFile,
+  ArticleUploadResult,
+  TemporaryImage
+} from '@/types/article';
 import { ApiError } from '@/types/api';
 
 // Use CachedPublicationData from cache manager for consistency
@@ -16,7 +25,7 @@ type PublicationInfo = CachedPublicationData;
 
 /**
  * Comprehensive article creation and publishing hook with Seal encryption
- * 
+ *
  * This hook provides complete article publishing functionality including:
  * - Article content validation and preparation
  * - Seal Identity-Based Encryption (IBE) for content security
@@ -24,13 +33,13 @@ type PublicationInfo = CachedPublicationData;
  * - Backend API integration for publishing
  * - Progress tracking for encryption and upload phases
  * - Error handling with user-friendly messages
- * 
+ *
  * **CRITICAL**: This hook preserves all Seal and Walrus data processing logic.
  * The encryption flows, BCS encoding, and data structures must remain unchanged
  * to prevent data corruption or compatibility issues with existing content.
- * 
+ *
  * @returns Article creation state and management functions
- * 
+ *
  * @example
  * ```tsx
  * const {
@@ -61,7 +70,7 @@ type PublicationInfo = CachedPublicationData;
  * ```
  */
 export const useArticleCreation = () => {
-  const [state, setState] = useState<ArticleCreationState>({
+  const [ state, setState ] = useState<ArticleCreationState>({
     isProcessing: false,
     uploadProgress: 0,
     encryptionProgress: 0,
@@ -164,7 +173,7 @@ export const useArticleCreation = () => {
       log.error('Failed to fetch publication from blockchain', { error });
       return null;
     }
-  }, [currentAccount, suiClient]);
+  }, [ currentAccount, suiClient ]);
 
   /**
    * Convert temporary images to MediaFile format for upload
@@ -172,40 +181,41 @@ export const useArticleCreation = () => {
    * @returns Promise resolving to MediaFile array
    */
   const convertTempImagesToMediaFiles = useCallback(
-    async (tempImages: TemporaryImage[]): Promise<MediaFile[]> => {
-      log.info('Converting temporary images to MediaFile format', {
-        count: tempImages.length
-      });
+      async (tempImages: TemporaryImage[]): Promise<MediaFile[]> => {
+        log.info('Converting temporary images to MediaFile format', {
+          count: tempImages.length
+        });
 
-      const mediaFiles: MediaFile[] = await Promise.all(
-        tempImages.map(async (tempImg) => {
-          // Use FileReader API for reliable base64 conversion (handles large files)
-          const base64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result as string;
-              resolve(result.split(',')[1]); // Remove "data:image/...;base64," prefix
-            };
-            reader.readAsDataURL(tempImg.file);
-          });
+        const mediaFiles: MediaFile[] = await Promise.all(
+            tempImages.map(async (tempImg) => {
+              // Use FileReader API for reliable base64 conversion (handles large files)
+              const base64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string;
+                  resolve(result.split(',')[1]); // Remove "data:image/...;base64," prefix
+                };
+                reader.readAsDataURL(tempImg.file);
+              });
 
-          return {
-            content: base64,
-            filename: tempImg.filename,
-            mimeType: tempImg.mimeType,
-            size: tempImg.size,
-          };
-        })
-      );
+              return {
+                content: base64,
+                filename: tempImg.filename,
+                mimeType: tempImg.mimeType,
+                size: tempImg.size,
+                index: tempImg.index,
+              };
+            })
+        );
 
-      log.info('Temporary images converted successfully', {
-        originalCount: tempImages.length,
-        convertedCount: mediaFiles.length
-      });
+        log.info('Temporary images converted successfully', {
+          originalCount: tempImages.length,
+          convertedCount: mediaFiles.length
+        });
 
-      return mediaFiles;
-    },
-    []
+        return mediaFiles;
+      },
+      []
   );
 
   /**
@@ -214,155 +224,128 @@ export const useArticleCreation = () => {
    * @param tempImages - Optional temporary images from editor (will be converted to MediaFiles)
    */
   const createAndPublishArticle = useCallback(
-    async (
-      title: string,
-      content: string,
-      mediaFiles: MediaFile[] = [],
-      gated: boolean = false,
-      tempImages: TemporaryImage[] = []
-    ): Promise<ArticleUploadResult> => {
-      if (!currentAccount) {
-        throw new Error('Wallet not connected');
-      }
-
-      setState(prev => ({
-        ...prev,
-        error: null,
-        isProcessing: true,
-        uploadProgress: 0,
-        encryptionProgress: 0,
-        isEncrypting: false
-      }));
-
-      try {
-        // Convert temporary images to MediaFiles and merge with existing mediaFiles
-        let allMediaFiles = [...mediaFiles];
-        if (tempImages.length > 0) {
-          log.info('Converting temporary images for upload', {
-            tempImageCount: tempImages.length,
-            existingMediaFiles: mediaFiles.length
-          });
-
-          const convertedTempImages = await convertTempImagesToMediaFiles(tempImages);
-          allMediaFiles = [...allMediaFiles, ...convertedTempImages];
-
-          log.info('Media files merged successfully', {
-            totalMediaFiles: allMediaFiles.length
-          });
-        }
-        // 1. Get user's publication
-        const publication = await getUserPublication();
-        if (!publication) {
-          throw new Error('No publication found. Please create a publication first.');
+      async (
+          title: string,
+          content: string,
+          draftId: string,
+          gated: boolean = false,
+      ): Promise<ArticleUploadResult> => {
+        if (!currentAccount) {
+          throw new Error('Wallet not connected');
         }
 
-        // 2. Validate input data BEFORE encryption (validate plain text)
-        const validation = validateArticleCreation({
-          title,
-          content, // Validate the original markdown content
-          publicationId: publication.publicationId,
-          authorAddress: currentAccount.address,
-          mediaFiles: [], // Keep empty for validation, actual files processed separately
-        });
-
-        if (!validation.isValid) {
-          throw new Error(`Content validation failed: ${validation.errors.join(', ')}`);
-        }
-
-        // 3. Initialize SealService and check encryption requirements
-        if (!currentAccount || !suiClient) {
-          throw new Error('Wallet connection required for encryption');
-        }
-
-        const sealService = createSealService(suiClient, currentAccount);
-        const encryptionStatus = sealService.getEncryptionStatus();
-
-        if (!encryptionStatus.isAvailable) {
-          throw new Error(`Seal encryption not available: ${encryptionStatus.error || 'Unknown error'}`);
-        }
-
-        // Validate encryption requirements
-        sealService.validateEncryptionRequirements(publication.publicationId);
-
-        setState(prev => ({ ...prev, isEncrypting: true, encryptionProgress: 10 }));
-
-        // 4. Encrypt article content with Seal IBE
-        const encryptedContent = await sealService.encryptArticleContent(
-          content,
-          publication.publicationId,
-          title
-        );
-
-        setState(prev => ({ ...prev, encryptionProgress: 50 }));
-
-        // 5. Skip media file encryption - media files are stored unencrypted for direct serving
-        // Only article content is encrypted with Seal, media files remain as plain binary data
-        log.info('Skipping media file encryption - storing as unencrypted for direct serving', {
-          mediaFileCount: allMediaFiles.length
-        });
-
-        setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
-        // 6. Prepare request data with encrypted content
-        // Convert encrypted content to base64 for API transmission using Mysten's BCS utilities
-        const encryptedContentBase64 = toBase64(encryptedContent.encryptedData);
-
-        // Note: summary and categoryId are no longer sent - AI will generate them after publishing
-        const requestData = {
-          title,
-          content: encryptedContentBase64, // Base64-encoded encrypted content
-          contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
-          publicationId: publication.publicationId,
-          authorAddress: currentAccount.address,
-          gated,
-          mediaFiles: allMediaFiles.map(file => ({
-            content: file.content, // Base64 encoded unencrypted content
-            filename: file.filename,
-            mimeType: file.mimeType,
-            size: file.size,
-            // No contentId for unencrypted media files
-          })),
-          // Encryption metadata for backend
-          isEncrypted: true, // Flag to indicate content is encrypted
-          encryptionMetadata: {
-            originalContentLength: content.length, // Original markdown length
-            encryptedContentLength: encryptedContent.encryptedSize, // Encrypted size
-            algorithm: 'seal-ibe', // Encryption method
-            contentType: 'markdown', // Original content type
-            validationPassed: true, // Frontend validation completed
-          },
-        };
-        setState(prev => ({ ...prev, uploadProgress: 25 }));
-
-        setState(prev => ({ ...prev, uploadProgress: 50 }));
-
-        // 3. Call backend API with new type-safe client
-        const result: ArticleUploadResult = await api.articles.create(requestData);
-
-        setState(prev => ({ ...prev, uploadProgress: 90 }));
-        setState(prev => ({ ...prev, uploadProgress: 100 }));
-
-        return result;
-      } catch (error) {
-        let errorMessage: string;
-
-        if (error instanceof ApiError) {
-          // Use the user-friendly message from ApiError
-          errorMessage = error.getUserMessage();
-        } else {
-          // Fallback to existing error parsing
-          errorMessage = parseCreationError(error);
-        }
-
-        setState(prev => ({ ...prev, error: errorMessage }));
-        throw new Error(errorMessage);
-      } finally {
         setState(prev => ({
           ...prev,
-          isProcessing: false,
+          error: null,
+          isProcessing: true,
+          uploadProgress: 0,
+          encryptionProgress: 0,
+          isEncrypting: false
         }));
-      }
-    },
-    [currentAccount, suiClient, getUserPublication, convertTempImagesToMediaFiles]
+
+        try {
+          // 1. Get user's publication
+          const publication = await getUserPublication();
+          if (!publication) {
+            throw new Error('No publication found. Please create a publication first.');
+          }
+
+          // 2. Validate input data BEFORE encryption (validate plain text)
+          const validation = validateArticleCreation({
+            title,
+            content, // Validate the original markdown content
+            publicationId: publication.publicationId,
+            authorAddress: currentAccount.address,
+            mediaFiles: [], // Keep empty for validation, actual files processed separately
+          });
+
+          if (!validation.isValid) {
+            throw new Error(`Content validation failed: ${validation.errors.join(', ')}`);
+          }
+
+          // 3. Initialize SealService and check encryption requirements
+          if (!currentAccount || !suiClient) {
+            throw new Error('Wallet connection required for encryption');
+          }
+
+          const sealService = createSealService(suiClient, currentAccount);
+          const encryptionStatus = sealService.getEncryptionStatus();
+
+          if (!encryptionStatus.isAvailable) {
+            throw new Error(`Seal encryption not available: ${encryptionStatus.error || 'Unknown error'}`);
+          }
+
+          // Validate encryption requirements
+          sealService.validateEncryptionRequirements(publication.publicationId);
+
+          setState(prev => ({ ...prev, isEncrypting: true, encryptionProgress: 10 }));
+
+          // 4. Encrypt article content with Seal IBE
+          const encryptedContent = await sealService.encryptArticleContent(
+              content,
+              publication.publicationId,
+              title
+          );
+
+          setState(prev => ({ ...prev, encryptionProgress: 50 }));
+
+          // 5. Only article content is encrypted with Seal, media files remain as plain binary data
+          setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
+          // 6. Prepare request data with encrypted content
+          // Convert encrypted content to base64 for API transmission using Mysten's BCS utilities
+          const encryptedContentBase64 = toBase64(encryptedContent.encryptedData);
+
+          // Note: summary and categoryId are no longer sent - AI will generate them after publishing
+          const requestData = {
+            draftId,
+            title,
+            content: encryptedContentBase64, // Base64-encoded encrypted content
+            contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
+            publicationId: publication.publicationId,
+            authorAddress: currentAccount.address,
+            gated,
+            // Encryption metadata for backend
+            isEncrypted: true, // Flag to indicate content is encrypted
+            encryptionMetadata: {
+              originalContentLength: content.length, // Original markdown length
+              encryptedContentLength: encryptedContent.encryptedSize, // Encrypted size
+              algorithm: 'seal-ibe', // Encryption method
+              contentType: 'markdown', // Original content type
+              validationPassed: true, // Frontend validation completed
+            },
+          };
+          setState(prev => ({ ...prev, uploadProgress: 25 }));
+
+          setState(prev => ({ ...prev, uploadProgress: 50 }));
+
+          // 3. Call backend API with new type-safe client
+          const result: ArticleUploadResult = await api.articles.create(requestData);
+
+          setState(prev => ({ ...prev, uploadProgress: 90 }));
+          setState(prev => ({ ...prev, uploadProgress: 100 }));
+
+          return result;
+        } catch (error) {
+          let errorMessage: string;
+
+          if (error instanceof ApiError) {
+            // Use the user-friendly message from ApiError
+            errorMessage = error.getUserMessage();
+          } else {
+            // Fallback to existing error parsing
+            errorMessage = parseCreationError(error);
+          }
+
+          setState(prev => ({ ...prev, error: errorMessage }));
+          throw new Error(errorMessage);
+        } finally {
+          setState(prev => ({
+            ...prev,
+            isProcessing: false,
+          }));
+        }
+      },
+      [ currentAccount, suiClient, getUserPublication ]
   );
 
   /**
@@ -371,7 +354,8 @@ export const useArticleCreation = () => {
   const convertFilesToMediaFiles = useCallback(async (files: File[]): Promise<MediaFile[]> => {
     const mediaFiles: MediaFile[] = [];
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       try {
         // Convert file to base64 using Mysten's BCS utilities
         const buffer = await file.arrayBuffer();
@@ -383,6 +367,7 @@ export const useArticleCreation = () => {
           filename: file.name,
           mimeType: file.type,
           size: file.size,
+          index: i,
         });
       } catch (error) {
         throw new Error(`Failed to process file: ${file.name}`);
@@ -432,7 +417,7 @@ export const useArticleCreation = () => {
         },
       };
     }
-  }, [currentAccount, suiClient]);
+  }, [ currentAccount, suiClient ]);
 
   /**
    * Reset all state

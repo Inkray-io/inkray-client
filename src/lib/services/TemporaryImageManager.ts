@@ -6,7 +6,6 @@ import { TemporaryImage } from '@/types/article'
  */
 export class TemporaryImageManager {
   private images: Map<string, TemporaryImage> = new Map()
-  private indexCounter = 0
   
   /**
    * Add an image and return a deterministic final URL that stays in markdown
@@ -15,7 +14,7 @@ export class TemporaryImageManager {
    */
   addImage(file: File): string {
     const id = crypto.randomUUID()
-    const index = this.indexCounter++
+    const index = Math.floor(Date.now()/1000);
     
     // Generate the final URL that will be used in the published article
     // This URL will remain unchanged in the markdown
@@ -83,7 +82,6 @@ export class TemporaryImageManager {
       URL.revokeObjectURL(image.blobUrl)
     }
     this.images.clear()
-    this.indexCounter = 0
   }
 
   /**
