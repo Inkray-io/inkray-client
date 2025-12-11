@@ -1,37 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  HiPaperAirplane,
+  HiDocumentText,
   HiCheckCircle,
-  HiExclamationCircle,
   HiChevronRight,
   HiChevronLeft,
   HiSparkles,
-  HiCube,
   HiUserGroup,
   HiArrowPath,
   HiExclamationTriangle,
+  HiExclamationCircle,
+  HiLockClosed,
+  HiClock,
 } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
-import { SettingsSection } from "./SettingsSection";
-import { SettingsCard } from "./SettingsCard";
-import { useAirdrop, AirdropStep } from "@/hooks/useAirdrop";
-import { NftAirdropContent } from "./NftAirdropContent";
-import { useWalletBalances, formatTokenBalance, TokenBalance } from "@/hooks/useWalletBalances";
-import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { useNftAirdrop, NftAirdropStep } from "@/hooks/useNftAirdrop";
 import { DATE_PRESETS, DateRange } from "@/lib/followerFilters";
+import { PublicationArticle } from "@/types/article";
 
-interface AirdropSettingsProps {
+interface NftAirdropContentProps {
   publicationId: string;
 }
 
-// Step indicator component
-function StepIndicator({ currentStep }: { currentStep: AirdropStep }) {
+// Step indicator component for NFT airdrop
+function NftStepIndicator({ currentStep }: { currentStep: NftAirdropStep }) {
   const steps = [
-    { num: 1, label: "Select Token", icon: HiCube },
+    { num: 1, label: "Select Article", icon: HiDocumentText },
     { num: 2, label: "Recipients", icon: HiUserGroup },
     { num: 3, label: "Review", icon: HiCheckCircle },
   ];
@@ -91,18 +88,16 @@ function StepIndicator({ currentStep }: { currentStep: AirdropStep }) {
   );
 }
 
-// Token selector card
-function TokenCard({
-  token,
+// Article selector card
+function ArticleCard({
+  article,
   isSelected,
   onSelect,
 }: {
-  token: TokenBalance;
+  article: PublicationArticle;
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const [imageError, setImageError] = useState(false);
-
   return (
     <button
       onClick={onSelect}
@@ -110,157 +105,136 @@ function TokenCard({
         "w-full p-4 rounded-xl border text-left transition-all duration-200",
         "hover:border-primary/50 hover:bg-primary/5",
         isSelected
-          ? "border-primary bg-primary/10 shadow-sm"
+          ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/20"
           : "border-gray-200 bg-white"
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex items-center justify-center size-10 rounded-full font-bold text-sm overflow-hidden",
-              isSelected
-                ? "bg-primary text-primary-foreground"
-                : "bg-gray-100 text-gray-500"
-            )}
-          >
-            {token.iconUrl && !imageError ? (
-              <img
-                src={token.iconUrl}
-                alt={token.symbol}
-                className="size-full object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              token.symbol.slice(0, 2)
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            {article.gated && (
+              <Badge variant="secondary" className="text-xs shrink-0">
+                <HiLockClosed className="size-3 mr-1" />
+                Gated
+              </Badge>
             )}
           </div>
-          <div>
-            <p className="font-medium text-gray-900">{token.name}</p>
-            <p className="text-sm text-gray-500 font-mono">
-              {token.symbol}
-            </p>
+          <h4 className="font-medium text-gray-900 line-clamp-2 leading-snug">
+            {article.title}
+          </h4>
+          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+            <HiClock className="size-3.5" />
+            <span>{article.timeAgo}</span>
+            {article.viewCount !== undefined && article.viewCount > 0 && (
+              <>
+                <span className="text-gray-300">•</span>
+                <span>{article.viewCount.toLocaleString()} views</span>
+              </>
+            )}
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-semibold text-gray-900 tabular-nums">
-            {formatTokenBalance(token.totalBalance, token.decimals)}
-          </p>
-          <p className="text-xs text-gray-500">Available</p>
+        <div
+          className={cn(
+            "size-5 rounded-full border-2 shrink-0 mt-1 transition-all duration-200",
+            isSelected
+              ? "border-primary bg-primary"
+              : "border-gray-300"
+          )}
+        >
+          {isSelected && (
+            <HiCheckCircle className="size-full text-white" />
+          )}
         </div>
       </div>
     </button>
   );
 }
 
-// Step 1: Token Selection
-function Step1TokenSelection({
-  balances,
-  isLoadingBalances,
-  selectedCoinType,
-  totalAmount,
-  onSelectToken,
-  onSetAmount,
+// Step 1: Article Selection
+function Step1ArticleSelection({
+  articles,
+  isLoadingArticles,
+  selectedArticle,
+  onSelectArticle,
+  onRefresh,
   onNext,
 }: {
-  balances: TokenBalance[];
-  isLoadingBalances: boolean;
-  selectedCoinType: string | null;
-  totalAmount: string;
-  onSelectToken: (coinType: string) => void;
-  onSetAmount: (amount: string) => void;
+  articles: PublicationArticle[];
+  isLoadingArticles: boolean;
+  selectedArticle: PublicationArticle | null;
+  onSelectArticle: (article: PublicationArticle) => void;
+  onRefresh: () => void;
   onNext: () => void;
 }) {
-  const selectedToken = balances.find((b) => b.coinType === selectedCoinType);
-  const maxBalance = selectedToken
-    ? formatTokenBalance(selectedToken.totalBalance, selectedToken.decimals)
-    : "0";
-
-  const isValidAmount =
-    totalAmount &&
-    parseFloat(totalAmount) > 0 &&
-    parseFloat(totalAmount) <= parseFloat(maxBalance);
-
   return (
     <div className="space-y-6">
-      {/* Token List */}
+      {/* Article List */}
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-3">
-          Select Token to Airdrop
-        </label>
-        {isLoadingBalances ? (
+        <div className="flex items-center justify-between mb-3">
+          <label className="block text-sm font-medium text-gray-900">
+            Select Article for NFT Airdrop
+          </label>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isLoadingArticles}
+            className="gap-2 -mr-2"
+          >
+            <HiArrowPath
+              className={cn("size-4", isLoadingArticles && "animate-spin")}
+            />
+            Refresh
+          </Button>
+        </div>
+
+        {isLoadingArticles ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-20 bg-gray-100 rounded-xl animate-pulse"
+                className="h-24 bg-gray-100 rounded-xl animate-pulse"
               />
             ))}
           </div>
-        ) : balances.length === 0 ? (
-          <div className="text-center py-8 bg-gray-100/30 rounded-xl border border-gray-200">
-            <HiCube className="size-12 mx-auto text-gray-500 mb-3" />
-            <p className="text-gray-500">
-              No tokens found in your wallet
+        ) : articles.length === 0 ? (
+          <div className="text-center py-10 bg-gray-100/30 rounded-xl border border-gray-200">
+            <HiDocumentText className="size-12 mx-auto text-gray-400 mb-3" />
+            <p className="text-gray-500 font-medium">No articles found</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Publish an article first to airdrop NFTs
             </p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-            {balances.map((token) => (
-              <TokenCard
-                key={token.coinType}
-                token={token}
-                isSelected={selectedCoinType === token.coinType}
-                onSelect={() => onSelectToken(token.coinType)}
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            {articles.map((article) => (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                isSelected={selectedArticle?.id === article.id}
+                onSelect={() => onSelectArticle(article)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Amount Input */}
-      {selectedCoinType && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <label className="block text-sm font-medium text-gray-900 mb-3">
-            Total Airdrop Amount
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              value={totalAmount}
-              onChange={(e) => onSetAmount(e.target.value)}
-              placeholder="0.00"
-              min="0"
-              step="any"
-              className={cn(
-                "w-full px-4 py-3 pr-24 border rounded-xl bg-white text-gray-900",
-                "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary",
-                "placeholder:text-gray-500 tabular-nums text-lg font-medium",
-                !isValidAmount && totalAmount && "border-destructive focus:ring-destructive/50"
-              )}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <button
-                onClick={() => onSetAmount(maxBalance)}
-                className="px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded transition-colors"
-              >
-                MAX
-              </button>
-              <span className="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                {selectedToken?.symbol}
-              </span>
+      {/* Selection Preview */}
+      {selectedArticle && (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 bg-primary/5 rounded-xl p-4 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 shrink-0">
+              <HiSparkles className="size-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-primary font-medium uppercase tracking-wide mb-1">
+                Selected Article
+              </p>
+              <p className="font-medium text-gray-900 line-clamp-1">
+                {selectedArticle.title}
+              </p>
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Available: {maxBalance} {selectedToken?.symbol}
-          </p>
-          {totalAmount && !isValidAmount && (
-            <p className="text-sm text-red-600 mt-1">
-              {parseFloat(totalAmount) > parseFloat(maxBalance)
-                ? "Amount exceeds available balance"
-                : "Please enter a valid amount"}
-            </p>
-          )}
         </div>
       )}
 
@@ -268,7 +242,7 @@ function Step1TokenSelection({
       <div className="flex justify-end pt-4">
         <Button
           onClick={onNext}
-          disabled={!selectedCoinType || !isValidAmount}
+          disabled={!selectedArticle}
           className="gap-2"
         >
           Continue
@@ -279,7 +253,7 @@ function Step1TokenSelection({
   );
 }
 
-// Step 2: Recipient Selection
+// Step 2: Recipient Selection (reused from token airdrop pattern)
 function Step2RecipientSelection({
   dateRange,
   customStartDate,
@@ -437,10 +411,8 @@ function Step2RecipientSelection({
 
 // Step 3: Review & Send
 function Step3Review({
-  selectedToken,
-  totalAmount,
+  selectedArticle,
   recipientCount,
-  amountPerRecipient,
   status,
   error,
   txDigest,
@@ -448,10 +420,8 @@ function Step3Review({
   onPrev,
   onReset,
 }: {
-  selectedToken: TokenBalance | undefined;
-  totalAmount: string;
+  selectedArticle: PublicationArticle | null;
   recipientCount: number;
-  amountPerRecipient: number;
   status: string;
   error: string | null;
   txDigest: string | null;
@@ -459,7 +429,6 @@ function Step3Review({
   onPrev: () => void;
   onReset: () => void;
 }) {
-  const [imageError, setImageError] = useState(false);
   const isLoading = status === "loading";
   const isSuccess = status === "success";
 
@@ -470,13 +439,12 @@ function Step3Review({
           <HiCheckCircle className="size-10 text-green-500" />
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Airdrop Successful!
+          NFT Airdrop Successful!
         </h3>
         <p className="text-gray-500 mb-6">
-          Successfully sent {totalAmount} {selectedToken?.symbol} to{" "}
-          {recipientCount} recipients
+          Successfully minted and sent {recipientCount} NFTs for &ldquo;{selectedArticle?.title}&rdquo;
         </p>
-        <div className="bg-gray-100/50 rounded-lg px-4 py-3 mb-6 inline-block">
+        <div className="bg-gray-100/50 rounded-lg px-4 py-3 mb-6 inline-block max-w-full">
           <p className="text-xs text-gray-500 mb-1">Transaction ID</p>
           <p className="font-mono text-sm text-gray-900 break-all">
             {txDigest}
@@ -498,34 +466,22 @@ function Step3Review({
       <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <HiSparkles className="size-5 text-primary" />
-          Airdrop Summary
+          NFT Airdrop Summary
         </h3>
 
         <div className="space-y-4">
-          <div className="flex justify-between items-center py-3 border-b border-gray-200/50">
-            <span className="text-gray-500">Token</span>
-            <span className="font-medium text-gray-900 flex items-center gap-2">
-              <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary/20 text-primary text-xs font-bold overflow-hidden">
-                {selectedToken?.iconUrl && !imageError ? (
-                  <img
-                    src={selectedToken.iconUrl}
-                    alt={selectedToken.symbol}
-                    className="size-full object-cover"
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  selectedToken?.symbol.slice(0, 2)
-                )}
-              </span>
-              {selectedToken?.name}
+          <div className="flex justify-between items-start py-3 border-b border-gray-200/50">
+            <span className="text-gray-500">Article</span>
+            <span className="font-medium text-gray-900 text-right max-w-[60%] line-clamp-2">
+              {selectedArticle?.title}
             </span>
           </div>
 
           <div className="flex justify-between items-center py-3 border-b border-gray-200/50">
-            <span className="text-gray-500">Total Amount</span>
-            <span className="font-semibold text-gray-900 tabular-nums">
-              {totalAmount} {selectedToken?.symbol}
-            </span>
+            <span className="text-gray-500">NFT Type</span>
+            <Badge variant="secondary" className="font-medium">
+              Article Access NFT
+            </Badge>
           </div>
 
           <div className="flex justify-between items-center py-3 border-b border-gray-200/50">
@@ -535,10 +491,15 @@ function Step3Review({
             </Badge>
           </div>
 
+          <div className="flex justify-between items-center py-3 border-b border-gray-200/50">
+            <span className="text-gray-500">Mint Price</span>
+            <span className="font-medium text-green-600">Free</span>
+          </div>
+
           <div className="flex justify-between items-center py-3 bg-primary/10 -mx-2 px-4 rounded-lg">
-            <span className="font-medium text-gray-900">Per Recipient</span>
+            <span className="font-medium text-gray-900">Total NFTs to Mint</span>
             <span className="text-lg font-bold text-primary tabular-nums">
-              {amountPerRecipient.toFixed(6)} {selectedToken?.symbol}
+              {recipientCount.toLocaleString()}
             </span>
           </div>
         </div>
@@ -553,8 +514,8 @@ function Step3Review({
               Large Airdrop
             </p>
             <p className="text-sm text-amber-600/80 dark:text-amber-400/80">
-              This transaction involves {recipientCount} transfers. Gas costs
-              may be higher than usual.
+              This transaction involves minting {recipientCount} NFTs. Gas costs
+              may be higher than usual and the transaction may take longer to process.
             </p>
           </div>
         </div>
@@ -592,12 +553,12 @@ function Step3Review({
           {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-              Sending...
+              Minting...
             </>
           ) : (
             <>
-              <HiPaperAirplane className="size-4" />
-              Send Airdrop
+              <HiSparkles className="size-4" />
+              Send NFT Airdrop
             </>
           )}
         </Button>
@@ -606,15 +567,13 @@ function Step3Review({
   );
 }
 
-// Main component
-export function AirdropSettings({ publicationId }: AirdropSettingsProps) {
-  const { address } = useWalletConnection();
-  const { balances, isLoading: isLoadingBalances, refresh: refreshBalances } = useWalletBalances(address);
-
+// Main NFT Airdrop Content Component
+export function NftAirdropContent({ publicationId }: NftAirdropContentProps) {
   const {
     step,
-    selectedCoinType,
-    totalAmount,
+    selectedArticle,
+    articles,
+    isLoadingArticles,
     dateRange,
     customStartDate,
     customEndDate,
@@ -623,141 +582,63 @@ export function AirdropSettings({ publicationId }: AirdropSettingsProps) {
     status,
     error,
     txDigest,
-    amountPerRecipient,
     nextStep,
     prevStep,
-    setSelectedCoinType,
-    setTotalAmount,
+    setSelectedArticle,
+    fetchArticles,
     setDateRange,
     setCustomStartDate,
     setCustomEndDate,
     fetchRecipients,
-    executeAirdrop,
+    executeNftAirdrop,
     reset,
-  } = useAirdrop({ publicationId });
-
-  const selectedToken = balances.find((b) => b.coinType === selectedCoinType);
-
-  const handleExecute = async () => {
-    await executeAirdrop(selectedToken?.decimals || 9);
-  };
-
-  // Tab selection for airdrop type (token vs NFT)
-  const [airdropType, setAirdropType] = useState<"token" | "nft">("token");
+  } = useNftAirdrop({ publicationId });
 
   return (
-    <SettingsSection
-      title="Airdrop"
-      description="Distribute tokens or NFTs to your followers."
-    >
-      <SettingsCard>
-        {/* Airdrop Type Selector */}
-        <div className="mb-8">
-          <div className="inline-flex rounded-lg bg-gray-100 p-1">
-            <button
-              onClick={() => setAirdropType("token")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all",
-                airdropType === "token"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              )}
-            >
-              <HiCube className="size-4" />
-              Token Airdrop
-            </button>
-            <button
-              onClick={() => setAirdropType("nft")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all",
-                airdropType === "nft"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              )}
-            >
-              <HiSparkles className="size-4" />
-              NFT Airdrop
-            </button>
-          </div>
-        </div>
+    <>
+      {/* Step Indicator */}
+      <NftStepIndicator currentStep={step} />
 
-        {/* Token Airdrop Content */}
-        {airdropType === "token" && (
-          <>
-            {/* Step Indicator */}
-            <StepIndicator currentStep={step} />
+      {/* Step Content */}
+      {step === 1 && (
+        <Step1ArticleSelection
+          articles={articles}
+          isLoadingArticles={isLoadingArticles}
+          selectedArticle={selectedArticle}
+          onSelectArticle={setSelectedArticle}
+          onRefresh={fetchArticles}
+          onNext={nextStep}
+        />
+      )}
 
-            {/* Step Content */}
-            {step === 1 && (
-              <Step1TokenSelection
-                balances={balances}
-                isLoadingBalances={isLoadingBalances}
-                selectedCoinType={selectedCoinType}
-                totalAmount={totalAmount}
-                onSelectToken={setSelectedCoinType}
-                onSetAmount={setTotalAmount}
-                onNext={nextStep}
-              />
-            )}
+      {step === 2 && (
+        <Step2RecipientSelection
+          dateRange={dateRange}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
+          recipientCount={recipientCount}
+          isLoadingRecipients={isLoadingRecipients}
+          onSetDateRange={setDateRange}
+          onSetCustomStartDate={setCustomStartDate}
+          onSetCustomEndDate={setCustomEndDate}
+          onFetchRecipients={fetchRecipients}
+          onPrev={prevStep}
+          onNext={nextStep}
+        />
+      )}
 
-            {step === 2 && (
-              <Step2RecipientSelection
-                dateRange={dateRange}
-                customStartDate={customStartDate}
-                customEndDate={customEndDate}
-                recipientCount={recipientCount}
-                isLoadingRecipients={isLoadingRecipients}
-                onSetDateRange={setDateRange}
-                onSetCustomStartDate={setCustomStartDate}
-                onSetCustomEndDate={setCustomEndDate}
-                onFetchRecipients={fetchRecipients}
-                onPrev={prevStep}
-                onNext={nextStep}
-              />
-            )}
-
-            {step === 3 && (
-              <Step3Review
-                selectedToken={selectedToken}
-                totalAmount={totalAmount}
-                recipientCount={recipientCount}
-                amountPerRecipient={amountPerRecipient}
-                status={status}
-                error={error}
-                txDigest={txDigest}
-                onExecute={handleExecute}
-                onPrev={prevStep}
-                onReset={reset}
-              />
-            )}
-          </>
-        )}
-
-        {/* NFT Airdrop Content */}
-        {airdropType === "nft" && (
-          <NftAirdropContent publicationId={publicationId} />
-        )}
-      </SettingsCard>
-
-      {/* Info Note */}
-      <div className="bg-gray-100/30 rounded-xl p-4 border border-gray-200">
-        <p className="text-sm text-gray-500">
-          <strong className="text-gray-900">How it works:</strong>{" "}
-          {airdropType === "token" ? (
-            <>
-              Select a token from your wallet, choose how much to distribute, filter which
-              followers receive the airdrop, and sign the transaction. The total
-              amount will be split equally among all recipients.
-            </>
-          ) : (
-            <>
-              Select an article from your publication, filter which followers receive the NFT,
-              and sign the transaction. Each recipient will receive one Article Access NFT
-              that grants them access to the selected article.
-            </>
-          )}
-        </p>
-      </div>
-    </SettingsSection>
+      {step === 3 && (
+        <Step3Review
+          selectedArticle={selectedArticle}
+          recipientCount={recipientCount}
+          status={status}
+          error={error}
+          txDigest={txDigest}
+          onExecute={executeNftAirdrop}
+          onPrev={prevStep}
+          onReset={reset}
+        />
+      )}
+    </>
   );
 }
