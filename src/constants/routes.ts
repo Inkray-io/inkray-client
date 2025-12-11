@@ -25,6 +25,10 @@ export const ROUTES = {
   FEED_CATEGORY_POPULAR: (categorySlug: string) => `/feed?type=popular&category=${categorySlug}`,
   FEED_CATEGORY_MY: (categorySlug: string) => `/feed?type=my&category=${categorySlug}`,
   
+  // Profile
+  PROFILE: '/profile',
+  PROFILE_WITH_ID: (address: string) => `/profile?id=${address}`,
+
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
   PUBLICATION_WITH_ID: (id: string) => `/publication?id=${id}`,

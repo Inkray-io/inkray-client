@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { nftAPI } from "@/lib/api";
 import { Clock, ExternalLink } from "lucide-react";
 import { log } from "@/lib/utils/Logger";
+import { ROUTES } from "@/constants/routes";
 
 interface MintTransaction {
   id: string;
@@ -19,6 +21,7 @@ interface RecentMintsProps {
 }
 
 export function RecentMints({ articleId }: RecentMintsProps) {
+  const router = useRouter();
   const [mints, setMints] = useState<MintTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,9 +112,13 @@ export function RecentMints({ articleId }: RecentMintsProps) {
               className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-900">
+                <button
+                  type="button"
+                  onClick={() => router.push(ROUTES.PROFILE_WITH_ID(mint.to))}
+                  className="text-sm font-medium text-gray-900 hover:text-primary hover:underline transition-colors"
+                >
                   {formatAddress(mint.to)}
-                </span>
+                </button>
                 <span className="text-xs text-gray-500">
                   {formatTimeAgo(mint.mintedAt)}
                 </span>

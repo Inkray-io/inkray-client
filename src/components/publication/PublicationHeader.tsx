@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from 'react';
 import { Publication } from '@/types/article';
 import { useFollows } from '@/hooks/useFollows';
@@ -9,27 +11,49 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ROUTES } from '@/constants/routes';
 import { addressesEqual } from '@/utils/address';
-import { Image } from 'lucide-react';
-import { HiCog6Tooth } from 'react-icons/hi2';
-import Link from 'next/link';
+import { HiPencil, HiDocumentText, HiUserGroup } from 'react-icons/hi2';
 import { log } from '@/lib/utils/Logger';
+import { cn } from '@/lib/utils';
 
 interface PublicationHeaderProps {
   publication: Publication;
   isLoading?: boolean;
+  isOwner?: boolean;
+  onEditClick?: () => void;
+}
+
+function StatItem({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 text-gray-500 group/stat">
+      <div className="flex items-center justify-center w-5 h-5 rounded-md bg-primary/5 group-hover/stat:bg-primary/10 transition-colors">
+        <Icon className="w-3 h-3 text-primary/80" />
+      </div>
+      <span className="font-semibold text-gray-800 text-sm tabular-nums">{value.toLocaleString()}</span>
+      <span className="text-xs text-gray-400">{label}</span>
+    </div>
+  );
 }
 
 /**
- * Publication header component matching Figma design
- * 
- * Features cover image with gradient overlay, profile avatar, publication info,
- * subscriber count, and subscribe button in the exact layout from Figma.
+ * Publication header component matching user profile layout
+ *
+ * Features avatar with gradient ring, publication info, description,
+ * subscriber count, and action buttons.
  */
 export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   publication,
   isLoading = false,
+  isOwner: isOwnerProp,
+  onEditClick,
 }) => {
   const { account } = useAuth();
   const {
@@ -44,7 +68,9 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   } : undefined);
 
   // Check if current user is the publication owner using normalized address comparison
-  const isOwner = addressesEqual(account?.publicKey, publication?.owner);
+  const isOwner = isOwnerProp !== undefined
+    ? isOwnerProp
+    : addressesEqual(account?.publicKey, publication?.owner);
 
   // Refresh follow status when publication data loads
   useEffect(() => {
@@ -64,57 +90,18 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
     await toggleFollow();
   };
 
-
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl overflow-hidden">
-        {/* Cover image skeleton */}
-        <div className="relative h-40 sm:h-60 rounded-tl-2xl rounded-tr-2xl overflow-hidden">
-          <Skeleton className="w-full h-full rounded-none" />
-
-          {/* Profile section skeleton - Avatar overlapping the cover */}
-          <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-6 pb-2.5">
-            <div className="flex items-end justify-between">
-              <Skeleton className="w-20 h-20 sm:w-25 sm:h-25 rounded-full" />
+      <div className="px-5 py-4">
+        <div className="flex items-start gap-4">
+          <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="w-40 h-6" />
+            <Skeleton className="w-full h-10 mt-1" />
+            <div className="flex gap-4 mt-2">
+              <Skeleton className="w-24 h-4" />
+              <Skeleton className="w-20 h-4" />
             </div>
-          </div>
-        </div>
-
-        {/* Publication Info Section Skeleton */}
-        <div className="px-3 sm:px-6 pb-5">
-          {/* Mobile Layout Skeleton */}
-          <div className="sm:hidden w-full">
-            <div className="space-y-3 w-full pt-3">
-              <div className="space-y-1.5 pl-3">
-                <Skeleton className="h-5 w-48 max-w-[calc(100%-2rem)]" />
-                <Skeleton className="h-3 w-32" />
-              </div>
-              <div className="px-3 flex gap-3">
-                <Skeleton className="h-9 w-24 rounded-lg" />
-                <Skeleton className="h-9 w-24 rounded-lg" />
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Layout Skeleton */}
-          <div className="hidden sm:flex items-start justify-between w-full pt-3">
-            <div className="flex-shrink-0 min-w-0 flex-1">
-              <div className="pl-6 space-y-1.5 pr-4">
-                <Skeleton className="h-5 w-48 max-w-full" />
-                <Skeleton className="h-3 w-32" />
-              </div>
-            </div>
-            <div className="flex-shrink-0 ml-4 flex gap-3">
-              <Skeleton className="h-9 w-24 rounded-lg" />
-              <Skeleton className="h-9 w-24 rounded-lg" />
-            </div>
-          </div>
-
-          {/* Subscriber Stats Skeleton */}
-          <div className="mt-4 flex gap-3 px-3 sm:px-6">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
           </div>
         </div>
       </div>
@@ -123,83 +110,97 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
 
   if (!publication) return null;
 
+  const avatarConfig = createPublicationAvatarConfig(publication, 'xl');
+
   return (
-    <div className="bg-white rounded-t-2xl overflow-hidden">
-      {/* Cover Image */}
-      <div className="relative h-40 sm:h-60 bg-gray-100 rounded-tl-2xl rounded-tr-2xl overflow-hidden flex items-center justify-center">
-        {/* Placeholder Image */}
-        <Image className="w-16 h-16 text-gray-400" />
-        
-        {/* Gradient overlay for avatar contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20"></div>
-        
-        {/* Profile section overlaying the cover */}
-        <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-6 pb-2.5">
-          <div className="flex items-end justify-between">
-            <div className="flex items-center gap-7.5">
-              {/* Profile Avatar */}
-              {(() => {
-                const avatarConfig = createPublicationAvatarConfig(publication, 'xl');
-                return (
-                  <Avatar
-                    src={avatarConfig.src}
-                    alt={avatarConfig.alt}
-                    size="xl"
-                    gradientBorder={true}
-                    fallbackText={avatarConfig.fallbackText}
-                  />
-                );
-              })()}
-            </div>
-            
-            {/* Placeholder for top-right content if needed */}
-            <div className="w-11 h-9"></div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Publication Info Section */}
-      <div className="px-5 pb-6 pt-6">
-        {/* Header with name and buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="font-semibold text-sm text-black leading-[1.4] truncate">
-              {publication.name}
-            </h1>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            {isOwner ? (
-              <Link href={ROUTES.PUBLICATION_SETTINGS(publication.id)}>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <HiCog6Tooth className="size-4" />
-                  Settings
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <FollowButton
-                  isFollowing={isFollowing}
-                  isLoading={followLoading}
-                  followerCount={followerCount}
-                  onToggleFollow={handleToggleFollow}
-                  showFollowerCount={false}
-                />
-                <PublicationTipButton
-                  publicationId={publication.id}
-                  publicationName={publication.name}
-                />
-              </>
+    <div className="px-5 py-5">
+      <div className="flex items-start gap-4">
+        {/* Avatar with animated gradient ring */}
+        <div className="relative flex-shrink-0 group/avatar">
+          <div
+            className={cn(
+              'absolute -inset-1 rounded-full blur-md opacity-60',
+              'bg-gradient-to-br from-primary via-blue-400 to-purple-500',
+              'group-hover/avatar:opacity-80 group-hover/avatar:scale-105',
+              'transition-all duration-300'
             )}
-          </div>
+          />
+          <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/30 via-blue-400/30 to-purple-500/30 rounded-full" />
+          <Avatar
+            src={avatarConfig.src}
+            alt={avatarConfig.alt}
+            fallbackText={avatarConfig.fallbackText}
+            className="relative w-[72px] h-[72px] ring-[3px] ring-white shadow-sm"
+          />
         </div>
-        
-        {/* Subscriber Stats */}
-        <div className="flex gap-3 items-start text-xs text-gray-500 mt-4">
-          <span>{followerCount || 0} subscribers</span>
-          <span>{publication.articleCount || 0} posts</span>
-          <TipDisplay amount={publication.totalTips || 0} size="sm" />
+
+        {/* Info */}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight truncate">
+                {publication.name}
+              </h1>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 flex-shrink-0">
+              {isOwner ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onEditClick}
+                  className={cn(
+                    'gap-1.5 h-8 px-3 text-xs font-medium rounded-lg',
+                    'border-gray-200 hover:border-primary/50',
+                    'hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-500/5',
+                    'hover:shadow-sm transition-all duration-200'
+                  )}
+                >
+                  <HiPencil className="w-3.5 h-3.5" />
+                  Edit
+                </Button>
+              ) : (
+                <>
+                  <FollowButton
+                    isFollowing={isFollowing}
+                    isLoading={followLoading}
+                    followerCount={followerCount}
+                    onToggleFollow={handleToggleFollow}
+                    showFollowerCount={false}
+                  />
+                  <PublicationTipButton
+                    publicationId={publication.id}
+                    publicationName={publication.name}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          {publication.description && (
+            <p className="mt-1.5 text-sm text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-2">
+              {publication.description}
+            </p>
+          )}
+
+          {/* Stats - inline with subtle dividers */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <StatItem
+              icon={HiUserGroup}
+              value={followerCount || 0}
+              label="followers"
+            />
+            <span className="w-px h-4 bg-gray-200" />
+            <StatItem
+              icon={HiDocumentText}
+              value={publication.articleCount || 0}
+              label="posts"
+            />
+            <span className="w-px h-4 bg-gray-200" />
+            <TipDisplay amount={publication.totalTips || 0} size="sm" />
+          </div>
         </div>
       </div>
     </div>

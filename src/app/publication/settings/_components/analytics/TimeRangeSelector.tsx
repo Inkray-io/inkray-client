@@ -35,10 +35,10 @@ export function TimeRangeSelector({
             onClick={() => onChange(range.id)}
             className={cn(
               "relative px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
               isActive
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                ? "bg-gray-900 text-white"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
             )}
           >
             <span className="flex items-center gap-1.5">

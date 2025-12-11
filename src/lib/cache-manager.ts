@@ -14,7 +14,9 @@ const CACHE_KEYS = {
   PUBLICATION: 'inkray-user-publication',
   ARTICLE_DRAFT: 'inkray-article-draft',
   PACKAGE_ID: 'inkray-package-id', // Track which package ID was used for cache
-  SESSION_KEY: 'inkray-session-key', // Cached Seal session key
+  SESSION_KEY: 'inkray-session-key', // Cached Seal session key (wallet-based)
+  FREE_KEYPAIR: 'inkray-free-keypair', // Local Ed25519 keypair for free content
+  FREE_SESSION_KEY: 'inkray-free-session-key', // Cached Seal session key for free content
 } as const;
 
 export interface CachedPublicationData {
@@ -375,7 +377,8 @@ export function clearSessionKeyCache(): void {
 
 /**
  * Clear user-specific cache data (publications, drafts, session keys)
- * Preserves non-user-specific data like package ID
+ * Preserves non-user-specific data like package ID and free keypair
+ * Note: FREE_KEYPAIR is NOT user-specific (it's device-specific for free content)
  */
 export function clearUserSpecificCache(): void {
   // SSR guard - localStorage only available in browser
@@ -389,6 +392,8 @@ export function clearUserSpecificCache(): void {
     CACHE_KEYS.PUBLICATION,
     CACHE_KEYS.ARTICLE_DRAFT,
     CACHE_KEYS.SESSION_KEY,
+    // Note: FREE_KEYPAIR is NOT cleared here - it's device-specific, not user-specific
+    // FREE_SESSION_KEY could be cleared, but we keep it since it's not tied to wallet
   ];
 
   userSpecificKeys.forEach(key => {
@@ -486,6 +491,8 @@ export function getCacheStats(): {
   hasPublication: boolean;
   hasDraft: boolean;
   hasSessionKey: boolean;
+  hasFreeKeypair: boolean;
+  hasFreeSessionKey: boolean;
   packageId: string;
   cacheEntries: string[];
 } {
@@ -495,6 +502,8 @@ export function getCacheStats(): {
       hasPublication: false,
       hasDraft: false,
       hasSessionKey: false,
+      hasFreeKeypair: false,
+      hasFreeSessionKey: false,
       packageId: CONFIG.PACKAGE_ID,
       cacheEntries: [],
     };
@@ -508,6 +517,8 @@ export function getCacheStats(): {
     hasPublication: !!getCachedPublication(),
     hasDraft: !!getCachedDraft(),
     hasSessionKey: !!getCachedSessionKey(),
+    hasFreeKeypair: !!localStorage.getItem(CACHE_KEYS.FREE_KEYPAIR),
+    hasFreeSessionKey: !!localStorage.getItem(CACHE_KEYS.FREE_SESSION_KEY),
     packageId: CONFIG.PACKAGE_ID,
     cacheEntries,
   };

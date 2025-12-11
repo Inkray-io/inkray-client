@@ -21,7 +21,7 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   return (
     <div className={cn(
-      "inline-flex rounded-lg bg-muted p-1",
+      "inline-flex rounded-xl bg-gray-100 p-1",
       className
     )}>
       {options.map((option) => {
@@ -33,10 +33,10 @@ export function SegmentedControl({
             key={option.id}
             onClick={() => onChange(option.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all",
+              "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all",
               isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-900"
             )}
           >
             {Icon && <Icon className="size-4" />}

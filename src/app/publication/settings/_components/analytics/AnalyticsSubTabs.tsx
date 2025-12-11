@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { HiEye, HiHeart, HiUserPlus } from "react-icons/hi2";
+import { HiEye, HiHeart, HiUserPlus, HiCurrencyDollar } from "react-icons/hi2";
 import { MetricType } from "./useAnalyticsData";
 
 interface AnalyticsSubTabsProps {
@@ -13,11 +13,12 @@ const TABS: { id: MetricType; label: string; icon: React.ComponentType<{ classNa
   { id: "views", label: "Views", icon: HiEye },
   { id: "likes", label: "Likes", icon: HiHeart },
   { id: "follows", label: "Follows", icon: HiUserPlus },
+  { id: "tips", label: "Tips", icon: HiCurrencyDollar },
 ];
 
 export function AnalyticsSubTabs({ activeTab, onChange }: AnalyticsSubTabsProps) {
   return (
-    <div className="inline-flex rounded-lg bg-muted/50 p-1 mb-6">
+    <div className="inline-flex rounded-xl bg-gray-100 p-1 mb-6">
       {TABS.map((tab) => {
         const isActive = tab.id === activeTab;
         const Icon = tab.icon;
@@ -27,10 +28,10 @@ export function AnalyticsSubTabs({ activeTab, onChange }: AnalyticsSubTabsProps)
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "group relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200",
+              "group relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
               isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-900"
             )}
           >
             <Icon
@@ -42,7 +43,7 @@ export function AnalyticsSubTabs({ activeTab, onChange }: AnalyticsSubTabsProps)
             <span>{tab.label}</span>
             {isActive && (
               <span
-                className="absolute inset-0 rounded-md ring-1 ring-border/50 pointer-events-none"
+                className="absolute inset-0 rounded-lg ring-1 ring-gray-200/50 pointer-events-none"
                 style={{
                   animation: "subtab-glow 0.3s ease-out"
                 }}

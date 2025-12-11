@@ -64,8 +64,8 @@ export function AnalyticsSettings({ publicationId }: AnalyticsSettingsProps) {
         {/* Metric Summary Card */}
         {analyticsData.isLoading ? (
           <div className="animate-pulse space-y-4">
-            <div className="h-32 bg-muted rounded-xl" />
-            <div className="h-64 bg-muted rounded-xl" />
+            <div className="h-32 bg-gray-100 rounded-xl" />
+            <div className="h-64 bg-gray-100 rounded-xl" />
           </div>
         ) : (
           <>

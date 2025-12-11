@@ -205,9 +205,9 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
     >
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-xl p-4 flex items-center gap-3">
-          <HiCheckCircle className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-          <p className="text-green-800 dark:text-green-200">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+          <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
+          <p className="text-green-800">
             Subscription settings updated successfully! Changes may take a moment to appear.
           </p>
         </div>
@@ -215,17 +215,17 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
       {/* Error Message */}
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3">
-          <HiExclamationCircle className="size-5 text-destructive flex-shrink-0" />
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+          <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-destructive font-medium">Failed to update subscription settings</p>
-            <p className="text-destructive/80 text-sm mt-1">{error}</p>
+            <p className="text-red-800 font-medium">Failed to update subscription settings</p>
+            <p className="text-red-600 text-sm mt-1">{error}</p>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={clearError}
-            className="text-destructive hover:text-destructive/80"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
           >
             Dismiss
           </Button>
@@ -237,8 +237,8 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
           {/* Subscription Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium text-foreground">Enable Subscription</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h3 className="text-lg font-medium text-gray-900">Enable Subscription</h3>
+              <p className="text-sm text-gray-500 mt-1">
                 Require readers to pay a monthly subscription to access your content
               </p>
             </div>
@@ -247,13 +247,13 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
               disabled={isSaving}
               className={cn(
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                isEnabled ? "bg-primary" : "bg-muted",
+                isEnabled ? "bg-primary" : "bg-gray-200",
                 isSaving && "opacity-50 cursor-not-allowed"
               )}
             >
               <span
                 className={cn(
-                  "inline-block h-4 w-4 transform rounded-full bg-background transition-transform shadow-sm",
+                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
                   isEnabled ? "translate-x-6" : "translate-x-1"
                 )}
               />
@@ -262,9 +262,9 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
           {/* Price Input (only shown when enabled) */}
           {isEnabled && (
-            <div className="space-y-4 pt-4 border-t border-border">
+            <div className="space-y-4 pt-4 border-t border-gray-100">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   Monthly Subscription Price (SUI)
                 </label>
                 <input
@@ -275,18 +275,18 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
                   onChange={(e) => handlePriceChange(e.target.value)}
                   disabled={isSaving}
                   className={cn(
-                    "w-full px-3 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:border-transparent transition-colors",
+                    "w-full px-3 py-2 border rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent transition-colors",
                     inputError
-                      ? "border-destructive focus:ring-destructive/50"
-                      : "border-border focus:ring-primary/50",
+                      ? "border-red-300 focus:ring-red-200"
+                      : "border-gray-200 focus:ring-primary/50",
                     isSaving && "opacity-50 cursor-not-allowed"
                   )}
                   placeholder="0.00"
                 />
                 {inputError && (
-                  <p className="text-destructive text-sm mt-1">{inputError}</p>
+                  <p className="text-red-600 text-sm mt-1">{inputError}</p>
                 )}
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-gray-500 text-sm mt-1">
                   Readers will pay this amount monthly to access your content
                 </p>
               </div>
@@ -294,11 +294,11 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
           )}
 
           {/* Save Button */}
-          <div className="pt-4 border-t border-border">
+          <div className="pt-4 border-t border-gray-100">
             <Button
               onClick={handleSave}
               disabled={isSaving || (!isEnabled && !isSubscriptionEnabled)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>
@@ -311,7 +311,7 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
             </Button>
 
             {/* Current Status */}
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Current status: {isSubscriptionEnabled
                 ? `Subscription enabled (${currentPriceInSui} SUI/month)`
                 : 'Subscription disabled (free access)'
@@ -325,39 +325,39 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
       <SettingsCard>
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Subscription Balance</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Subscription Balance</h3>
+            <p className="text-sm text-gray-500">
               View and withdraw accumulated subscription payments
             </p>
           </div>
 
           {/* Balance Display */}
-          <div className="bg-muted/50 rounded-lg p-4">
+          <div className="bg-gray-50 rounded-xl p-4">
             {isLoadingBalance ? (
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
-                <span className="text-muted-foreground">Loading balance...</span>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                <span className="text-gray-500">Loading balance...</span>
               </div>
             ) : balanceError ? (
-              <div className="text-destructive text-sm">
+              <div className="text-red-600 text-sm">
                 <p className="font-medium">Failed to load balance</p>
                 <p className="mt-1">{balanceError}</p>
               </div>
             ) : (
               <div>
-                <div className="text-3xl font-bold text-foreground">
+                <div className="text-3xl font-bold text-gray-900">
                   {balanceInSui.toFixed(4)} SUI
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Available to withdraw</p>
+                <p className="text-sm text-gray-500 mt-1">Available to withdraw</p>
               </div>
             )}
           </div>
 
           {/* Withdrawal Success Message */}
           {withdrawalSuccess && (
-            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-xl p-4 flex items-center gap-3">
-              <HiCheckCircle className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <p className="text-green-800 dark:text-green-200">
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+              <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
+              <p className="text-green-800">
                 Balance withdrawn successfully! Funds have been transferred to your wallet.
               </p>
             </div>
@@ -365,17 +365,17 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
           {/* Withdrawal Error Message */}
           {withdrawalError && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3">
-              <HiExclamationCircle className="size-5 text-destructive flex-shrink-0" />
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+              <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-destructive font-medium">Failed to withdraw balance</p>
-                <p className="text-destructive/80 text-sm mt-1">{withdrawalError}</p>
+                <p className="text-red-800 font-medium">Failed to withdraw balance</p>
+                <p className="text-red-600 text-sm mt-1">{withdrawalError}</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearWithdrawalError}
-                className="text-destructive hover:text-destructive/80"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 Dismiss
               </Button>
@@ -395,11 +395,11 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
           {/* Withdrawal Confirmation Dialog */}
           {showWithdrawDialog && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-4">
               <div>
-                <p className="text-foreground font-medium">Confirm Withdrawal</p>
-                <p className="text-muted-foreground text-sm mt-1">
-                  You are about to withdraw <strong className="text-foreground">{balanceInSui.toFixed(4)} SUI</strong> from your publication subscription balance.
+                <p className="text-gray-900 font-medium">Confirm Withdrawal</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  You are about to withdraw <strong className="text-gray-900">{balanceInSui.toFixed(4)} SUI</strong> from your publication subscription balance.
                   The funds will be transferred to your connected wallet.
                 </p>
               </div>

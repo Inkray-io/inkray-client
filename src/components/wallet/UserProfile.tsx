@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -27,8 +27,9 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   
   if (!address || !isAuthenticated) return null
   
-  const { primary, secondary } = getDisplayName(suiNSName, address)
-  const displayName = account?.username || suiNSName || primary
+  const { primary } = getDisplayName(suiNSName, address)
+  // Display SuiNS name if available, otherwise show shortened address
+  const displayName = suiNSName || primary
   
   const handleCopyAddress = async () => {
     if (!address || copying) return
@@ -88,9 +89,9 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           <div className="font-medium text-black text-sm truncate">
             {suiNSLoading ? 'Loading...' : displayName}
           </div>
-          {(account?.username || suiNSName) && !suiNSLoading && (
+          {suiNSName && !suiNSLoading && (
             <div className="text-xs text-gray-500 truncate">
-              {account?.username ? primary : secondary}
+              {primary}
             </div>
           )}
         </div>
@@ -112,17 +113,23 @@ export function UserProfile({ className = "" }: UserProfileProps) {
               <div className="font-medium text-black text-sm mb-1">
                 {displayName}
               </div>
-              {account?.username && (
-                <div className="text-xs text-gray-600 mb-2">
-                  @{account.username}
-                </div>
-              )}
               <div className="text-xs text-gray-500 font-mono break-all">
                 {address}
               </div>
             </div>
             
             <div className="p-2">
+              <Link href={ROUTES.PROFILE} onClick={() => setIsOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-sm"
+                >
+                  <HiUser className="size-4" />
+                  My Profile
+                </Button>
+              </Link>
+
               {hasPublications && firstPublication ? (
                 <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
                   <Button
@@ -131,7 +138,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                     className="w-full justify-start gap-2 text-sm"
                   >
                     <HiCog6Tooth className="size-4" />
-                    My Publication
+                    Publication Dashboard
                   </Button>
                 </Link>
               ) : (

@@ -36,11 +36,11 @@ export function SettingsTabs({ tabs, activeTab, onTabChange }: SettingsTabsProps
   }, []);
 
   return (
-    <div className="relative border-b border-border mb-8">
+    <div className="relative border-b border-gray-200 mb-8">
       {/* Left gradient indicator */}
       <div
         className={cn(
-          "absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none transition-opacity lg:hidden",
+          "absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none transition-opacity lg:hidden",
           showLeftGradient ? "opacity-100" : "opacity-0"
         )}
       />
@@ -48,7 +48,7 @@ export function SettingsTabs({ tabs, activeTab, onTabChange }: SettingsTabsProps
       {/* Right gradient indicator */}
       <div
         className={cn(
-          "absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none transition-opacity lg:hidden",
+          "absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none transition-opacity lg:hidden",
           showRightGradient ? "opacity-100" : "opacity-0"
         )}
       />
@@ -72,7 +72,7 @@ export function SettingsTabs({ tabs, activeTab, onTabChange }: SettingsTabsProps
                   "flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 lg:flex-shrink",
                   isActive
                     ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                    : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
                 )}
               >
                 <Icon className="size-4" />

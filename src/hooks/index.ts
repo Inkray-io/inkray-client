@@ -33,7 +33,7 @@ export {
   useArticleContent,
 } from './useArticleContent';
 
-export { 
+export {
   useDrafts,
 } from './useDrafts';
 
@@ -74,3 +74,15 @@ export { useToast, toast } from './use-toast';
 
 // Export Hooks
 export { useExportFollowers } from './useExportFollowers';
+
+// Profile Hooks
+export {
+  useProfile,
+  type Profile,
+  type ProfileStats,
+} from './useProfile';
+
+export {
+  useUserArticles,
+  type UserArticle,
+} from './useUserArticles';

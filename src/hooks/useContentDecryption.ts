@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient, useSignPersonalMessage } from '@mysten/dapp-kit';
-import { createSealService, type DecryptionParams } from '@/lib/services/SealService';
+import { createSealService, createFreeSealService, type DecryptionParams } from '@/lib/services/SealService';
 
 export interface UseContentDecryptionReturn {
   decryptContent: (params: DecryptionParams) => Promise<string>;
+  decryptFreeContent: (params: DecryptionParams) => Promise<string>;
   isDecrypting: boolean;
   decryptionError: string | null;
   clearError: () => void;
@@ -90,6 +91,50 @@ export const useContentDecryption = (): UseContentDecryptionReturn => {
   }, [currentAccount, suiClient, signMessage]);
 
   /**
+   * Decrypt FREE content without wallet interaction
+   *
+   * This uses a locally-generated keypair to auto-sign session keys,
+   * allowing users to decrypt free articles without connecting a wallet.
+   */
+  const decryptFreeContent = useCallback(async (params: DecryptionParams): Promise<string> => {
+    if (!suiClient) {
+      throw new Error('Sui client not available');
+    }
+
+    setIsDecrypting(true);
+    setDecryptionError(null);
+
+    try {
+      // Create SealService for free content (no wallet required)
+      const sealService = createFreeSealService(suiClient);
+
+      // Use the free decryption method
+      const decryptedContent = await sealService.decryptFreeContent(params);
+
+      return decryptedContent;
+    } catch (error) {
+      let errorMessage = 'Failed to decrypt free content';
+
+      if (error instanceof Error) {
+        if (error.message.includes('key server')) {
+          errorMessage = 'Decryption service temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('threshold')) {
+          errorMessage = 'Insufficient key servers available for decryption.';
+        } else if (error.message.includes('approve_free')) {
+          errorMessage = 'Access denied. Content may not support free access.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      setDecryptionError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsDecrypting(false);
+    }
+  }, [suiClient]);
+
+  /**
    * Clear any decryption error
    */
   const clearError = useCallback(() => {
@@ -98,6 +143,7 @@ export const useContentDecryption = (): UseContentDecryptionReturn => {
 
   return {
     decryptContent,
+    decryptFreeContent,
     isDecrypting,
     decryptionError,
     clearError,

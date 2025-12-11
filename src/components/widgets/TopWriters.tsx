@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
 
-interface Writer {
+interface Publication {
   rank: number
   id: string
   name: string
@@ -22,27 +22,27 @@ interface Writer {
   };
 }
 
-interface TopWritersProps {
-  writers?: Writer[]
+interface TopPublicationsProps {
+  publications?: Publication[]
 }
 
-export function TopWriters({ writers: propsWriters }: TopWritersProps) {
-  const { writers: apiWriters, isLoading, error, refetch } = useTopWriters();
+export function TopWriters({ publications: propsPublications }: TopPublicationsProps) {
+  const { writers: apiPublications, isLoading, error, refetch } = useTopWriters();
   const router = useRouter();
 
-  // Use props writers if provided, otherwise use API data
-  const displayWriters = propsWriters || apiWriters;
+  // Use props publications if provided, otherwise use API data
+  const displayPublications = propsPublications || apiPublications;
 
-  const handleWriterClick = (writerId: string) => {
-    router.push(ROUTES.PUBLICATION_WITH_ID(writerId));
+  const handlePublicationClick = (publicationId: string) => {
+    router.push(ROUTES.PUBLICATION_WITH_ID(publicationId));
   };
 
   // Loading state
-  if (isLoading && displayWriters.length === 0) {
+  if (isLoading && displayPublications.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
         <div className="mb-4">
-          <h3 className="font-semibold text-black text-lg">Top writers</h3>
+          <h3 className="font-semibold text-black text-lg">Top publications</h3>
         </div>
 
         <div className="space-y-4">
@@ -54,7 +54,7 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
               </div>
               {/* Avatar skeleton */}
               <Skeleton className="w-10 h-10 rounded-full" />
-              {/* Writer info skeleton */}
+              {/* Publication info skeleton */}
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3 w-20" />
@@ -69,17 +69,17 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   }
 
   // Error state
-  if (error && displayWriters.length === 0) {
+  if (error && displayPublications.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
         <div className="mb-4">
-          <h3 className="font-semibold text-black text-lg">Top writers</h3>
+          <h3 className="font-semibold text-black text-lg">Top publications</h3>
         </div>
-        
+
         <div className="text-center py-4 space-y-3">
           <AlertCircle className="w-6 h-6 text-gray-400 mx-auto" />
-          <p className="text-sm text-gray-500">Failed to load top writers</p>
-          <button 
+          <p className="text-sm text-gray-500">Failed to load top publications</p>
+          <button
             onClick={refetch}
             className="text-[#005efc] hover:underline text-sm flex items-center gap-1 mx-auto"
           >
@@ -92,13 +92,13 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   }
 
   // Empty state
-  if (displayWriters.length === 0) {
+  if (displayPublications.length === 0) {
     return (
       <div className="bg-white rounded-2xl p-5">
         <div className="mb-4">
-          <h3 className="font-semibold text-black text-lg">Top writers</h3>
+          <h3 className="font-semibold text-black text-lg">Top publications</h3>
         </div>
-        
+
         <div className="text-center py-4">
           <p className="text-sm text-gray-500">No publications found</p>
         </div>
@@ -109,39 +109,39 @@ export function TopWriters({ writers: propsWriters }: TopWritersProps) {
   return (
     <div className="bg-white rounded-2xl p-5">
       <div className="mb-4">
-        <h3 className="font-semibold text-black text-lg">Top writers</h3>
+        <h3 className="font-semibold text-black text-lg">Top publications</h3>
       </div>
       
       <div className="space-y-4">
-        {displayWriters.map((writer) => (
-          <div 
-            key={writer.rank} 
+        {displayPublications.map((publication) => (
+          <div
+            key={publication.rank}
             className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
-            onClick={() => handleWriterClick(writer.id)}
+            onClick={() => handlePublicationClick(publication.id)}
           >
             {/* Rank number */}
             <div className="w-6 text-center">
               <span className="text-black font-medium text-sm">
-                {writer.rank}
+                {publication.rank}
               </span>
             </div>
             {/* Avatar */}
             <Avatar
-              {...writer.avatarConfig}
+              {...publication.avatarConfig}
             />
-            {/* Writer info */}
+            {/* Publication info */}
             <div className="flex-1">
               <div className="font-semibold text-black text-sm">
-                {writer.name}
+                {publication.name}
               </div>
               <div className="text-gray-500 text-xs mt-0.5">
-                {writer.subscribers}
+                {publication.subscribers}
               </div>
             </div>
           </div>
         ))}
       </div>
-      
+
       <div className="text-primary text-sm font-medium cursor-pointer hover:underline pt-4">
         View the entire list
       </div>

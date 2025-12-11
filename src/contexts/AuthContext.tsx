@@ -73,9 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // If profile returns null but token is valid, we still have authentication
           // This can happen if the account record doesn't exist in the database yet
-          if (response.data) {
+          // API response is wrapped: { success: true, data: account }
+          const accountData = response.data?.data || response.data;
+          if (accountData) {
             setState({
-              account: response.data,
+              account: accountData,
               accessToken: token,
               isAuthenticated: true,
               isLoading: false,

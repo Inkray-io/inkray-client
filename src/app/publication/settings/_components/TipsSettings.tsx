@@ -82,13 +82,13 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
         title="Tips"
         description="View and withdraw accumulated tips from your publication."
       >
-        <SettingsCard className="bg-destructive/10 border-destructive/20">
-          <p className="text-destructive font-medium">Unable to load tip settings</p>
-          <div className="text-destructive/80 text-sm mt-2 space-y-1">
+        <SettingsCard className="bg-red-50 border-red-200">
+          <p className="text-red-800 font-medium">Unable to load tip settings</p>
+          <div className="text-red-600 text-sm mt-2 space-y-1">
             {!ownerCapId && <p>• Missing publication owner capability</p>}
             {!publicationId && <p>• Missing publication ID</p>}
           </div>
-          <p className="text-destructive/80 text-sm mt-2">
+          <p className="text-red-600 text-sm mt-2">
             Please ensure you own this publication and try refreshing the page.
           </p>
         </SettingsCard>
@@ -105,40 +105,40 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
       <SettingsCard>
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Tip Balance</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Tip Balance</h3>
+            <p className="text-sm text-gray-500">
               Accumulated tips from readers who appreciate your content
             </p>
           </div>
 
           {/* Balance Display */}
-          <div className="bg-muted/50 rounded-lg p-4">
+          <div className="bg-gray-50 rounded-xl p-4">
             {isLoadingBalance ? (
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
-                <span className="text-muted-foreground">Loading balance...</span>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                <span className="text-gray-500">Loading balance...</span>
               </div>
             ) : balanceError ? (
-              <div className="text-destructive text-sm">
+              <div className="text-red-600 text-sm">
                 <p className="font-medium">Failed to load balance</p>
                 <p className="mt-1">{balanceError}</p>
               </div>
             ) : (
               <div>
-                <div className="text-3xl font-bold text-foreground">
+                <div className="text-3xl font-bold text-gray-900">
                   {balanceInSui.toFixed(4)} SUI
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Available to withdraw</p>
+                <p className="text-sm text-gray-500 mt-1">Available to withdraw</p>
 
                 {/* Statistics */}
-                <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-4">
+                <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Tips</p>
-                    <p className="text-lg font-semibold text-foreground">{totalTipsReceived}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Tips</p>
+                    <p className="text-lg font-semibold text-gray-900">{totalTipsReceived}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Lifetime Earnings</p>
-                    <p className="text-lg font-semibold text-foreground">{totalAmountReceivedInSui.toFixed(2)} SUI</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Lifetime Earnings</p>
+                    <p className="text-lg font-semibold text-gray-900">{totalAmountReceivedInSui.toFixed(2)} SUI</p>
                   </div>
                 </div>
               </div>
@@ -147,9 +147,9 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
 
           {/* Withdrawal Success Message */}
           {withdrawalSuccess && (
-            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-xl p-4 flex items-center gap-3">
-              <HiCheckCircle className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <p className="text-green-800 dark:text-green-200">
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+              <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
+              <p className="text-green-800">
                 Tips withdrawn successfully! Funds have been transferred to your wallet.
               </p>
             </div>
@@ -157,17 +157,17 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
 
           {/* Withdrawal Error Message */}
           {withdrawalError && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3">
-              <HiExclamationCircle className="size-5 text-destructive flex-shrink-0" />
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+              <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-destructive font-medium">Failed to withdraw tips</p>
-                <p className="text-destructive/80 text-sm mt-1">{withdrawalError}</p>
+                <p className="text-red-800 font-medium">Failed to withdraw tips</p>
+                <p className="text-red-600 text-sm mt-1">{withdrawalError}</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearWithdrawalError}
-                className="text-destructive hover:text-destructive/80"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 Dismiss
               </Button>
@@ -187,11 +187,11 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
 
           {/* Withdrawal Confirmation Dialog */}
           {showWithdrawDialog && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-4">
               <div>
-                <p className="text-foreground font-medium">Confirm Withdrawal</p>
-                <p className="text-muted-foreground text-sm mt-1">
-                  You are about to withdraw <strong className="text-foreground">{balanceInSui.toFixed(4)} SUI</strong> from your publication tips balance.
+                <p className="text-gray-900 font-medium">Confirm Withdrawal</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  You are about to withdraw <strong className="text-gray-900">{balanceInSui.toFixed(4)} SUI</strong> from your publication tips balance.
                   All accumulated tips will be transferred to your connected wallet.
                 </p>
               </div>

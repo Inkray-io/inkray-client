@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { followsAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
+import { DateRange, getDateRangeFromPreset } from '@/lib/followerFilters';
 
 type DataType = 'email' | 'wallet';
-type DateRange = 'week' | 'month' | 'year' | 'all' | 'custom';
 
 interface UseExportFollowersOptions {
   publicationId: string;
@@ -30,42 +30,6 @@ interface UseExportFollowersReturn {
   clearErrors: () => void;
 }
 
-/**
- * Calculate date range from preset
- */
-function getDateRangeFromPreset(
-  preset: DateRange,
-  customStartDate?: string,
-  customEndDate?: string
-): { fromDate?: string; toDate?: string } {
-  if (preset === 'custom') {
-    return {
-      fromDate: customStartDate || undefined,
-      toDate: customEndDate || undefined,
-    };
-  }
-
-  const now = new Date();
-  let fromDate: Date | undefined;
-
-  switch (preset) {
-    case 'week':
-      fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
-    case 'month':
-      fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      break;
-    case 'year':
-      fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      break;
-    case 'all':
-      return {};
-  }
-
-  return {
-    fromDate: fromDate?.toISOString().split('T')[0],
-  };
-}
 
 /**
  * Hook for exporting publication follower data

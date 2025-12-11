@@ -9,7 +9,7 @@ import {
 } from "date-fns";
 import { analyticsAPI } from "@/lib/api";
 
-export type MetricType = "views" | "likes" | "follows";
+export type MetricType = "views" | "likes" | "follows" | "tips";
 export type TimeRange = "7d" | "1m" | "1y" | "all" | "custom";
 
 export interface ChartDataPoint {
@@ -96,6 +96,9 @@ async function fetchAnalytics(
       break;
     case "follows":
       response = await analyticsAPI.getFollows(publicationId, startStr, endStr);
+      break;
+    case "tips":
+      response = await analyticsAPI.getTips(publicationId, startStr, endStr);
       break;
   }
 

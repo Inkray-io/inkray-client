@@ -15,32 +15,32 @@ const api = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-    (config) => {
-      const token = Cookies.get('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
+  (config) => {
+    const token = Cookies.get('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor for auth errors
 api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        // Clear invalid token
-        Cookies.remove('access_token');
-        // Redirect to auth page
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth';
-        }
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      Cookies.remove('access_token');
+      // Redirect to auth page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth';
       }
-      return Promise.reject(error);
     }
+    return Promise.reject(error);
+  }
 );
 
 export default api;
@@ -59,9 +59,40 @@ export const authAPI = {
   }) => api.post('/auth', data),
 };
 
+export interface SocialAccounts {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  telegram?: string;
+  website?: string;
+}
+
+export interface UpdateProfileData {
+  username?: string;
+  description?: string;
+  avatar?: string;
+  skills?: string[];
+  socialAccounts?: SocialAccounts;
+}
+
 export const usersAPI = {
+  // Get current user's profile (authenticated)
   getProfile: () => api.get('/users/profile'),
-  updateProfile: (data: { username?: string }) => api.patch('/users/profile', data),
+
+  // Get any user's public profile by wallet address
+  getPublicProfile: (address: string) => api.get(`/users/profile/${address}`),
+
+  // Update current user's profile
+  updateProfile: (data: UpdateProfileData) => api.patch('/users/profile', data),
+
+  // Get user's articles across all publications
+  getUserArticles: (
+    address: string,
+    params: { cursor?: string; limit?: number }
+  ) => api.get(`/users/profile/${address}/articles`, { params }),
+
+  // Get available skill categories
+  getSkillCategories: () => api.get('/users/skills/categories'),
 };
 
 export const feedAPI = {
@@ -152,7 +183,7 @@ export const articlesAPI = {
   getRawContent: async (quiltBlobId: string) => {
     // Import CDN function to avoid circular imports
     const { getRawContentFromCdn } = await import('@/lib/utils/mediaUrlTransform');
-
+    
     try {
       // Try CDN first
       const data = await getRawContentFromCdn(quiltBlobId);
@@ -169,30 +200,30 @@ export const articlesAPI = {
 
 export const followsAPI = {
   followPublication: (publicationId: string) =>
-      api.post(`/follows/${publicationId}`),
+    api.post(`/follows/${publicationId}`),
 
   unfollowPublication: (publicationId: string) =>
-      api.delete(`/follows/${publicationId}`),
+    api.delete(`/follows/${publicationId}`),
 
   toggleFollow: (publicationId: string) =>
-      api.post(`/follows/${publicationId}/toggle`),
+    api.post(`/follows/${publicationId}/toggle`),
 
   getFollowStatus: (publicationId: string) =>
-      api.get(`/follows/${publicationId}/status`),
+    api.get(`/follows/${publicationId}/status`),
 
   getPublicationInfo: (publicationId: string, userId?: string) =>
-      api.get(`/follows/${publicationId}/info`, {
-        params: userId ? { userId } : {}
-      }),
+    api.get(`/follows/${publicationId}/info`, {
+      params: userId ? { userId } : {}
+    }),
 
   getFollowerCount: (publicationId: string) =>
-      api.get(`/follows/${publicationId}/count`),
+    api.get(`/follows/${publicationId}/count`),
 
   getMyFollows: (params: { cursor?: string; limit?: number }) =>
-      api.get('/follows/my-follows', { params }),
+    api.get('/follows/my-follows', { params }),
 
   getPublicationStats: (publicationId: string) =>
-      api.get(`/follows/${publicationId}/stats`),
+    api.get(`/follows/${publicationId}/stats`),
 
   // Export endpoints (owner only)
   getExportPreview: (publicationId: string, params: {
@@ -208,52 +239,62 @@ export const followsAPI = {
   }) => api.get(`/follows/${publicationId}/export/data`, { params }),
 };
 
+export interface UpdatePublicationData {
+  description?: string;
+  avatar?: string;
+  tags?: string[];
+  socialAccounts?: SocialAccounts;
+}
+
 export const publicationsAPI = {
   getPublication: (publicationId: string, userId?: string) =>
-      api.get(`/publications/${publicationId}`, {
-        params: userId ? { userId } : {},
-      }),
+    api.get(`/publications/${publicationId}`, {
+      params: userId ? { userId } : {},
+    }),
 
   getPublicationAuthenticated: (publicationId: string) =>
-      api.get(`/publications/${publicationId}/authenticated`),
+    api.get(`/publications/${publicationId}/authenticated`),
 
   getPublicationArticles: (
-      publicationId: string,
-      params: {
-        cursor?: string;
-        limit?: number;
-      }
+    publicationId: string,
+    params: {
+      cursor?: string;
+      limit?: number;
+    }
   ) =>
-      api.get(`/publications/${publicationId}/articles`, { params }),
+    api.get(`/publications/${publicationId}/articles`, { params }),
 
   getTopWriters: (limit?: number) =>
-      api.get('/publications/top-writers', {
-        params: limit ? { limit } : {},
-      }),
+    api.get('/publications/top-writers', {
+      params: limit ? { limit } : {},
+    }),
+
+  updatePublication: (publicationId: string, data: UpdatePublicationData) =>
+    api.patch(`/publications/${publicationId}`, data),
 };
 
 export const nftAPI = {
   getRecentMints: (articleId: string, limit?: number) =>
-      api.get(`/nft/recent/${articleId}`, {
-        params: limit ? { limit } : {}
-      }),
+    api.get(`/nft/recent/${articleId}`, { 
+      params: limit ? { limit } : {} 
+    }),
 
   getMintCount: (articleId: string) =>
-      api.get(`/nft/count/${articleId}`),
+    api.get(`/nft/count/${articleId}`),
 };
 
 /**
  * Tipping API endpoints
- *
+ * 
  * Note: Tip transactions are handled directly via blockchain transactions (no backend API needed).
  * Tip data is automatically aggregated from blockchain events and included in feed/publication responses.
- *
+ * 
  * All tipping functionality is implemented through:
  * - TipButton component for article tips
  * - PublicationTipButton component for publication tips
  * - Backend event handlers process blockchain events automatically
  * - Tip totals are included in article and publication API responses
- *
+ * 
  * This object is reserved for future tip analytics endpoints if needed.
  */
 export const tipsAPI = {
@@ -265,88 +306,108 @@ export const tipsAPI = {
 
 export const likesAPI = {
   likeArticle: (articleId: string) =>
-      api.post(`/likes/${articleId}`),
+    api.post(`/likes/${articleId}`),
 
   unlikeArticle: (articleId: string) =>
-      api.delete(`/likes/${articleId}`),
+    api.delete(`/likes/${articleId}`),
 
   toggleLike: (articleId: string) =>
-      api.post(`/likes/${articleId}/toggle`),
+    api.post(`/likes/${articleId}/toggle`),
 
   getLikeStatus: (articleId: string) =>
-      api.get(`/likes/${articleId}/status`),
+    api.get(`/likes/${articleId}/status`),
 
   getArticleLikeCount: (articleId: string) =>
-      api.get(`/likes/${articleId}/count`),
+    api.get(`/likes/${articleId}/count`),
 
   getMyLikedArticles: (params: { cursor?: string; limit?: number }) =>
-      api.get('/likes/my-likes', { params }),
+    api.get('/likes/my-likes', { params }),
 };
 
 export const bookmarksAPI = {
   bookmarkArticle: (articleId: string) =>
-      api.post(`/bookmarks/${articleId}`),
+    api.post(`/bookmarks/${articleId}`),
 
   unbookmarkArticle: (articleId: string) =>
-      api.delete(`/bookmarks/${articleId}`),
+    api.delete(`/bookmarks/${articleId}`),
 
   toggleBookmark: (articleId: string) =>
-      api.post(`/bookmarks/${articleId}/toggle`),
+    api.post(`/bookmarks/${articleId}/toggle`),
 
   getBookmarkStatus: (articleId: string) =>
-      api.get(`/bookmarks/${articleId}/status`),
+    api.get(`/bookmarks/${articleId}/status`),
 
   getArticleBookmarkCount: (articleId: string) =>
-      api.get(`/bookmarks/${articleId}/count`),
+    api.get(`/bookmarks/${articleId}/count`),
 
   getMyBookmarkedArticles: (params: { cursor?: string; limit?: number }) =>
-      api.get('/bookmarks/my-bookmarks', { params }),
+    api.get('/bookmarks/my-bookmarks', { params }),
+};
+
+export const commentsAPI = {
+  createComment: (articleId: string, content: string) =>
+    api.post(`/comments/${articleId}`, { content }),
+
+  getComments: (articleId: string, params: { limit?: number; cursor?: string }) =>
+    api.get(`/comments/${articleId}`, { params }),
+
+  deleteComment: (commentId: string) =>
+    api.delete(`/comments/${commentId}`),
+
+  getCommentCount: (articleId: string) =>
+    api.get(`/comments/${articleId}/count`),
 };
 
 export const viewsAPI = {
   recordView: (articleId: string) =>
-      api.post(`/views/${articleId}`),
+    api.post(`/views/${articleId}`),
 
   getViewCount: (articleId: string) =>
-      api.get(`/views/${articleId}/count`),
+    api.get(`/views/${articleId}/count`),
 };
 
 export const subscriptionsAPI = {
   // Get user's active subscriptions
-  getMySubscriptions: (params: { cursor?: string; limit?: number }) =>
-      api.get('/subscriptions/my-subscriptions', { params }),
-
+  getMySubscriptions: (params: { cursor?: string; limit?: number }) => 
+    api.get('/subscriptions/my-subscriptions', { params }),
+  
   // Check subscription status for a publication
-  getSubscriptionStatus: (publicationId: string) =>
-      api.get(`/subscriptions/publications/${publicationId}/status`),
-
+  getSubscriptionStatus: (publicationId: string) => 
+    api.get(`/subscriptions/publications/${publicationId}/status`),
+  
   // Get publication subscription info (price, requirements)
-  getPublicationSubscriptionInfo: (publicationId: string) =>
-      api.get(`/subscriptions/publications/${publicationId}/info`),
-
+  getPublicationSubscriptionInfo: (publicationId: string) => 
+    api.get(`/subscriptions/publications/${publicationId}/info`),
+  
   // Get subscription stats for publication owners
   getPublicationSubscriptionStats: (publicationId: string) =>
-      api.get(`/subscriptions/publications/${publicationId}/stats`),
+    api.get(`/subscriptions/publications/${publicationId}/stats`),
 };
 
 export const analyticsAPI = {
   // Get views analytics for a publication
   getViews: (publicationId: string, startDate: string, endDate: string) =>
-      api.get(`/analytics/${publicationId}/views`, {
-        params: { startDate, endDate },
-      }),
+    api.get(`/analytics/${publicationId}/views`, {
+      params: { startDate, endDate },
+    }),
 
   // Get likes analytics for a publication
   getLikes: (publicationId: string, startDate: string, endDate: string) =>
-      api.get(`/analytics/${publicationId}/likes`, {
-        params: { startDate, endDate },
-      }),
+    api.get(`/analytics/${publicationId}/likes`, {
+      params: { startDate, endDate },
+    }),
 
   // Get follows analytics for a publication
   getFollows: (publicationId: string, startDate: string, endDate: string) =>
-      api.get(`/analytics/${publicationId}/follows`, {
-        params: { startDate, endDate },
-      }),
+    api.get(`/analytics/${publicationId}/follows`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get tips analytics for a publication
+  getTips: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/tips`, {
+      params: { startDate, endDate },
+    }),
 };
 
 export const notificationsAPI = {

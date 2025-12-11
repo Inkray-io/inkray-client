@@ -284,6 +284,17 @@ export interface ImageValidation {
 }
 
 /**
+ * Social accounts for publications
+ */
+export interface PublicationSocialAccounts {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  telegram?: string;
+  website?: string;
+}
+
+/**
  * Publication information from the backend
  */
 export interface Publication {
@@ -297,8 +308,12 @@ export interface Publication {
   owner: string;
   /** Optional vault ID for publication storage */
   vaultId?: string;
-  /** Optional avatar URL */
+  /** Optional avatar as base64 data URL */
   avatar?: string;
+  /** Array of tag slugs */
+  tags?: string[];
+  /** Social media accounts */
+  socialAccounts?: PublicationSocialAccounts | null;
   /** Publication creation date */
   createdAt: string;
   /** Number of articles published */
