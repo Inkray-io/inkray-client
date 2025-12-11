@@ -227,9 +227,8 @@ export const useArticleCreation = () => {
       async (
           title: string,
           content: string,
-          mediaFiles: MediaFile[] = [],
+          draftId: string,
           gated: boolean = false,
-          tempImages: TemporaryImage[] = []
       ): Promise<ArticleUploadResult> => {
         if (!currentAccount) {
           throw new Error('Wallet not connected');
@@ -245,21 +244,6 @@ export const useArticleCreation = () => {
         }));
 
         try {
-          // Convert temporary images to MediaFiles and merge with existing mediaFiles
-          let allMediaFiles = [ ...mediaFiles ];
-          if (tempImages.length > 0) {
-            log.info('Converting temporary images for upload', {
-              tempImageCount: tempImages.length,
-              existingMediaFiles: mediaFiles.length
-            });
-
-            const convertedTempImages = await convertTempImagesToMediaFiles(tempImages);
-            allMediaFiles = [ ...allMediaFiles, ...convertedTempImages ];
-
-            log.info('Media files merged successfully', {
-              totalMediaFiles: allMediaFiles.length
-            });
-          }
           // 1. Get user's publication
           const publication = await getUserPublication();
           if (!publication) {
@@ -305,12 +289,7 @@ export const useArticleCreation = () => {
 
           setState(prev => ({ ...prev, encryptionProgress: 50 }));
 
-          // 5. Skip media file encryption - media files are stored unencrypted for direct serving
-          // Only article content is encrypted with Seal, media files remain as plain binary data
-          log.info('Skipping media file encryption - storing as unencrypted for direct serving', {
-            mediaFileCount: allMediaFiles.length
-          });
-
+          // 5. Only article content is encrypted with Seal, media files remain as plain binary data
           setState(prev => ({ ...prev, encryptionProgress: 90, isEncrypting: false }));
           // 6. Prepare request data with encrypted content
           // Convert encrypted content to base64 for API transmission using Mysten's BCS utilities
@@ -318,20 +297,13 @@ export const useArticleCreation = () => {
 
           // Note: summary and categoryId are no longer sent - AI will generate them after publishing
           const requestData = {
+            draftId,
             title,
             content: encryptedContentBase64, // Base64-encoded encrypted content
             contentId: encryptedContent.contentIdHex, // Send content ID for backend storage
             publicationId: publication.publicationId,
             authorAddress: currentAccount.address,
             gated,
-            mediaFiles: allMediaFiles.map(file => ({
-              content: file.content, // Base64 encoded unencrypted content
-              filename: file.filename,
-              mimeType: file.mimeType,
-              size: file.size,
-              index: file.index,
-              // No contentId for unencrypted media files
-            })),
             // Encryption metadata for backend
             isEncrypted: true, // Flag to indicate content is encrypted
             encryptionMetadata: {
@@ -373,7 +345,7 @@ export const useArticleCreation = () => {
           }));
         }
       },
-      [ currentAccount, suiClient, getUserPublication, convertTempImagesToMediaFiles ]
+      [ currentAccount, suiClient, getUserPublication ]
   );
 
   /**

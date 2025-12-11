@@ -246,18 +246,12 @@ export const api = {
   // Note: summary and categoryId are no longer required - AI generates them after publishing
   articles: {
     create: (data: {
+      draftId: string;
       title: string;
       content: string;
       publicationId: string;
       authorAddress: string;
       gated?: boolean;
-      mediaFiles?: Array<{
-        content: string;
-        filename: string;
-        mimeType: string;
-        size?: number;
-        contentId?: string;
-      }>;
       isEncrypted?: boolean;
       contentId?: string;
       encryptionMetadata?: {

@@ -8,7 +8,6 @@ import React from "react";
 import type { DraftArticle } from '@/types/article';
 import { CONFIG } from "@/lib/config";
 import Link from 'next/link';
-import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
 
 
 function DraftListItem({ draft }: { draft: DraftArticle }) {

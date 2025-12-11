@@ -96,19 +96,24 @@ export default function CreateArticlePage() {
       return
     }
 
+    if (!draft) {
+      toast({
+        title: "No Draft",
+        description: "Draft not found. Please refresh the page and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       clearError()
-
-      // Get temporary images from editor
-      const currentTempImages = editorRef.current?.getTemporaryImages() || []
 
       const result = await createAndPublishArticle(
           title.trim(),
           content.trim(),
-          [], // existing media files
+          draft.id,
           gated,
-          currentTempImages // temporary images from editor
-      )
+      );
 
 
       editorRef.current?.clearTemporaryImages()

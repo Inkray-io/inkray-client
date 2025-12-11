@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { CONFIG } from './config';
 import { PaginatedDraftArticles } from "@/types/article";
-import { ApiResponse, ApiResponseParser } from "@/types/api";
+import { ApiResponse } from "@/types/api";
 
 const API_BASE_URL = CONFIG.API_URL;
 
