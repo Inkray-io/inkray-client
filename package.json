@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@assistant-ui/react": "0.11.49",
     "@milkdown/crepe": "^7.16.0",
     "@milkdown/plugin-listener": "^7.16.0",
     "@milkdown/react": "^7.16.0",
@@ -57,5 +58,8 @@
     "eslint-config-next": "15.4.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@assistant-ui/tap": "0.3.1"
   }
 }

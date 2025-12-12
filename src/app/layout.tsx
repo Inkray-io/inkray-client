@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 
 const inter = Inter({
@@ -15,6 +14,8 @@ import { CacheProvider } from '@/components/providers/CacheProvider'
 import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { OnboardingModal } from '@/components/onboarding'
+import { ChatModal } from '@/components/chat'
+import { ChatProvider } from '@/components/chat/ChatProvider'
 
 export const metadata: Metadata = {
   title: 'Inkray – True Digital Ownership for Creators',
@@ -84,28 +85,16 @@ export default function RootLayout({
           <WalletProviders>
             <WalletChangeProvider>
               <AuthProvider>
-                {children}
-                <Toaster />
-                <OnboardingModal />
+                <ChatProvider>
+                  {children}
+                  <Toaster />
+                  <OnboardingModal />
+                  <ChatModal />
+                </ChatProvider>
               </AuthProvider>
             </WalletChangeProvider>
           </WalletProviders>
         </CacheProvider>
-
-        {/* DigitalOcean AI Chatbot */}
-        <Script
-          id="digitalocean-chatbot"
-          src="https://nabqygyhmmhom56tewiv3yla.agents.do-ai.run/static/chatbot/widget.js"
-          strategy="afterInteractive"
-          data-agent-id="ec14d47c-d74a-11f0-b074-4e013e2ddde4"
-          data-chatbot-id="LL0Wk_OGxrc1lQN2twhwokas-HBXWLIg"
-          data-name="Inkray"
-          data-primary-color="#005EFC"
-          data-secondary-color="#FAFAFA"
-          data-button-background-color="#005EFC"
-          data-starting-message="Hello! How can I help you today?"
-          data-logo="https://inkray.xyz/favicon.ico"
-        />
       </body>
     </html>
   )
