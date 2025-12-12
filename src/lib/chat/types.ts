@@ -11,11 +11,18 @@ export interface ChatMessage {
 
 /**
  * Source from DO Agent's knowledge base
+ * Note: DO Agent API uses 'page_content' not 'content'
  */
 export interface RetrievedSource {
-  content: string;
+  id?: string;
+  page_content: string;
   filename: string;
   score: number;
+  data_source_id?: string;
+  metadata?: Record<string, unknown>;
+  // Enriched from database
+  articleTitle?: string;
+  articleSlug?: string;
 }
 
 /**

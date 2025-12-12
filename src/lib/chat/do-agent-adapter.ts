@@ -91,6 +91,7 @@ export const DoAgentAdapter: ChatModelAdapter = {
             }
 
             if (chunk.retrieval_info?.retrieved_data) {
+              console.log('[DEBUG] Received sources from backend:', chunk.retrieval_info.retrieved_data);
               sources = chunk.retrieval_info.retrieved_data;
             }
 
@@ -116,11 +117,13 @@ export const DoAgentAdapter: ChatModelAdapter = {
             fullText += chunk.content;
           }
           if (chunk?.retrieval_info?.retrieved_data) {
+            console.log('[DEBUG] Received sources from buffer:', chunk.retrieval_info.retrieved_data);
             sources = chunk.retrieval_info.retrieved_data;
           }
         }
 
         // Final yield with complete content
+        console.log('[DEBUG] Final yield - sources count:', sources.length);
         yield {
           content: [{ type: 'text' as const, text: fullText }],
           ...(sources.length > 0 && {

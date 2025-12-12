@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, FileText, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RetrievedSource } from '@/lib/chat/types';
@@ -9,10 +10,37 @@ interface SourcesCitationProps {
   sources: RetrievedSource[];
 }
 
+/**
+ * Process sources: filter invalid scores, deduplicate by article, sort by relevance
+ */
+function processAndDeduplicateSources(sources: RetrievedSource[]): RetrievedSource[] {
+  // 1. Filter out invalid scores (keep only 0-1 range)
+  const validSources = sources.filter(s => s.score >= 0 && s.score <= 1);
+
+  // 2. Deduplicate by articleSlug (or filename), keeping the highest score
+  const byKey = new Map<string, RetrievedSource>();
+  for (const source of validSources) {
+    const key = source.articleSlug || source.filename;
+    const existing = byKey.get(key);
+    if (!existing || source.score > existing.score) {
+      byKey.set(key, source);
+    }
+  }
+
+  // 3. Sort by score (highest first) and limit to top 5
+  return Array.from(byKey.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
 export function SourcesCitation({ sources }: SourcesCitationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!sources || sources.length === 0) return null;
+
+  const processedSources = processAndDeduplicateSources(sources);
+
+  if (processedSources.length === 0) return null;
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-slate-200/60 bg-gradient-to-br from-slate-50/80 to-white/90 backdrop-blur-sm">
@@ -25,7 +53,7 @@ export function SourcesCitation({ sources }: SourcesCitationProps) {
             <FileText className="h-3.5 w-3.5 text-[#005EFC]" />
           </div>
           <span className="text-sm font-medium text-slate-700">
-            Sources used ({sources.length})
+            Sources used ({processedSources.length})
           </span>
         </div>
         <ChevronDown
@@ -44,8 +72,8 @@ export function SourcesCitation({ sources }: SourcesCitationProps) {
       >
         <div className="overflow-hidden">
           <div className="space-y-2 px-4 pb-4">
-            {sources.map((source, index) => (
-              <SourceCard key={index} source={source} index={index} />
+            {processedSources.map((source, index) => (
+              <SourceCard key={source.articleSlug || index} source={source} index={index} />
             ))}
           </div>
         </div>
@@ -63,25 +91,26 @@ function SourceCard({ source, index }: { source: RetrievedSource; index: number 
         ? 'bg-amber-500'
         : 'bg-slate-400';
 
-  return (
-    <div
-      className="group relative overflow-hidden rounded-lg border border-slate-200/50 bg-white p-3 transition-all duration-200 hover:border-[#005EFC]/20 hover:shadow-sm"
-      style={{
-        animationDelay: `${index * 50}ms`,
-      }}
-    >
+  // Display article title if available, otherwise fallback to cleaned filename
+  const displayTitle = source.articleTitle || cleanFilename(source.filename);
+  const hasLink = !!source.articleSlug;
+
+  const cardContent = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium text-slate-800">
-              {source.filename || 'Document'}
+            <span className="truncate text-sm font-medium text-slate-800 group-hover:text-[#005EFC] transition-colors">
+              {displayTitle}
             </span>
-            <ExternalLink className="h-3 w-3 flex-shrink-0 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+            {hasLink && (
+              <ExternalLink className="h-3 w-3 flex-shrink-0 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+            )}
           </div>
 
           <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
-            {source.content.substring(0, 150)}
-            {source.content.length > 150 && '...'}
+            {source.page_content.substring(0, 150)}
+            {source.page_content.length > 150 && '...'}
           </p>
         </div>
 
@@ -100,6 +129,40 @@ function SourceCard({ source, index }: { source: RetrievedSource; index: number 
 
       {/* Subtle gradient accent */}
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#005EFC]/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+    </>
+  );
+
+  if (hasLink) {
+    return (
+      <Link
+        href={`/article?id=${source.articleSlug}`}
+        className="group relative block overflow-hidden rounded-lg border border-slate-200/50 bg-white p-3 transition-all duration-200 hover:border-[#005EFC]/20 hover:shadow-sm"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className="group relative overflow-hidden rounded-lg border border-slate-200/50 bg-white p-3 transition-all duration-200"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      {cardContent}
     </div>
   );
+}
+
+/**
+ * Clean filename by removing path prefix
+ */
+function cleanFilename(filename: string): string {
+  // Strip path prefix like "inkray-testnet/articles/"
+  const match = filename.match(/articles\/(.+)$/);
+  if (match) {
+    // Remove .md extension if present
+    return match[1].replace(/\.md$/, '');
+  }
+  return filename;
 }

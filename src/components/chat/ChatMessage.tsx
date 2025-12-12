@@ -1,11 +1,11 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { User, Sparkles, Copy, Check } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { SourcesCitation } from './SourcesCitation';
 import type { RetrievedSource } from '@/lib/chat/types';
-import { useState } from 'react';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -81,7 +81,45 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
               isUser && 'prose-p:text-slate-800'
             )}
           >
-            <p className="whitespace-pre-wrap">{content}</p>
+            {isUser ? (
+              <p className="whitespace-pre-wrap">{content}</p>
+            ) : (
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                  em: ({ children }) => <em>{children}</em>,
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                  li: ({ children }) => <li>{children}</li>,
+                  code: ({ children }) => (
+                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700 font-mono">
+                      {children}
+                    </code>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto mb-2 text-sm">
+                      {children}
+                    </pre>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} className="text-[#005EFC] hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  h1: ({ children }) => <h1 className="text-lg font-semibold mb-2">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-2 border-slate-300 pl-3 italic text-slate-600 mb-2">
+                      {children}
+                    </blockquote>
+                  ),
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            )}
           </div>
 
           {/* Sources (only for assistant messages) */}
