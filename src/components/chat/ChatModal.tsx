@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageCircle, X, Minimize2, RotateCcw } from 'lucide-react';
+import { MessageCircle, X, Minimize2, Maximize2, RotateCcw } from 'lucide-react';
 import { useAssistantRuntime } from '@assistant-ui/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,7 @@ import { ChatThread } from './ChatThread';
 
 export function ChatModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
   const assistantRuntime = useAssistantRuntime();
@@ -59,18 +60,30 @@ export function ChatModal() {
         )}
       </button>
 
+      {/* Backdrop for fullscreen mode */}
+      {isOpen && isFullscreen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsFullscreen(false)}
+        />
+      )}
+
       {/* Chat Window */}
       <div
         className={cn(
-          'fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 ease-out',
-          'w-[400px] max-w-[calc(100vw-48px)]',
-          'ring-1 ring-slate-200/50',
+          'fixed z-50 flex flex-col overflow-hidden bg-white shadow-2xl transition-all duration-300 ease-out',
+          'ring-1 ring-slate-200/50 rounded-2xl',
+          isFullscreen
+            ? 'inset-6 sm:inset-12 lg:inset-20'
+            : 'bottom-6 right-6 w-[400px] max-w-[calc(100vw-48px)]',
           isOpen
-            ? 'h-[600px] max-h-[calc(100vh-48px)] scale-100 opacity-100'
+            ? isFullscreen
+              ? 'h-auto scale-100 opacity-100'
+              : 'h-[600px] max-h-[calc(100vh-48px)] scale-100 opacity-100'
             : 'pointer-events-none h-0 scale-95 opacity-0'
         )}
         style={{
-          transformOrigin: 'bottom right',
+          transformOrigin: isFullscreen ? 'center' : 'bottom right',
         }}
       >
         {/* Header */}
@@ -103,11 +116,16 @@ export function ChatModal() {
               <RotateCcw className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsFullscreen(!isFullscreen)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              aria-label="Minimize chat"
+              aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             >
-              <Minimize2 className="h-4 w-4" />
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </button>
             <button
               onClick={() => setIsOpen(false)}
