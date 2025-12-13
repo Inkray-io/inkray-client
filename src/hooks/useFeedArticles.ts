@@ -231,7 +231,9 @@ export const useFeedArticles = (
       engagement: {
         likes: article.totalLikes,
         comments: 0, // TODO: Implement comments count from backend
-        views: article.viewCount ?? 0,
+        views: (article.viewCount ?? 0) + (article.chatViewCount ?? 0), // Total views
+        pageViews: article.viewCount ?? 0, // Views from article page
+        chatViews: article.chatViewCount ?? 0, // Views from AI chat mentions
         isLiked: article.isLiked,
         isBookmarked: article.isBookmarked,
         bookmarkCount: article.totalBookmarks,

@@ -71,8 +71,10 @@ export interface Article {
   totalBookmarks?: number;
   /** Whether the current user has bookmarked this article (only set when authenticated) */
   isBookmarked?: boolean;
-  /** Total view count for this article */
+  /** View count from article page visits */
   viewCount?: number;
+  /** View count from AI chat mentions */
+  chatViewCount?: number;
   /** Publication owner address for ownership validation */
   publicationOwner?: string;
   /** Whether this article requires a publication subscription to access */
@@ -388,6 +390,7 @@ export interface PublicationArticle {
   totalLikes: number;
   isLiked?: boolean;
   viewCount?: number;
+  chatViewCount?: number;
   publicationOwner?: string;
   vaultId?: string;
   publicationId?: string;
