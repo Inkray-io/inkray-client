@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useState } from 'react';
-import { User, Sparkles, Copy, Check } from 'lucide-react';
+import { User, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { SourcesCitation } from './SourcesCitation';
@@ -12,10 +12,11 @@ interface ChatMessageProps {
   content: string;
   sources?: RetrievedSource[];
   isStreaming?: boolean;
+  userAvatar?: string | null;
 }
 
 export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
-  function ChatMessage({ role, content, sources, isStreaming }, ref) {
+  function ChatMessage({ role, content, sources, isStreaming, userAvatar }, ref) {
     const [copied, setCopied] = useState(false);
     const isUser = role === 'user';
 
@@ -34,20 +35,25 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
         )}
       >
         {/* Avatar */}
-        <div
-          className={cn(
-            'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105',
-            isUser
-              ? 'bg-gradient-to-br from-[#005EFC] to-[#0047CC] shadow-md shadow-[#005EFC]/20'
-              : 'bg-gradient-to-br from-slate-100 to-slate-200 ring-1 ring-slate-200/50'
-          )}
-        >
-          {isUser ? (
-            <User className="h-4 w-4 text-white" />
+        {isUser ? (
+          userAvatar ? (
+            <img
+              src={userAvatar}
+              alt="User"
+              className="h-8 w-8 flex-shrink-0 rounded-xl object-cover transition-transform duration-200 group-hover:scale-105"
+            />
           ) : (
-            <Sparkles className="h-4 w-4 text-slate-600" />
-          )}
-        </div>
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#005EFC] to-[#0047CC] shadow-md shadow-[#005EFC]/20 transition-transform duration-200 group-hover:scale-105">
+              <User className="h-4 w-4 text-white" />
+            </div>
+          )
+        ) : (
+          <img
+            src="/icon.png"
+            alt="Inkray"
+            className="h-8 w-8 flex-shrink-0 rounded-xl object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+        )}
 
         {/* Content */}
         <div className="min-w-0 flex-1 space-y-1">

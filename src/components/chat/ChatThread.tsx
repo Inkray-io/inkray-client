@@ -10,12 +10,14 @@ import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
 import { Sparkles } from 'lucide-react';
 import type { RetrievedSource } from '@/lib/chat/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function ChatThread() {
   const threadRuntime = useThreadRuntime();
   const messages = useThread((t) => t.messages);
   const isRunning = useThread((t) => t.isRunning);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { account } = useAuth();
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -44,6 +46,7 @@ export function ChatThread() {
                 key={message.id}
                 message={message}
                 isStreaming={isRunning && index === messages.length - 1 && message.role === 'assistant'}
+                userAvatar={account?.avatar}
               />
             ))}
           </div>
@@ -64,9 +67,11 @@ export function ChatThread() {
 function MessageWrapper({
   message,
   isStreaming,
+  userAvatar,
 }: {
   message: ThreadMessage;
   isStreaming: boolean;
+  userAvatar?: string | null;
 }) {
   const content = message.content
     .filter((c): c is { type: 'text'; text: string } => c.type === 'text' && 'text' in c)
@@ -83,6 +88,7 @@ function MessageWrapper({
       content={content}
       sources={sources}
       isStreaming={isStreaming}
+      userAvatar={userAvatar}
     />
   );
 }
