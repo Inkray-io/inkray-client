@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageCircle, X, Minimize2 } from 'lucide-react';
+import { MessageCircle, X, Minimize2, RotateCcw } from 'lucide-react';
+import { useAssistantRuntime } from '@assistant-ui/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChatThread } from './ChatThread';
@@ -10,6 +11,7 @@ export function ChatModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
+  const assistantRuntime = useAssistantRuntime();
 
   // Check if user has interacted before (for pulse animation)
   useEffect(() => {
@@ -92,6 +94,14 @@ export function ChatModal() {
           </div>
 
           <div className="relative flex items-center gap-1">
+            <button
+              onClick={() => assistantRuntime.switchToNewThread()}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              aria-label="New chat"
+              title="New chat"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
             <button
               onClick={() => setIsOpen(false)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
