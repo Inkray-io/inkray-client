@@ -11,11 +11,11 @@ interface SourcesCitationProps {
 }
 
 /**
- * Process sources: filter invalid scores, deduplicate by article, sort by relevance
+ * Process sources: filter negative scores, deduplicate by article, sort by relevance
  */
 function processAndDeduplicateSources(sources: RetrievedSource[]): RetrievedSource[] {
-  // 1. Filter out invalid scores (keep only 0-1 range)
-  const validSources = sources.filter(s => s.score >= 0 && s.score <= 1);
+  // 1. Filter out negative scores
+  const validSources = sources.filter(s => s.score >= 0);
 
   // 2. Deduplicate by articleSlug (or filename), keeping the highest score
   const byKey = new Map<string, RetrievedSource>();
@@ -83,49 +83,25 @@ export function SourcesCitation({ sources }: SourcesCitationProps) {
 }
 
 function SourceCard({ source, index }: { source: RetrievedSource; index: number }) {
-  const relevancePercent = Math.round(source.score * 100);
-  const relevanceColor =
-    relevancePercent >= 80
-      ? 'bg-emerald-500'
-      : relevancePercent >= 60
-        ? 'bg-amber-500'
-        : 'bg-slate-400';
-
   // Display article title if available, otherwise fallback to cleaned filename
   const displayTitle = source.articleTitle || cleanFilename(source.filename);
   const hasLink = !!source.articleSlug;
 
   const cardContent = (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium text-slate-800 group-hover:text-[#005EFC] transition-colors">
-              {displayTitle}
-            </span>
-            {hasLink && (
-              <ExternalLink className="h-3 w-3 flex-shrink-0 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
-            )}
-          </div>
-
-          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
-            {source.page_content.substring(0, 150)}
-            {source.page_content.length > 150 && '...'}
-          </p>
-        </div>
-
-        <div className="flex flex-shrink-0 flex-col items-end gap-1">
-          <div className="flex items-center gap-1.5">
-            <div className={cn('h-1.5 w-1.5 rounded-full', relevanceColor)} />
-            <span className="text-xs font-medium text-slate-500">
-              {relevancePercent}%
-            </span>
-          </div>
-          <span className="text-[10px] uppercase tracking-wider text-slate-400">
-            match
-          </span>
-        </div>
+      <div className="flex items-center gap-2">
+        <span className="truncate text-sm font-medium text-slate-800 group-hover:text-[#005EFC] transition-colors">
+          {displayTitle}
+        </span>
+        {hasLink && (
+          <ExternalLink className="h-3 w-3 flex-shrink-0 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+        )}
       </div>
+
+      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
+        {source.page_content.substring(0, 150)}
+        {source.page_content.length > 150 && '...'}
+      </p>
 
       {/* Subtle gradient accent */}
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#005EFC]/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
