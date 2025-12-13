@@ -11,7 +11,9 @@ import { RequireAuth } from '@/components/auth/RequireAuth'
 import { RequirePublication } from '@/components/auth/RequirePublication'
 import { useArticleCreation } from '@/hooks/useArticleCreation'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, Trash2 } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import useDraftMode from "@/hooks/useDraftMode";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
@@ -54,6 +56,7 @@ export default function CreateArticlePage() {
   const [ content, setContent ] = useState('')
   const [ gated, setGated ] = useState(false)
   const [ isWaitingForRedirect, setIsWaitingForRedirect ] = useState(false)
+  const [ clearDialogOpen, setClearDialogOpen ] = useState(false)
 
   // Prevent autosave from running when we programmatically clear editor state
   // (for example after deleting a draft). This is a short-lived guard used
@@ -152,10 +155,13 @@ export default function CreateArticlePage() {
     // Clear the guard on the next tick — autosave is allowed again after that.
     setTimeout(() => { skipAutosaveRef.current = false }, 50)
   }
-  const clearDraft = () => {
-    if (confirm('Are you sure you want to clear this draft?')) {
-      destroyDraft()
-    }
+  const handleClearDraftClick = () => {
+    setClearDialogOpen(true)
+  }
+
+  const handleConfirmClearDraft = async () => {
+    await destroyDraft()
+    setClearDialogOpen(false)
   }
 
   return (
@@ -184,6 +190,26 @@ export default function CreateArticlePage() {
                               Last saved: {lastSavedAt.toLocaleTimeString()}
                             </span>
                         )
+                    )}
+                    {account && account.id === draft?.authorId && draft && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClearDraftClick}
+                                disabled={!draft || deletingDraft}
+                                className="size-9 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              {deletingDraft ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                  <Trash2 className="size-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Clear draft</TooltipContent>
+                        </Tooltip>
                     )}
                     {account && account.id === draft?.authorId && draft && (
                         <Button
@@ -310,23 +336,22 @@ export default function CreateArticlePage() {
                           ~{calculateReadingTime(getPlainTextFromMarkdown(content))} min read
                         </span>
                       </div>
-
-                      {account && account.id === draft?.authorId && (
-                          <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={clearDraft}
-                              disabled={!draft || deletingDraft}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                          >
-                            {deletingDraft ? 'Clearing Draft ...' : 'Clear Draft'}
-                          </Button>
-                      )}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <ConfirmationDialog
+                open={clearDialogOpen}
+                onOpenChange={setClearDialogOpen}
+                title="Clear Draft"
+                description="Are you sure you want to clear this draft? All content will be permanently deleted."
+                confirmLabel="Clear Draft"
+                onConfirm={handleConfirmClearDraft}
+                isLoading={deletingDraft}
+                variant="destructive"
+            />
           </AppLayout>
         </RequirePublication>
       </RequireAuth>
