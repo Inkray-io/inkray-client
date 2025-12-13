@@ -15,10 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   HiDocumentText,
   HiTag,
-  HiEye,
   HiCheckCircle,
 } from "react-icons/hi2";
-import { cn } from "@/lib/utils";
 import { RssFeedPreviewResult, FieldMappings } from "@/lib/api";
 
 interface FieldMappingDialogProps {
@@ -176,22 +174,6 @@ export function FieldMappingDialog({
             </div>
           </div>
 
-          {/* Article Preview Card */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-              <HiEye className="size-4 text-gray-500" />
-              Article Preview
-            </div>
-            <div className="border border-gray-200 rounded-xl p-4 bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {truncate(rawFields[titleField], 80) || "Untitled Article"}
-              </h3>
-              <p className="text-sm text-gray-600 line-clamp-4">
-                {truncate(rawFields[contentField], 300) || "No content available"}
-              </p>
-            </div>
-          </div>
-
           {/* Suggested Mapping Info */}
           {preview.sampleItem.suggestedMapping && (
             <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -212,29 +194,6 @@ export function FieldMappingDialog({
             </div>
           )}
 
-          {/* Available Fields Reference */}
-          <details className="group">
-            <summary className="text-sm font-medium text-gray-500 cursor-pointer hover:text-gray-700">
-              View all available fields ({availableFields.length})
-            </summary>
-            <div className="mt-2 p-3 bg-gray-50 rounded-lg max-h-40 overflow-y-auto">
-              <div className="flex flex-wrap gap-1.5">
-                {availableFields.map((field) => (
-                  <Badge
-                    key={field}
-                    variant="outline"
-                    className={cn(
-                      "text-xs cursor-default",
-                      field === titleField && "bg-blue-100 border-blue-300",
-                      field === contentField && "bg-emerald-100 border-emerald-300"
-                    )}
-                  >
-                    {field}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </details>
         </div>
 
         <DialogFooter className="gap-2">
