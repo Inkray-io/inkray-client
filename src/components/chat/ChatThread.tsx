@@ -101,11 +101,10 @@ function EmptyState() {
 
       {/* Text */}
       <h3 className="mb-2 text-lg font-semibold text-slate-800">
-        Ask me anything about Inkray
+        Ask me anything
       </h3>
       <p className="max-w-[280px] text-center text-sm leading-relaxed text-slate-500">
-        I can help you with creating publications, understanding Walrus storage,
-        monetization, and more.
+        I can help you with information from the content published on the platform, Inkray or any Sui related topics.
       </p>
 
       {/* Decorative elements */}
