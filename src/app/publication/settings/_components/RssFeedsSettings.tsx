@@ -15,12 +15,14 @@ import {
   HiXMark,
   HiPause,
   HiPlay,
+  HiCog6Tooth,
 } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
+import { FieldMappingDialog } from "./FieldMappingDialog";
 import { useRssFeeds } from "@/hooks/useRssFeeds";
-import { RssFeed } from "@/lib/api";
+import { RssFeed, RssFeedPreviewResult, FieldMappings } from "@/lib/api";
 
 interface RssFeedsSettingsProps {
   publicationId: string;
@@ -266,6 +268,13 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
   const [addError, setAddError] = useState<string | null>(null);
   const [deletingFeedId, setDeletingFeedId] = useState<string | null>(null);
 
+  // Field mapping state
+  const [showFieldMapping, setShowFieldMapping] = useState(false);
+  const [previewResult, setPreviewResult] = useState<RssFeedPreviewResult | null>(null);
+  const [customMappings, setCustomMappings] = useState<FieldMappings | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [pendingAddFeed, setPendingAddFeed] = useState(false); // Track if user clicked "Add Feed" without configuring fields
+
   const {
     feeds,
     isLoading,
@@ -275,6 +284,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     deleteFeed,
     triggerSync,
     validateFeed,
+    previewFeed,
     isAddingFeed,
     isSyncing,
   } = useRssFeeds({ publicationId });
@@ -285,6 +295,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     setIsValidating(true);
     setValidationResult(null);
     setAddError(null);
+    setCustomMappings(null); // Reset custom mappings when re-validating
 
     const result = await validateFeed(newFeedUrl);
     setValidationResult(result);
@@ -296,9 +307,32 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     }
   };
 
-  const handleAddFeed = async () => {
+  const handleOpenFieldMapping = async () => {
     if (!newFeedUrl.trim()) return;
 
+    setIsLoadingPreview(true);
+    const preview = await previewFeed(newFeedUrl);
+    setPreviewResult(preview);
+    setIsLoadingPreview(false);
+
+    if (preview?.valid && preview.sampleItem) {
+      setShowFieldMapping(true);
+    }
+  };
+
+  const handleFieldMappingConfirm = async (mappings: FieldMappings) => {
+    setCustomMappings(mappings);
+    setShowFieldMapping(false);
+
+    // If user clicked "Add Feed" and we were waiting for field configuration, now add the feed
+    if (pendingAddFeed) {
+      setPendingAddFeed(false);
+      await doAddFeed(mappings);
+    }
+  };
+
+  // Internal function to actually add the feed
+  const doAddFeed = async (mappings: FieldMappings) => {
     setAddError(null);
 
     try {
@@ -306,6 +340,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
         url: newFeedUrl,
         name: newFeedName || undefined,
         autoPublish: newFeedAutoPublish,
+        fieldMappings: mappings,
       });
 
       // Reset form on success
@@ -313,8 +348,43 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
       setNewFeedName("");
       setNewFeedAutoPublish(false);
       setValidationResult(null);
+      setCustomMappings(null);
+      setPreviewResult(null);
     } catch (err: any) {
       setAddError(err.message || "Failed to add feed");
+    }
+  };
+
+  const handleAddFeed = async () => {
+    if (!newFeedUrl.trim()) return;
+
+    // If user has already configured field mappings, proceed directly
+    if (customMappings) {
+      await doAddFeed(customMappings);
+      return;
+    }
+
+    // User hasn't configured fields yet - show the dialog first
+    setAddError(null);
+    setPendingAddFeed(true);
+
+    // If we don't have a preview yet, load it first
+    if (!previewResult) {
+      setIsLoadingPreview(true);
+      const preview = await previewFeed(newFeedUrl);
+      setPreviewResult(preview);
+      setIsLoadingPreview(false);
+
+      if (preview?.valid && preview.sampleItem) {
+        setShowFieldMapping(true);
+      } else {
+        // Preview failed, reset pending state
+        setPendingAddFeed(false);
+        setAddError("Failed to load feed preview. Please try again.");
+      }
+    } else {
+      // We already have a preview, just show the dialog
+      setShowFieldMapping(true);
     }
   };
 
@@ -407,7 +477,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                   {validationResult.valid ? (
                     <>
                       <HiCheckCircle className="size-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium text-emerald-800">
                           Valid RSS Feed
                         </p>
@@ -430,6 +500,39 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                         </p>
                       </div>
                     </>
+                  )}
+                </div>
+              )}
+
+              {/* Configure Fields Button - shown after successful validation */}
+              {validationResult?.valid && (
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenFieldMapping}
+                    disabled={isLoadingPreview}
+                    className="flex-shrink-0"
+                  >
+                    {isLoadingPreview ? (
+                      <>
+                        <HiArrowPath className="size-3.5 mr-1.5 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <HiCog6Tooth className="size-3.5 mr-1.5" />
+                        Configure Fields
+                      </>
+                    )}
+                  </Button>
+                  <span className="text-xs text-gray-500">
+                    Customize which RSS fields map to title & content
+                  </span>
+                  {customMappings && (
+                    <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      Custom mapping set
+                    </Badge>
                   )}
                 </div>
               )}
@@ -489,6 +592,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                 disabled={
                   !newFeedUrl.trim() ||
                   isAddingFeed ||
+                  isLoadingPreview ||
                   (validationResult !== null && !validationResult.valid)
                 }
                 className="w-full bg-primary hover:bg-primary/90 text-white"
@@ -497,6 +601,11 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                   <>
                     <HiArrowPath className="size-4 mr-2 animate-spin" />
                     Adding Feed...
+                  </>
+                ) : isLoadingPreview ? (
+                  <>
+                    <HiArrowPath className="size-4 mr-2 animate-spin" />
+                    Loading Preview...
                   </>
                 ) : (
                   <>
@@ -577,6 +686,20 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
           </div>
         </div>
       </div>
+
+      {/* Field Mapping Dialog */}
+      <FieldMappingDialog
+        open={showFieldMapping}
+        onOpenChange={(open) => {
+          setShowFieldMapping(open);
+          // If dialog is being closed (cancelled), reset pending state
+          if (!open) {
+            setPendingAddFeed(false);
+          }
+        }}
+        preview={previewResult}
+        onConfirm={handleFieldMappingConfirm}
+      />
     </SettingsSection>
   );
 }

@@ -451,6 +451,11 @@ export const draftsAPI = {
 };
 
 // RSS Feeds types
+export interface FieldMappings {
+  titleField?: string;
+  contentField?: string;
+}
+
 export interface RssFeed {
   id: string;
   publicationId: string;
@@ -461,6 +466,7 @@ export interface RssFeed {
   lastSyncAt: string | null;
   lastSyncError: string | null;
   itemCount: number;
+  fieldMappings?: FieldMappings | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -486,6 +492,21 @@ export interface RssFeedValidationResult {
   error?: string;
 }
 
+export interface RssFeedPreviewResult {
+  valid: boolean;
+  feedTitle?: string;
+  feedDescription?: string;
+  itemCount?: number;
+  sampleItem?: {
+    rawFields: Record<string, any>;
+    suggestedMapping: {
+      titleField: string;
+      contentField: string;
+    };
+  };
+  error?: string;
+}
+
 export const rssFeedsAPI = {
   // Create a new RSS feed subscription
   createFeed: (data: {
@@ -493,6 +514,7 @@ export const rssFeedsAPI = {
     publicationId: string;
     name?: string;
     autoPublish?: boolean;
+    fieldMappings?: FieldMappings;
   }) => api.post<ApiResponse<RssFeed>>('/rss-feeds', data),
 
   // Get all feeds for a publication
@@ -530,4 +552,8 @@ export const rssFeedsAPI = {
   // Validate an RSS feed URL
   validateFeed: (url: string) =>
     api.post<ApiResponse<RssFeedValidationResult>>('/rss-feeds/validate', { url }),
+
+  // Get a preview of the RSS feed with available fields for mapping
+  previewFeed: (url: string) =>
+    api.post<ApiResponse<RssFeedPreviewResult>>('/rss-feeds/preview', { url }),
 };

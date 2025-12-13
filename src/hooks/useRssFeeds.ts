@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   rssFeedsAPI,
   RssFeed,
-  RssFeedSyncHistory,
   RssFeedValidationResult,
+  RssFeedPreviewResult,
+  FieldMappings,
 } from '@/lib/api';
 
 interface UseRssFeedsOptions {
@@ -20,6 +21,7 @@ interface UseRssFeedsReturn {
     url: string;
     name?: string;
     autoPublish?: boolean;
+    fieldMappings?: FieldMappings;
   }) => Promise<RssFeed | null>;
   updateFeed: (
     feedId: string,
@@ -28,6 +30,7 @@ interface UseRssFeedsReturn {
   deleteFeed: (feedId: string) => Promise<boolean>;
   triggerSync: (feedId: string) => Promise<boolean>;
   validateFeed: (url: string) => Promise<RssFeedValidationResult | null>;
+  previewFeed: (url: string) => Promise<RssFeedPreviewResult | null>;
   isAddingFeed: boolean;
   isSyncing: string | null; // feedId being synced, or null
 }
@@ -74,6 +77,7 @@ export function useRssFeeds({
       url: string;
       name?: string;
       autoPublish?: boolean;
+      fieldMappings?: FieldMappings;
     }): Promise<RssFeed | null> => {
       if (!publicationId) return null;
 
@@ -191,6 +195,25 @@ export function useRssFeeds({
     []
   );
 
+  const previewFeed = useCallback(
+    async (url: string): Promise<RssFeedPreviewResult | null> => {
+      try {
+        setError(null);
+        const response = await rssFeedsAPI.previewFeed(url);
+        return response.data?.data || null;
+      } catch (err: any) {
+        const errorMessage =
+          err?.response?.data?.message ||
+          err?.message ||
+          'Failed to preview RSS feed';
+        setError(errorMessage);
+        console.error('Failed to preview RSS feed:', err);
+        return { valid: false, error: errorMessage };
+      }
+    },
+    []
+  );
+
   return {
     feeds,
     isLoading,
@@ -201,6 +224,7 @@ export function useRssFeeds({
     deleteFeed,
     triggerSync,
     validateFeed,
+    previewFeed,
     isAddingFeed,
     isSyncing,
   };
