@@ -9,3 +9,4 @@ export { GeneralSettings } from "./GeneralSettings";
 export { SubscribersSettings } from "./SubscribersSettings";
 export { AnalyticsSettings } from "./AnalyticsSettings";
 export { AirdropSettings } from "./AirdropSettings";
+export { RssFeedsSettings } from "./RssFeedsSettings";

@@ -16,6 +16,7 @@ import {
   HiGift,
   HiArrowDownTray,
   HiPaperAirplane,
+  HiRss,
 } from "react-icons/hi2";
 import { addressesEqual } from "@/utils/address";
 import Link from "next/link";
@@ -28,6 +29,7 @@ import {
   SubscribersSettings,
   AnalyticsSettings,
   AirdropSettings,
+  RssFeedsSettings,
 } from "./_components";
 
 interface TabConfig {
@@ -43,6 +45,12 @@ const TABS: TabConfig[] = [
     label: "Subscription",
     icon: HiCurrencyDollar,
     component: SubscriptionSettings,
+  },
+  {
+    id: "rss-feeds",
+    label: "RSS Feeds",
+    icon: HiRss,
+    component: RssFeedsSettings,
   },
   {
     id: "export",
