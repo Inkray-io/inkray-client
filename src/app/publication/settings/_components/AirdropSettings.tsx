@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
+import { SettingsInfoBox } from "./SettingsInfoBox";
 import { useAirdrop, AirdropStep } from "@/hooks/useAirdrop";
 import { NftAirdropContent } from "./NftAirdropContent";
 import { useWalletBalances, formatTokenBalance, TokenBalance } from "@/hooks/useWalletBalances";
@@ -740,9 +741,12 @@ export function AirdropSettings({ publicationId }: AirdropSettingsProps) {
       </SettingsCard>
 
       {/* Info Note */}
-      <div className="bg-gray-100/30 rounded-xl p-4 border border-gray-200">
-        <p className="text-sm text-gray-500">
-          <strong className="text-gray-900">How it works:</strong>{" "}
+      <SettingsInfoBox
+        icon={HiSparkles}
+        title="How it works"
+        variant="tip"
+      >
+        <p>
           {airdropType === "token" ? (
             <>
               Select a token from your wallet, choose how much to distribute, filter which
@@ -757,7 +761,7 @@ export function AirdropSettings({ publicationId }: AirdropSettingsProps) {
             </>
           )}
         </p>
-      </div>
+      </SettingsInfoBox>
     </SettingsSection>
   );
 }

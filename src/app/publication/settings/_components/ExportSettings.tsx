@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HiEnvelope, HiWallet, HiArrowDownTray, HiClipboard, HiCheckCircle, HiExclamationCircle } from "react-icons/hi2";
+import { HiEnvelope, HiWallet, HiArrowDownTray, HiClipboard, HiCheckCircle, HiExclamationCircle, HiShieldCheck } from "react-icons/hi2";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
 import { SegmentedControl } from "./SegmentedControl";
+import { SettingsInfoBox } from "./SettingsInfoBox";
 import { useExportFollowers } from "@/hooks/useExportFollowers";
 
 interface ExportSettingsProps {
@@ -146,7 +147,7 @@ export function ExportSettings({ publicationId }: ExportSettingsProps) {
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
@@ -247,12 +248,16 @@ export function ExportSettings({ publicationId }: ExportSettingsProps) {
       </SettingsCard>
 
       {/* Privacy Note */}
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-        <p className="text-sm text-gray-500">
-          <strong className="text-gray-900">Privacy Note:</strong> Exported data should be handled in accordance with your privacy policy.
+      <SettingsInfoBox
+        icon={HiShieldCheck}
+        title="Privacy Note"
+        variant="tip"
+      >
+        <p>
+          Exported data should be handled in accordance with your privacy policy.
           Only use subscriber data for purposes your subscribers have consented to.
         </p>
-      </div>
+      </SettingsInfoBox>
     </SettingsSection>
   );
 }

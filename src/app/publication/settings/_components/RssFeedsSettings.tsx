@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
+import { SettingsInfoBox } from "./SettingsInfoBox";
 import { FieldMappingDialog } from "./FieldMappingDialog";
 import { useRssFeeds } from "@/hooks/useRssFeeds";
 import { RssFeed, RssFeedPreviewResult, FieldMappings } from "@/lib/api";
@@ -670,22 +671,18 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
       </SettingsCard>
 
       {/* Info Note */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl p-4 border border-blue-100/80">
-        <div className="flex gap-3">
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-            <HiRss className="size-4 text-blue-600" />
-          </div>
-          <div className="text-sm">
-            <p className="font-medium text-blue-900 mb-1">How RSS Import Works</p>
-            <ul className="text-blue-700 space-y-1 text-xs">
-              <li>• Feeds are synced automatically every hour</li>
-              <li>• New articles are saved as drafts for your review</li>
-              <li>• Enable auto-publish to skip the draft step</li>
-              <li>• Duplicate articles are automatically detected and skipped</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <SettingsInfoBox
+        icon={HiRss}
+        title="How RSS Import Works"
+        variant="info"
+      >
+        <ul className="space-y-1 text-xs">
+          <li>Feeds are synced automatically every hour</li>
+          <li>New articles are saved as drafts for your review</li>
+          <li>Enable auto-publish to skip the draft step</li>
+          <li>Duplicate articles are automatically detected and skipped</li>
+        </ul>
+      </SettingsInfoBox>
 
       {/* Field Mapping Dialog */}
       <FieldMappingDialog

@@ -9,9 +9,7 @@ import { usePublication } from "@/hooks/usePublication";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import {
-  HiCog6Tooth,
   HiCurrencyDollar,
-  HiUserGroup,
   HiChartBarSquare,
   HiGift,
   HiArrowDownTray,
@@ -25,8 +23,6 @@ import {
   SubscriptionSettings,
   TipsSettings,
   ExportSettings,
-  GeneralSettings,
-  SubscribersSettings,
   AnalyticsSettings,
   AirdropSettings,
   RssFeedsSettings,
@@ -39,12 +35,19 @@ interface TabConfig {
   component: React.ComponentType<{ publicationId: string }>;
 }
 
+interface TabGroup {
+  id: string;
+  label: string;
+  tabs: string[];
+}
+
+// Tabs ordered by workflow priority: Insights → Content → Revenue → Distribution
 const TABS: TabConfig[] = [
   {
-    id: "subscription",
-    label: "Subscription",
-    icon: HiCurrencyDollar,
-    component: SubscriptionSettings,
+    id: "analytics",
+    label: "Analytics",
+    icon: HiChartBarSquare,
+    component: AnalyticsSettings,
   },
   {
     id: "rss-feeds",
@@ -53,16 +56,10 @@ const TABS: TabConfig[] = [
     component: RssFeedsSettings,
   },
   {
-    id: "export",
-    label: "Export",
-    icon: HiArrowDownTray,
-    component: ExportSettings,
-  },
-  {
-    id: "airdrop",
-    label: "Airdrop",
-    icon: HiPaperAirplane,
-    component: AirdropSettings,
+    id: "subscription",
+    label: "Subscription",
+    icon: HiCurrencyDollar,
+    component: SubscriptionSettings,
   },
   {
     id: "tips",
@@ -71,23 +68,25 @@ const TABS: TabConfig[] = [
     component: TipsSettings,
   },
   {
-    id: "general",
-    label: "General",
-    icon: HiCog6Tooth,
-    component: GeneralSettings,
+    id: "airdrop",
+    label: "Airdrop",
+    icon: HiPaperAirplane,
+    component: AirdropSettings,
   },
   {
-    id: "subscribers",
-    label: "Subscribers",
-    icon: HiUserGroup,
-    component: SubscribersSettings,
+    id: "export",
+    label: "Export",
+    icon: HiArrowDownTray,
+    component: ExportSettings,
   },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: HiChartBarSquare,
-    component: AnalyticsSettings,
-  },
+];
+
+// Tab groups for visual organization
+const TAB_GROUPS: TabGroup[] = [
+  { id: "insights", label: "Insights", tabs: ["analytics"] },
+  { id: "content", label: "Content", tabs: ["rss-feeds"] },
+  { id: "revenue", label: "Revenue", tabs: ["subscription", "tips"] },
+  { id: "distribution", label: "Distribution", tabs: ["airdrop", "export"] },
 ];
 
 function PublicationSettingsContent() {
@@ -99,7 +98,7 @@ function PublicationSettingsContent() {
   const [accessDenied, setAccessDenied] = useState(false);
 
   const publicationId = searchParams.get("id");
-  const activeTab = searchParams.get("tab") || "subscription";
+  const activeTab = searchParams.get("tab") || "analytics";
 
   const {
     publication,
@@ -203,7 +202,7 @@ function PublicationSettingsContent() {
 
   return (
     <AppLayout currentPage="settings">
-      <div className="max-w-4xl mx-auto py-6 sm:py-8">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -220,6 +219,7 @@ function PublicationSettingsContent() {
         {/* Tab Navigation */}
         <SettingsTabs
           tabs={TABS}
+          groups={TAB_GROUPS}
           activeTab={activeTab}
           onTabChange={handleTabChange}
         />

@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { log } from "@/lib/utils/Logger";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
+import { SettingsToggle } from "./SettingsToggle";
+import { SettingsBalanceDisplay } from "./SettingsBalanceDisplay";
 
 interface SubscriptionSettingsProps {
   publicationId: string;
@@ -205,7 +207,7 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
     >
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+        <div role="alert" className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
           <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
           <p className="text-green-800">
             Subscription settings updated successfully! Changes may take a moment to appear.
@@ -215,7 +217,7 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
           <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-red-800 font-medium">Failed to update subscription settings</p>
@@ -235,30 +237,13 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
       <SettingsCard>
         <div className="space-y-6">
           {/* Subscription Toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Enable Subscription</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Require readers to pay a monthly subscription to access your content
-              </p>
-            </div>
-            <button
-              onClick={() => handleToggleChange(!isEnabled)}
-              disabled={isSaving}
-              className={cn(
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                isEnabled ? "bg-primary" : "bg-gray-200",
-                isSaving && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              <span
-                className={cn(
-                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
-                  isEnabled ? "translate-x-6" : "translate-x-1"
-                )}
-              />
-            </button>
-          </div>
+          <SettingsToggle
+            label="Enable Subscription"
+            description="Require readers to pay a monthly subscription to access your content"
+            checked={isEnabled}
+            onChange={handleToggleChange}
+            disabled={isSaving}
+          />
 
           {/* Price Input (only shown when enabled) */}
           {isEnabled && (
@@ -322,40 +307,22 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
       </SettingsCard>
 
       {/* Subscription Balance Section - Separate Card */}
-      <SettingsCard>
+      <SettingsCard
+        title="Subscription Balance"
+        description="View and withdraw accumulated subscription payments"
+      >
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Subscription Balance</h3>
-            <p className="text-sm text-gray-500">
-              View and withdraw accumulated subscription payments
-            </p>
-          </div>
-
           {/* Balance Display */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            {isLoadingBalance ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                <span className="text-gray-500">Loading balance...</span>
-              </div>
-            ) : balanceError ? (
-              <div className="text-red-600 text-sm">
-                <p className="font-medium">Failed to load balance</p>
-                <p className="mt-1">{balanceError}</p>
-              </div>
-            ) : (
-              <div>
-                <div className="text-3xl font-bold text-gray-900">
-                  {balanceInSui.toFixed(4)} SUI
-                </div>
-                <p className="text-sm text-gray-500 mt-1">Available to withdraw</p>
-              </div>
-            )}
-          </div>
+          <SettingsBalanceDisplay
+            balance={balanceInSui.toFixed(4)}
+            currency="SUI"
+            isLoading={isLoadingBalance}
+            error={balanceError}
+          />
 
           {/* Withdrawal Success Message */}
           {withdrawalSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+            <div role="alert" className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
               <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
               <p className="text-green-800">
                 Balance withdrawn successfully! Funds have been transferred to your wallet.
@@ -365,7 +332,7 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
           {/* Withdrawal Error Message */}
           {withdrawalError && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
               <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-red-800 font-medium">Failed to withdraw balance</p>
