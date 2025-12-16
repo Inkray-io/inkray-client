@@ -12,6 +12,7 @@ interface FollowButtonProps {
   onToggleFollow: () => Promise<void>;
   showFollowerCount?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export function FollowButton({
@@ -21,6 +22,7 @@ export function FollowButton({
   onToggleFollow,
   showFollowerCount = false,
   className,
+  disabled
 }: FollowButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -43,7 +45,7 @@ export function FollowButton({
     <div className="flex items-center gap-2">
       <button
         onClick={handleClick}
-        disabled={isActionLoading}
+        disabled={disabled || isActionLoading}
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200',
           isFollowing 

@@ -13,6 +13,7 @@ interface LikeButtonProps {
   showLikeCount?: boolean;
   className?: string;
   variant?: 'button' | 'engagement'; // button for standalone, engagement for feed items
+  disabled?: boolean;
 }
 
 export function LikeButton({
@@ -23,6 +24,7 @@ export function LikeButton({
   showLikeCount = true,
   className,
   variant = 'button',
+  disabled
 }: LikeButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -45,7 +47,7 @@ export function LikeButton({
     return (
       <button
         onClick={handleClick}
-        disabled={isActionLoading}
+        disabled={disabled || isActionLoading}
         className={cn(
           'flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group',
           isActionLoading && 'opacity-50 cursor-not-allowed',
