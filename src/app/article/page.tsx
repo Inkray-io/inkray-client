@@ -9,7 +9,6 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import {
   AlertCircle,
   ArrowLeft,
-  User,
   Lock,
   RefreshCw,
   ExternalLink,
@@ -19,6 +18,8 @@ import {
   Check,
   Trash2
 } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/utils/avatar";
 import ReactMarkdown from "react-markdown";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
@@ -36,6 +37,7 @@ import { copyToClipboard } from "@/utils/address";
 import { ROUTES } from "@/constants/routes";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useArticleDeletion } from "@/hooks/useArticleDeletion";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -360,27 +362,70 @@ function ArticlePageContent() {
               {/* Unified Article Container */}
               <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8">
                 <div className="space-y-6">
-                  {/* Article Author */}
+                  {/* Article Author - Publication Style */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <User className="size-10 text-gray-400 bg-gray-100 rounded-full p-2" />
+                      <Avatar
+                        {...(article.followInfo?.publicationAvatar
+                          ? createPublicationAvatarConfig(
+                              {
+                                id: article.publicationId,
+                                name: article.followInfo?.publicationName || 'Publication',
+                                avatar: article.followInfo.publicationAvatar,
+                              },
+                              'md'
+                            )
+                          : createUserAvatarConfig(
+                              {
+                                publicKey: article.author || '',
+                                avatar: null,
+                              },
+                              'md'
+                            )
+                        )}
+                        size="md"
+                      />
                       <div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (article.author) {
-                              router.push(ROUTES.PROFILE_WITH_ID(article.author))
-                            }
-                          }}
-                          className="font-semibold text-black text-sm hover:text-primary hover:underline transition-colors"
-                        >
-                          {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown Author')}
-                        </button>
+                        {/* Publication Name - Primary */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (article.publicationId) {
+                                router.push(ROUTES.PUBLICATION_WITH_ID(article.publicationId))
+                              }
+                            }}
+                            className="font-semibold text-black text-sm hover:text-primary hover:underline transition-colors"
+                          >
+                            {article.followInfo?.publicationName || article.publicationName || 'Publication'}
+                          </button>
+                          {article.followInfo?.isVerified && <VerifiedBadge size="sm" />}
+                        </div>
+                        {/* Author & Meta - Secondary */}
                         <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <span>By{' '}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (article.author) {
+                                router.push(ROUTES.PROFILE_WITH_ID(article.author))
+                              }
+                            }}
+                            className="font-medium hover:text-primary hover:underline transition-colors"
+                          >
+                            {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown')}
+                          </button>
+                          <span>•</span>
                           <span>
                             {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
-                            {content && ` • ${Math.ceil((content.length || 0) / 1000)} min read`}
                           </span>
+                          {content && (
+                            <>
+                              <span>•</span>
+                              <span>{Math.ceil((content.length || 0) / 1000)} min read</span>
+                            </>
+                          )}
                           {article.category && (
                             <>
                               <span>•</span>

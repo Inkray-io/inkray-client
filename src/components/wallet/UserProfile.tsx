@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser, HiDevicePhoneMobile } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -12,6 +12,7 @@ import { Avatar } from "@/components/ui/Avatar"
 import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { MobileConnectPopup } from "@/components/auth/MobileConnectPopup"
 
 interface UserProfileProps {
   className?: string
@@ -23,6 +24,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   const { hasPublications, firstPublication, isLoading: publicationsLoading } = useUserPublications()
   const [isOpen, setIsOpen] = useState(false)
   const [copying, setCopying] = useState(false)
+  const [showMobileConnect, setShowMobileConnect] = useState(false)
   const router = useRouter()
   
   if (!address || !isAuthenticated) return null
@@ -165,7 +167,20 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                 <HiClipboard className="size-4" />
                 {copying ? 'Copied!' : 'Copy Address'}
               </Button>
-              
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowMobileConnect(true)
+                  setIsOpen(false)
+                }}
+                className="w-full justify-start gap-2 text-sm"
+              >
+                <HiDevicePhoneMobile className="size-4" />
+                Mobile Connect
+              </Button>
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -179,6 +194,11 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           </div>
         </>
       )}
+
+      <MobileConnectPopup
+        open={showMobileConnect}
+        onOpenChange={setShowMobileConnect}
+      />
     </div>
   )
 }

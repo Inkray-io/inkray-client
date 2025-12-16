@@ -134,7 +134,8 @@ function FeedPageContent() {
             id: article.publicationId,
             name: (article as { publicationName?: string }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId.slice(0, 8)}...`,
             avatar: article.followInfo?.publicationAvatar || null,
-            owner: (article as { publicationOwner?: string }).publicationOwner
+            owner: (article as { publicationOwner?: string }).publicationOwner,
+            isVerified: article.followInfo?.isVerified || false,
           };
 
           return (

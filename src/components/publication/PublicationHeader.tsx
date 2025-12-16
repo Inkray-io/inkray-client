@@ -15,6 +15,7 @@ import { addressesEqual } from '@/utils/address';
 import { HiPencil, HiDocumentText, HiUserGroup } from 'react-icons/hi2';
 import { log } from '@/lib/utils/Logger';
 import { cn } from '@/lib/utils';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -138,9 +139,12 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
         <div className="flex-1 min-w-0 pt-0.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight truncate">
-                {publication.name}
-              </h1>
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight truncate">
+                  {publication.name}
+                </h1>
+                {publication.isVerified && <VerifiedBadge size="lg" />}
+              </div>
             </div>
 
             {/* Action Buttons */}

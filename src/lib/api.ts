@@ -59,6 +59,39 @@ export const authAPI = {
   }) => api.post('/auth', data),
 };
 
+// Mobile authentication API (QR code based)
+export interface MobileAuthSession {
+  sessionId: string;
+  expiresAt: string;
+}
+
+export interface MobileSessionStatus {
+  status: 'pending' | 'authenticated' | 'expired';
+  accessToken?: string;
+  account?: {
+    id: string;
+    publicKey: string;
+    username?: string;
+    avatar?: string;
+  };
+}
+
+export const mobileAuthAPI = {
+  // Generate a new mobile auth session (called by web app)
+  // Response is wrapped in { success: true, data: {...} } by backend interceptor
+  generateSession: () =>
+    api.post<ApiResponse<MobileAuthSession>>('/auth/mobile/session'),
+
+  // Get session status (called by mobile app for polling)
+  // Response is wrapped in { success: true, data: {...} } by backend interceptor
+  getSessionStatus: (sessionId: string) =>
+    api.get<ApiResponse<MobileSessionStatus>>(`/auth/mobile/session/${sessionId}/status`),
+
+  // Complete a session (called by web app to authenticate)
+  completeSession: (sessionId: string) =>
+    api.post(`/auth/mobile/session/${sessionId}/complete`),
+};
+
 export interface SocialAccounts {
   twitter?: string;
   github?: string;

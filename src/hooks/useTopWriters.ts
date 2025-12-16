@@ -9,6 +9,7 @@ interface TopWriterData {
   name: string;
   followerCount: number;
   avatar: string | null;
+  isVerified: boolean;
 }
 
 interface Writer {
@@ -17,6 +18,7 @@ interface Writer {
   name: string;
   subscribers: string;
   avatar: string;
+  isVerified: boolean;
   avatarConfig: {
     src: string | null;
     alt: string;
@@ -62,6 +64,7 @@ export function useTopWriters(): UseTopWritersReturn {
         name: publication.name,
         subscribers: `${publication.followerCount} follower${publication.followerCount !== 1 ? 's' : ''}`,
         avatar: avatarConfig.src || '', // Use configured avatar for backward compatibility
+        isVerified: publication.isVerified,
         avatarConfig, // Include full avatar config
       };
     });

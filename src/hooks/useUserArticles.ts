@@ -30,6 +30,7 @@ export interface UserArticle {
     name: string;
     avatar: string | null;
     owner: string;
+    isVerified?: boolean;
   } | null;
   category: {
     id: string;

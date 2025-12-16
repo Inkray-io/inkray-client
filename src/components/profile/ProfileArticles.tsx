@@ -110,6 +110,7 @@ export function ProfileArticles({
                         name: article.publication.name,
                         avatar: article.publication.avatar,
                         owner: article.publication.owner,
+                        isVerified: article.publication.isVerified,
                       }
                     : undefined
                 }

@@ -235,6 +235,7 @@ const PublicationPageContent: React.FC = () => {
                           name: publication.name,
                           avatar: publication.avatar ?? null,
                           owner: publication.owner,
+                          isVerified: publication.isVerified,
                         }
                       : undefined,
                   };

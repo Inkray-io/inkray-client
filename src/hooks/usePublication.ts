@@ -82,6 +82,7 @@ export const usePublication = (publicationId: string) => {
           directTips: publicationData.directTips || 0,
           articleTips: publicationData.articleTips || 0,
           subscriptionPrice: publicationData.subscriptionPrice || 0,
+          isVerified: publicationData.isVerified || false,
         };
 
         setState(prev => ({

@@ -21,6 +21,7 @@ import { log } from "@/lib/utils/Logger"
 import { useFollows } from "@/hooks/useFollows"
 import { FollowButton } from "@/components/follow/FollowButton"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge"
 
 interface FeedPostProps {
   author: {
@@ -55,6 +56,7 @@ interface FeedPostProps {
     name: string
     avatar?: string | null
     owner?: string
+    isVerified?: boolean
   }
   // Article information for tipping
   articleId?: string
@@ -284,13 +286,16 @@ export function FeedPost({
           />
           <div className="flex flex-col">
             {publication ? (
-              <button
-                type="button"
-                onClick={handlePublicationClick}
-                className="font-semibold text-black text-xs text-left hover:text-primary transition-colors"
-              >
-                {publication.name}
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handlePublicationClick}
+                  className="font-semibold text-black text-xs text-left hover:text-primary transition-colors"
+                >
+                  {publication.name}
+                </button>
+                {publication.isVerified && <VerifiedBadge size="sm" />}
+              </div>
             ) : (
               <div className="font-semibold text-black text-xs">{author.name}</div>
             )}

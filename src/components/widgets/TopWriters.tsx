@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface Publication {
   rank: number
@@ -13,6 +14,7 @@ interface Publication {
   name: string
   subscribers: string
   avatar: string
+  isVerified: boolean
   avatarConfig: {
     src: string | null;
     alt: string;
@@ -131,8 +133,11 @@ export function TopWriters({ publications: propsPublications }: TopPublicationsP
             />
             {/* Publication info */}
             <div className="flex-1">
-              <div className="font-semibold text-black text-sm">
-                {publication.name}
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-black text-sm">
+                  {publication.name}
+                </span>
+                {publication.isVerified && <VerifiedBadge size="sm" />}
               </div>
               <div className="text-gray-500 text-xs mt-0.5">
                 {publication.subscribers}

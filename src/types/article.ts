@@ -60,6 +60,7 @@ export interface Article {
     followerCount: number;
     isFollowing: boolean;
     followedAt?: string;
+    isVerified?: boolean;
   };
   /** Total tip amount received for this article (in MIST) */
   totalTips: number;
@@ -336,6 +337,8 @@ export interface Publication {
   subscriptionPrice?: number;
   /** Subscription balance in MIST (accumulated from subscription payments) */
   subscriptionBalance?: number;
+  /** Whether the publication is verified (blue checkmark) */
+  isVerified?: boolean;
 }
 
 /**
