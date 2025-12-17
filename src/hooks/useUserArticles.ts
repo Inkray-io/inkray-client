@@ -16,6 +16,7 @@ export interface UserArticle {
   vaultId: string;
   gating: number;
   viewCount: number;
+  chatViewCount: number;
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;

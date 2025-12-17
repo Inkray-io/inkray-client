@@ -10,6 +10,7 @@ import { HiCheckCircle, HiExclamationCircle } from "react-icons/hi2";
 import { log } from "@/lib/utils/Logger";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
+import { SettingsBalanceDisplay } from "./SettingsBalanceDisplay";
 
 interface TipsSettingsProps {
   publicationId: string;
@@ -102,52 +103,26 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
       description="View and withdraw accumulated tips from your publication."
     >
       {/* Tip Balance Card */}
-      <SettingsCard>
+      <SettingsCard
+        title="Tip Balance"
+        description="Accumulated tips from readers who appreciate your content"
+      >
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Tip Balance</h3>
-            <p className="text-sm text-gray-500">
-              Accumulated tips from readers who appreciate your content
-            </p>
-          </div>
-
           {/* Balance Display */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            {isLoadingBalance ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                <span className="text-gray-500">Loading balance...</span>
-              </div>
-            ) : balanceError ? (
-              <div className="text-red-600 text-sm">
-                <p className="font-medium">Failed to load balance</p>
-                <p className="mt-1">{balanceError}</p>
-              </div>
-            ) : (
-              <div>
-                <div className="text-3xl font-bold text-gray-900">
-                  {balanceInSui.toFixed(4)} SUI
-                </div>
-                <p className="text-sm text-gray-500 mt-1">Available to withdraw</p>
-
-                {/* Statistics */}
-                <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Tips</p>
-                    <p className="text-lg font-semibold text-gray-900">{totalTipsReceived}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Lifetime Earnings</p>
-                    <p className="text-lg font-semibold text-gray-900">{totalAmountReceivedInSui.toFixed(2)} SUI</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <SettingsBalanceDisplay
+            balance={balanceInSui.toFixed(4)}
+            currency="SUI"
+            isLoading={isLoadingBalance}
+            error={balanceError}
+            stats={[
+              { label: "Total Tips", value: totalTipsReceived },
+              { label: "Lifetime Earnings", value: `${totalAmountReceivedInSui.toFixed(2)} SUI` },
+            ]}
+          />
 
           {/* Withdrawal Success Message */}
           {withdrawalSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+            <div role="alert" className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
               <HiCheckCircle className="size-5 text-green-600 flex-shrink-0" />
               <p className="text-green-800">
                 Tips withdrawn successfully! Funds have been transferred to your wallet.
@@ -157,7 +132,7 @@ export function TipsSettings({ publicationId }: TipsSettingsProps) {
 
           {/* Withdrawal Error Message */}
           {withdrawalError && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
               <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-red-800 font-medium">Failed to withdraw tips</p>

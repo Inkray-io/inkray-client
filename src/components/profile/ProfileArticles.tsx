@@ -119,7 +119,9 @@ export function ProfileArticles({
                 engagement={{
                   likes: article.likesCount,
                   comments: article.commentsCount,
-                  views: article.viewCount,
+                  views: article.viewCount + (article.chatViewCount ?? 0),
+                  pageViews: article.viewCount,
+                  chatViews: article.chatViewCount ?? 0,
                   isLiked: article.isLiked,
                   isBookmarked: article.isBookmarked,
                   bookmarkCount: article.bookmarksCount,

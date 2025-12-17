@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink, Trash2 } from "lucide-react"
+import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink, Trash2, FileText, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
@@ -11,6 +11,7 @@ import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/uti
 import { SuiIcon } from "@/components/ui/SuiIcon"
 import { LikeButton } from "@/components/like/LikeButton"
 import { BookmarkButton } from "@/components/bookmark/BookmarkButton"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useLikes } from "@/hooks/useLikes"
 import { useBookmarks } from "@/hooks/useBookmarks"
 import { useState } from "react"
@@ -38,6 +39,8 @@ interface FeedPostProps {
     likes: number
     comments: number
     views: number
+    pageViews?: number
+    chatViews?: number
     isLiked?: boolean
     isBookmarked?: boolean
     bookmarkCount?: number
@@ -534,10 +537,44 @@ export function FeedPost({
                     />
                   )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="size-1.5 bg-primary rounded-full"></div>
-                  <span className="text-gray-500 text-xs">{engagement.views} views</span>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-default group/views">
+                      <div className="size-1.5 bg-primary rounded-full group-hover/views:scale-110 transition-transform"></div>
+                      <span className="text-gray-500 text-xs group-hover/views:text-gray-700 transition-colors">{engagement.views} views</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    sideOffset={8}
+                    hideArrow={true}
+                    className="bg-white border border-gray-100 shadow-lg rounded-lg px-3 py-2.5 text-gray-900"
+                  >
+                    <div className="flex flex-col gap-1.5 min-w-[140px]">
+                      <div className="text-[11px] font-semibold text-gray-900 border-b border-gray-100 pb-1.5 mb-0.5">
+                        Views Breakdown
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="size-3 text-blue-500" />
+                          <span className="text-[11px] text-gray-600">Article page</span>
+                        </div>
+                        <span className="text-[11px] font-medium text-gray-900 tabular-nums">
+                          {engagement.pageViews ?? 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="size-3 text-amber-500" />
+                          <span className="text-[11px] text-gray-600">AI chat</span>
+                        </div>
+                        <span className="text-[11px] font-medium text-gray-900 tabular-nums">
+                          {engagement.chatViews ?? 0}
+                        </span>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>

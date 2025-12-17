@@ -449,3 +449,111 @@ export const draftsAPI = {
     }
   }),
 };
+
+// RSS Feeds types
+export interface FieldMappings {
+  titleField?: string;
+  contentField?: string;
+}
+
+export interface RssFeed {
+  id: string;
+  publicationId: string;
+  url: string;
+  name: string | null;
+  status: string;
+  autoPublish: boolean;
+  lastSyncAt: string | null;
+  lastSyncError: string | null;
+  itemCount: number;
+  fieldMappings?: FieldMappings | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RssFeedSyncHistory {
+  id: string;
+  feedId: string;
+  status: string;
+  itemsFound: number;
+  itemsImported: number;
+  itemsSkipped: number;
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  duration: number | null;
+}
+
+export interface RssFeedValidationResult {
+  valid: boolean;
+  title?: string;
+  description?: string;
+  itemCount?: number;
+  error?: string;
+}
+
+export interface RssFeedPreviewResult {
+  valid: boolean;
+  feedTitle?: string;
+  feedDescription?: string;
+  itemCount?: number;
+  sampleItem?: {
+    rawFields: Record<string, any>;
+    suggestedMapping: {
+      titleField: string;
+      contentField: string;
+    };
+  };
+  error?: string;
+}
+
+export const rssFeedsAPI = {
+  // Create a new RSS feed subscription
+  createFeed: (data: {
+    url: string;
+    publicationId: string;
+    name?: string;
+    autoPublish?: boolean;
+    fieldMappings?: FieldMappings;
+  }) => api.post<ApiResponse<RssFeed>>('/rss-feeds', data),
+
+  // Get all feeds for a publication
+  getFeedsByPublication: (publicationId: string) =>
+    api.get<ApiResponse<RssFeed[]>>(`/rss-feeds/publication/${publicationId}`),
+
+  // Get a single feed with sync history
+  getFeedDetail: (feedId: string) =>
+    api.get<ApiResponse<RssFeed & { recentSyncHistory: RssFeedSyncHistory[] }>>(`/rss-feeds/${feedId}`),
+
+  // Update feed settings
+  updateFeed: (feedId: string, data: {
+    name?: string;
+    autoPublish?: boolean;
+    status?: 'active' | 'paused';
+  }) => api.patch<ApiResponse<RssFeed>>(`/rss-feeds/${feedId}`, data),
+
+  // Delete a feed
+  deleteFeed: (feedId: string) =>
+    api.delete<ApiResponse<{ deleted: boolean }>>(`/rss-feeds/${feedId}`),
+
+  // Trigger manual sync
+  triggerSync: (feedId: string) =>
+    api.post<ApiResponse<{ jobId: string }>>(`/rss-feeds/${feedId}/sync`),
+
+  // Get sync history
+  getSyncHistory: (feedId: string, params?: { page?: number; limit?: number }) =>
+    api.get<ApiResponse<{
+      history: RssFeedSyncHistory[];
+      total: number;
+      page: number;
+      hasMore: boolean;
+    }>>(`/rss-feeds/${feedId}/history`, { params }),
+
+  // Validate an RSS feed URL
+  validateFeed: (url: string) =>
+    api.post<ApiResponse<RssFeedValidationResult>>('/rss-feeds/validate', { url }),
+
+  // Get a preview of the RSS feed with available fields for mapping
+  previewFeed: (url: string) =>
+    api.post<ApiResponse<RssFeedPreviewResult>>('/rss-feeds/preview', { url }),
+};
