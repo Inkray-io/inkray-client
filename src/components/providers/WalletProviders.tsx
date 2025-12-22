@@ -3,6 +3,7 @@
 import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { networkConfig, network } from '@/config/sui'
+import { RegisterEnokiWallets } from './RegisterEnokiWallets'
 
 const queryClient = new QueryClient()
 
@@ -14,6 +15,7 @@ export function WalletProviders({ children }: WalletProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
+        <RegisterEnokiWallets />
         <WalletProvider autoConnect={true}>
           {children}
         </WalletProvider>

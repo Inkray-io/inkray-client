@@ -15,6 +15,7 @@
     "@milkdown/react": "^7.16.0",
     "@mysten/bcs": "^1.7.0",
     "@mysten/dapp-kit": "^0.17.7",
+    "@mysten/enoki": "^0.13.0",
     "@mysten/seal": "^0.5.2",
     "@mysten/sui": "^1.37.6",
     "@radix-ui/react-accordion": "^1.2.12",
