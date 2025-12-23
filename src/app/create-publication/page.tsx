@@ -3,15 +3,83 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePublicationFlow } from "@/hooks/usePublicationFlow";
+import { usePublicationFlow, type SponsorStep } from "@/hooks/usePublicationFlow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, BookOpen, Users, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  BookOpen,
+  Users,
+  Sparkles,
+  Zap,
+  Hammer,
+  Gift,
+  PenTool,
+  Rocket,
+  Check,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { setCachedPublication } from "@/lib/cache-manager";
 import { log } from "@/lib/utils/Logger";
+
+/** Get step configuration for the progress indicator */
+function getStepConfig(step: SponsorStep) {
+  const steps = {
+    idle: { label: "Ready", icon: BookOpen, index: 0 },
+    building: { label: "Building transaction", icon: Hammer, index: 1 },
+    sponsoring: { label: "Getting gas sponsorship", icon: Gift, index: 2 },
+    signing: { label: "Sign with your wallet", icon: PenTool, index: 3 },
+    executing: { label: "Executing on chain", icon: Rocket, index: 4 },
+  };
+  return steps[step] || steps.idle;
+}
+
+/** Progress step component */
+function ProgressStep({
+  label,
+  icon: Icon,
+  isActive,
+  isComplete,
+}: {
+  label: string;
+  icon: React.ElementType;
+  isActive: boolean;
+  isComplete: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={`
+          relative flex items-center justify-center w-8 h-8 rounded-full
+          transition-all duration-300 ease-out
+          ${
+            isComplete
+              ? "bg-green-500 text-white"
+              : isActive
+                ? "bg-primary text-white ring-4 ring-primary/20"
+                : "bg-muted text-muted-foreground"
+          }
+        `}
+      >
+        {isComplete ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          <Icon className={`w-4 h-4 ${isActive ? "animate-pulse" : ""}`} />
+        )}
+      </div>
+      <span
+        className={`
+          text-sm font-medium transition-colors duration-200
+          ${isActive ? "text-foreground" : "text-muted-foreground"}
+        `}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
 
 export default function CreatePublicationPage() {
   const router = useRouter();
@@ -22,7 +90,9 @@ export default function CreatePublicationPage() {
     isCreating,
     error,
     clearError,
-    getUserPublications
+    getUserPublications,
+    sponsorStep,
+    isSponsored,
   } = usePublicationFlow();
 
   const [publicationName, setPublicationName] = useState('');
@@ -146,6 +216,23 @@ export default function CreatePublicationPage() {
             </p>
           </div>
 
+          {/* Gas-Free Badge */}
+          <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-lg border border-emerald-200 dark:border-emerald-700">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-semibold text-emerald-800 dark:text-emerald-200 text-sm">
+                  Gas-Free Creation
+                </p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  We sponsor your transaction — no SUI needed!
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Benefits Section */}
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -195,6 +282,38 @@ export default function CreatePublicationPage() {
               </p>
             </div>
 
+            {/* Progress Indicator - shown during creation */}
+            {isCreating && isSponsored && (
+              <div className="p-4 bg-muted/50 rounded-lg border space-y-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Creating your publication...</span>
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
+                <div className="space-y-2">
+                  {(
+                    [
+                      { step: "building", label: "Building transaction", icon: Hammer },
+                      { step: "sponsoring", label: "Getting gas sponsorship", icon: Gift },
+                      { step: "signing", label: "Sign with your wallet", icon: PenTool },
+                      { step: "executing", label: "Executing on chain", icon: Rocket },
+                    ] as const
+                  ).map(({ step, label, icon }, index) => {
+                    const currentStepIndex = getStepConfig(sponsorStep).index;
+                    const stepIndex = index + 1;
+                    return (
+                      <ProgressStep
+                        key={step}
+                        label={label}
+                        icon={icon}
+                        isActive={sponsorStep === step}
+                        isComplete={currentStepIndex > stepIndex}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={isCreating || !publicationName.trim()}
@@ -204,7 +323,9 @@ export default function CreatePublicationPage() {
               {isCreating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Creating Publication...
+                  {isSponsored
+                    ? getStepConfig(sponsorStep).label
+                    : "Creating Publication..."}
                 </>
               ) : (
                 <>
@@ -218,6 +339,11 @@ export default function CreatePublicationPage() {
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-center text-gray-500 dark:text-gray-400">
               This will create a publication on the Sui blockchain.
+              {isAuthenticated && (
+                <span className="block mt-1 text-emerald-600 dark:text-emerald-400">
+                  Gas fees are sponsored — you won&apos;t pay anything!
+                </span>
+              )}
             </p>
           </div>
         </div>

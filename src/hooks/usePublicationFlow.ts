@@ -3,6 +3,8 @@ import { Transaction } from '@mysten/sui/transactions';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { INKRAY_CONFIG } from '@/lib/sui-clients';
 import { useEnhancedTransaction, type EnhancedTransactionResult } from './useEnhancedTransaction';
+import { useSponsoredPublicationFlow, type SponsorStep } from './useSponsoredPublicationFlow';
+import { useAuth } from '@/contexts/AuthContext';
 import { log } from '@/lib/utils/Logger';
 
 /**
@@ -44,23 +46,28 @@ interface PublicationState {
   isAddingContributor: boolean;
   /** Current error message, if any */
   error: string | null;
+  /** Whether the transaction is sponsored (gasless) */
+  isSponsored: boolean;
 }
 
 /**
  * Hook for managing publication creation and contributor management
- * 
+ *
  * This hook provides functions to create publications on the Sui blockchain
  * and manage contributors. It handles transaction creation, signing, and
  * result parsing for publication-related operations.
- * 
+ *
+ * Now supports sponsored (gasless) publication creation with automatic
+ * fallback to user-paid transactions if sponsorship fails.
+ *
  * Adapted from contracts/scripts/src/workflows/publication-flow.ts
- * 
+ *
  * @returns Object containing publication flow state and actions
- * 
+ *
  * @example
  * ```tsx
- * const { createPublication, addContributor, isCreating } = usePublicationFlow();
- * 
+ * const { createPublication, addContributor, isCreating, sponsorStep } = usePublicationFlow();
+ *
  * const handleCreatePublication = async () => {
  *   try {
  *     const result = await createPublication("My Publication");
@@ -76,14 +83,21 @@ export const usePublicationFlow = () => {
     isCreating: false,
     isAddingContributor: false,
     error: null,
+    isSponsored: false,
   });
 
   const { signAndExecuteTransaction } = useEnhancedTransaction();
+  const {
+    createSponsoredPublication,
+    step: sponsorStep,
+  } = useSponsoredPublicationFlow();
+  const { isAuthenticated } = useAuth();
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
 
   /**
-   * Create a new publication
+   * Create a new publication.
+   * Attempts sponsored (gasless) creation first, falls back to user-paid.
    */
   const createPublication = useCallback(
     async (publicationName: string): Promise<PublicationResult> => {
@@ -91,14 +105,58 @@ export const usePublicationFlow = () => {
         throw new Error('Wallet not connected');
       }
 
-      setState(prev => ({ ...prev, isCreating: true, error: null }));
+      setState((prev) => ({
+        ...prev,
+        isCreating: true,
+        error: null,
+        isSponsored: false,
+      }));
 
       try {
-        log.debug('Creating publication', {
-          name: publicationName,
-          creator: currentAccount.address,
-          packageId: INKRAY_CONFIG.PACKAGE_ID,
-        }, 'usePublicationFlow');
+        // Try sponsored transaction first if user is authenticated
+        if (isAuthenticated) {
+          try {
+            log.debug(
+              'Attempting sponsored publication creation',
+              {
+                name: publicationName,
+                creator: currentAccount.address,
+              },
+              'usePublicationFlow'
+            );
+
+            setState((prev) => ({ ...prev, isSponsored: true }));
+            const sponsoredResult =
+              await createSponsoredPublication(publicationName);
+
+            log.debug(
+              'Sponsored publication created successfully',
+              sponsoredResult,
+              'usePublicationFlow'
+            );
+
+            return sponsoredResult;
+          } catch (sponsorError) {
+            log.warn(
+              'Sponsored transaction failed, falling back to user-paid',
+              { error: sponsorError },
+              'usePublicationFlow'
+            );
+            setState((prev) => ({ ...prev, isSponsored: false }));
+            // Continue to user-paid fallback
+          }
+        }
+
+        // Fallback: User-paid transaction
+        log.debug(
+          'Using user-paid transaction',
+          {
+            name: publicationName,
+            creator: currentAccount.address,
+            packageId: INKRAY_CONFIG.PACKAGE_ID,
+          },
+          'usePublicationFlow'
+        );
 
         // Build transaction
         const tx = new Transaction();
@@ -175,14 +233,20 @@ export const usePublicationFlow = () => {
         return publicationResult;
 
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        setState(prev => ({ ...prev, error: errorMessage }));
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        setState((prev) => ({ ...prev, error: errorMessage }));
         throw error;
       } finally {
-        setState(prev => ({ ...prev, isCreating: false }));
+        setState((prev) => ({ ...prev, isCreating: false, isSponsored: false }));
       }
     },
-    [currentAccount, signAndExecuteTransaction]
+    [
+      currentAccount,
+      isAuthenticated,
+      signAndExecuteTransaction,
+      createSponsoredPublication,
+    ]
   );
 
   /**
@@ -338,6 +402,10 @@ export const usePublicationFlow = () => {
     isCreating: state.isCreating,
     isAddingContributor: state.isAddingContributor,
     error: state.error,
+    /** Whether the current/last transaction is/was sponsored */
+    isSponsored: state.isSponsored,
+    /** Current step in the sponsored transaction flow */
+    sponsorStep,
 
     // Actions
     createPublication,
@@ -347,3 +415,6 @@ export const usePublicationFlow = () => {
     clearError,
   };
 };
+
+/** Re-export SponsorStep type for consumers */
+export type { SponsorStep };
