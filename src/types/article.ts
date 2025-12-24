@@ -90,6 +90,8 @@ export interface Article {
   };
   /** When the user's publication subscription expires (if they have one) */
   publicationSubscriptionExpiresAt?: string;
+  /** Indicates if the article data is cached locally */
+  cached?: boolean;
 }
 
 /**

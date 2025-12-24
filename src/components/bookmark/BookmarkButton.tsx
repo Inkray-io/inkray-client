@@ -13,6 +13,7 @@ interface BookmarkButtonProps {
   showBookmarkCount?: boolean;
   className?: string;
   variant?: 'button' | 'engagement'; // button for standalone, engagement for feed items
+  disabled?: boolean;
 }
 
 export function BookmarkButton({
@@ -23,11 +24,12 @@ export function BookmarkButton({
   showBookmarkCount = true,
   className,
   variant = 'button',
+  disabled
 }: BookmarkButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleClick = useCallback(async () => {
-    if (isLoading || isProcessing) return;
+    if (disabled || isLoading || isProcessing) return;
 
     setIsProcessing(true);
     try {
@@ -37,7 +39,7 @@ export function BookmarkButton({
     } finally {
       setIsProcessing(false);
     }
-  }, [onToggleBookmark, isLoading, isProcessing]);
+  }, [onToggleBookmark, isLoading, isProcessing, disabled]);
 
   const isActionLoading = isLoading || isProcessing;
 
@@ -45,7 +47,7 @@ export function BookmarkButton({
     return (
       <button
         onClick={handleClick}
-        disabled={isActionLoading}
+        disabled={disabled || isActionLoading}
         className={cn(
           'flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-colors group',
           isActionLoading && 'opacity-50 cursor-not-allowed',

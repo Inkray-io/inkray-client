@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -610,7 +611,7 @@ function Step3Review({
 // Main component
 export function AirdropSettings({ publicationId }: AirdropSettingsProps) {
   const { address } = useWalletConnection();
-  const { balances, isLoading: isLoadingBalances, refresh: refreshBalances } = useWalletBalances(address);
+  const { balances, isLoading: isLoadingBalances } = useWalletBalances(address);
 
   const {
     step,

@@ -11,6 +11,7 @@ import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
 import { transformMediaUrls } from '@/lib/utils/mediaUrlTransform';
 import { Article, ArticleState, ArticleContentResponse } from '@/types/article';
+import { CachedArticle } from "@/lib/idb";
 
 // Loading stages for better UX feedback
 type LoadingStage = 'idle' | 'metadata' | 'content' | 'decrypting' | 'waiting-wallet';
@@ -25,21 +26,21 @@ interface LoadingStateInfo {
 
 /**
  * Comprehensive article loading and decryption hook
- * 
+ *
  * This hook provides complete article management including:
  * - Loading article metadata from the backend API
  * - Downloading and decrypting Seal-encrypted content
  * - Handling BCS validation and data integrity checks
  * - Managing loading states and error handling
  * - Supporting both encrypted and unencrypted content
- * 
+ *
  * **IMPORTANT**: This hook preserves all Seal and Walrus data processing logic.
  * The encryption/decryption flows and BCS validation must remain unchanged
  * to prevent data corruption or compatibility issues.
- * 
+ *
  * @param articleSlug - URL slug of the article to load
  * @returns Article state and management functions
- * 
+ *
  * @example
  * ```tsx
  * const { 
@@ -50,7 +51,7 @@ interface LoadingStateInfo {
  *   loadArticle, 
  *   retry 
  * } = useArticle('my-article-slug');
- * 
+ *
  * // Load article with encrypted content decryption
  * useEffect(() => {
  *   if (slug) {
@@ -60,7 +61,7 @@ interface LoadingStateInfo {
  * ```
  */
 export const useArticle = (articleSlug: string | null) => {
-  const [state, setState] = useState<ArticleState>({
+  const [ state, setState ] = useState<ArticleState>({
     article: null,
     content: null,
     isLoading: false,
@@ -69,17 +70,17 @@ export const useArticle = (articleSlug: string | null) => {
   });
 
   // Enhanced loading state tracking
-  const [isWalletReady, setIsWalletReady] = useState(false);
-  const [isWaitingForWallet, setIsWaitingForWallet] = useState(false);
-  const [loadingStage, setLoadingStage] = useState<LoadingStage>('idle');
-  const [encryptedContentData, setEncryptedContentData] = useState<{
+  const [ isWalletReady, setIsWalletReady ] = useState(false);
+  const [ isWaitingForWallet, setIsWaitingForWallet ] = useState(false);
+  const [ loadingStage, setLoadingStage ] = useState<LoadingStage>('idle');
+  const [ encryptedContentData, setEncryptedContentData ] = useState<{
     encryptedData: Uint8Array;
     article: Article;
   } | null>(null);
 
   // Guard to prevent multiple decryption attempts for the same article
   const decryptionInProgress = useRef<Set<string>>(new Set());
-  
+
   // Stable owner data to prevent dependency loops
   const stableOwnerData = useRef<{
     publicationId: string;
@@ -89,25 +90,34 @@ export const useArticle = (articleSlug: string | null) => {
 
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const { decryptContent, decryptFreeContent, isDecrypting, decryptionError, clearError: clearDecryptionError } = useContentDecryption();
+  const {
+    decryptContent,
+    decryptFreeContent,
+    isDecrypting,
+    decryptionError,
+    clearError: clearDecryptionError
+  } = useContentDecryption();
 
   // Stable reference to decryptContent to prevent useEffect loops
   const stableDecryptContent = useCallback((params: DecryptionParams) => {
     return decryptContent(params);
-  }, [decryptContent]);
+  }, [ decryptContent ]);
 
   // Stable reference to decryptFreeContent
   const stableDecryptFreeContent = useCallback((params: DecryptionParams) => {
     return decryptFreeContent(params);
-  }, [decryptFreeContent]);
+  }, [ decryptFreeContent ]);
 
 
   // Get user's publication info for owner cap ID
   const { firstPublication, isLoading: isLoadingUserPublications } = useUserPublications();
 
   // Get publication info for subscription price (we'll need the article's publicationId for this)
-  const [currentPublicationId, setCurrentPublicationId] = useState<string | null>(null);
-  const { publication: currentPublication, isLoading: isLoadingPublication } = usePublication(currentPublicationId || '');
+  const [ currentPublicationId, setCurrentPublicationId ] = useState<string | null>(null);
+  const {
+    publication: currentPublication,
+    isLoading: isLoadingPublication
+  } = usePublication(currentPublicationId || '');
 
   // Get publication subscription status for the current user
   const {
@@ -137,8 +147,8 @@ export const useArticle = (articleSlug: string | null) => {
    * Update stable subscription data ref
    */
   useEffect(() => {
-    const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ?? 
-      !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
+    const requiresSubscription = subscriptionStatus?.publicationRequiresSubscription ??
+        !!(currentPublication?.subscriptionPrice && currentPublication.subscriptionPrice > 0);
     const hasActiveSubscription = !!(subscriptionStatus?.hasActiveSubscription);
     const subscriptionPrice = subscriptionInfo?.subscriptionPrice ?? currentPublication?.subscriptionPrice;
     const subscriptionId = subscriptionStatus?.subscription?.subscriptionId;
@@ -160,35 +170,39 @@ export const useArticle = (articleSlug: string | null) => {
   /**
    * Determine if we should attempt decryption based on access control policies
    */
-  const shouldAttemptDecryption = useCallback((article: Article): { shouldAttempt: boolean; reason: string; hasAccess: boolean } => {
+  const shouldAttemptDecryption = useCallback((article: Article): {
+    shouldAttempt: boolean;
+    reason: string;
+    hasAccess: boolean
+  } => {
     // For free content (no subscription price), always allow decryption
     const requiresSubscription = stableSubscriptionData.current.requiresSubscription;
-    
+
     if (!requiresSubscription) {
-      return { 
-        shouldAttempt: true, 
+      return {
+        shouldAttempt: true,
         reason: 'Free content - no access control required',
-        hasAccess: true 
+        hasAccess: true
       };
     }
 
     // Check if user is the publication owner
     const isOwner = stableOwnerData.current?.publicationId === article.publicationId;
     if (isOwner) {
-      return { 
-        shouldAttempt: true, 
+      return {
+        shouldAttempt: true,
         reason: 'User owns the publication',
-        hasAccess: true 
+        hasAccess: true
       };
     }
 
     // Check subscription access
     const hasActiveSubscription = stableSubscriptionData.current.hasActiveSubscription;
     if (hasActiveSubscription) {
-      return { 
-        shouldAttempt: true, 
+      return {
+        shouldAttempt: true,
         reason: 'User has active subscription',
-        hasAccess: true 
+        hasAccess: true
       };
     }
 
@@ -196,30 +210,30 @@ export const useArticle = (articleSlug: string | null) => {
     if (isLoadingUserPublications || isLoadingPublication || isLoadingSubscription) {
       // Check if user might be the publication owner (using stable owner data)
       const mightBeOwner = stableOwnerData.current?.publicationId === article.publicationId;
-      
+
       if (mightBeOwner) {
-        return { 
-          shouldAttempt: true, 
+        return {
+          shouldAttempt: true,
           reason: 'Still loading data but user might be owner',
-          hasAccess: true 
+          hasAccess: true
         };
       } else {
         // For non-owners, don't attempt decryption during loading to avoid unnecessary popups
-        return { 
-          shouldAttempt: false, 
+        return {
+          shouldAttempt: false,
           reason: 'Still loading access control data for non-owner',
-          hasAccess: false 
+          hasAccess: false
         };
       }
     }
 
     // User lacks access - don't attempt decryption
-    return { 
-      shouldAttempt: false, 
+    return {
+      shouldAttempt: false,
       reason: 'User lacks subscription access to gated content',
-      hasAccess: false 
+      hasAccess: false
     };
-  }, [isLoadingUserPublications, isLoadingPublication, isLoadingSubscription]);
+  }, [ isLoadingUserPublications, isLoadingPublication, isLoadingSubscription ]);
 
   // Get loading state information based on current stage
   const getLoadingStateInfo = useCallback((): LoadingStateInfo => {
@@ -265,7 +279,7 @@ export const useArticle = (articleSlug: string | null) => {
           needsWallet: false
         };
     }
-  }, [loadingStage]);
+  }, [ loadingStage ]);
 
   // Monitor wallet connection status
   useEffect(() => {
@@ -279,7 +293,7 @@ export const useArticle = (articleSlug: string | null) => {
       }, 'useArticle');
       setIsWaitingForWallet(false);
     }
-  }, [currentAccount, suiClient, isWaitingForWallet]);
+  }, [ currentAccount, suiClient, isWaitingForWallet ]);
 
   /**
    * Load article metadata directly from backend API
@@ -326,10 +340,10 @@ export const useArticle = (articleSlug: string | null) => {
       // Smart subscription/owner check - avoid race conditions for publication owners
       const requiresSubscription = stableSubscriptionData.current.requiresSubscription;
       const hasActiveSubscription = stableSubscriptionData.current.hasActiveSubscription;
-      
+
       // Check if user might be the publication owner (using stable owner data)
       const mightBeOwner = stableOwnerData.current?.publicationId === article.publicationId;
-      
+
       // If this publication requires subscription and user doesn't have one
       if (requiresSubscription && !hasActiveSubscription) {
         // If user might be the owner but owner data is still loading, defer to data-driven decryption
@@ -341,7 +355,7 @@ export const useArticle = (articleSlug: string | null) => {
             requiresSubscription,
             hasActiveSubscription
           }, 'useArticle');
-          
+
           // For encrypted content, this will be handled by data-driven decryption
           // For unencrypted content, we'll let it through (owner should access their own content)
           if (article.contentSealId) {
@@ -474,7 +488,7 @@ export const useArticle = (articleSlug: string | null) => {
 
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const result: ArticleContentResponse = response.data;
-        
+
         // Transform media URLs to CDN format with real blob IDs
         const transformedContent = transformMediaUrls(result.content, article.quiltBlobId);
 
@@ -490,8 +504,8 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
     }
   }, [
-    suiClient, 
-    currentAccount, 
+    suiClient,
+    currentAccount,
     isWalletReady,
     isLoadingUserPublications,
     isLoadingPublication,
@@ -515,7 +529,7 @@ export const useArticle = (articleSlug: string | null) => {
     // Clear wallet waiting state when starting fresh
     setIsWaitingForWallet(false);
     setLoadingStage('metadata');
-    
+
     let hasEncryptedContent = false;
 
     try {
@@ -537,7 +551,7 @@ export const useArticle = (articleSlug: string | null) => {
       // 2. Load content directly if available
       if (article.quiltBlobId) {
         const isEncrypted = !!article.contentSealId;
-        
+
         // For encrypted content, skip direct loading to avoid race conditions
         // Let the data-driven decryption useEffect handle it when all policy data is ready
         if (isEncrypted) {
@@ -545,23 +559,23 @@ export const useArticle = (articleSlug: string | null) => {
             articleId: article.articleId,
             contentSealId: article.contentSealId?.substring(0, 20) + '...'
           }, 'useArticle');
-          
+
           // Download encrypted content and check access before attempting decryption
           try {
             const response = await articlesAPI.getRawContent(article.quiltBlobId);
             const encryptedData = new Uint8Array(response.data);
-            
+
             // Check if user should attempt decryption based on access control
             const accessCheck = shouldAttemptDecryption(article);
-            
+
             if (accessCheck.shouldAttempt) {
               // Store encrypted content data for data-driven decryption
               setEncryptedContentData({ encryptedData, article });
-              
+
               // Set loading stage to indicate we're waiting for decryption data
               setLoadingStage('waiting-wallet');
               hasEncryptedContent = true;
-              
+
               log.debug('Encrypted content downloaded, stored for data-driven decryption', {
                 articleId: article.articleId,
                 encryptedSize: encryptedData.length,
@@ -573,14 +587,14 @@ export const useArticle = (articleSlug: string | null) => {
                 articleId: article.articleId,
                 reason: accessCheck.reason
               }, 'useArticle');
-              
+
               // Don't set loading stage, let UI show subscription paywall
               setState(prev => ({
                 ...prev,
                 error: null // Clear any existing errors to show clean subscription paywall
               }));
             }
-            
+
           } catch (encryptedError) {
             log.error('Failed to download encrypted content', encryptedError, 'useArticle');
             setState(prev => ({
@@ -588,14 +602,14 @@ export const useArticle = (articleSlug: string | null) => {
               error: `Failed to download encrypted content: ${encryptedError instanceof Error ? encryptedError.message : 'Unknown error'}`
             }));
           }
-          
+
           return; // Exit early, let useEffect handle encrypted content
         }
-        
+
         // For unencrypted content, load directly
         try {
           const content = await loadArticleContent(article, false);
-          
+
           if (content !== null) {
             setState(prev => ({ ...prev, content }));
             log.debug('Unencrypted content loaded successfully', { articleId: article.articleId }, 'useArticle');
@@ -620,14 +634,14 @@ export const useArticle = (articleSlug: string | null) => {
       setState(prev => ({ ...prev, error: errorMessage }));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
-      
+
       // Only reset loading stage if we don't have encrypted content waiting for decryption
       if (!hasEncryptedContent) {
         setLoadingStage('idle');
       }
       // For encrypted content, the data-driven decryption useEffect will manage the loading stage
     }
-  }, [loadArticleMetadata, loadArticleContent, shouldAttemptDecryption]);
+  }, [ loadArticleMetadata, loadArticleContent, shouldAttemptDecryption ]);
 
   // Stable reference to current slug to prevent unnecessary reloads
   const currentSlugRef = useRef<string | null>(null);
@@ -653,7 +667,7 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
       setEncryptedContentData(null);
     }
-  }, [articleSlug]); // Remove loadArticle from dependencies
+  }, [ articleSlug ]); // Remove loadArticle from dependencies
 
   /**
    * Record view when article is loaded and user is authenticated
@@ -664,7 +678,7 @@ export const useArticle = (articleSlug: string | null) => {
         // Silently fail - view recording is non-critical
       });
     }
-  }, [state.article?.articleId, currentAccount]);
+  }, [ state.article?.articleId, currentAccount ]);
 
   /**
    * Update stable owner data when firstPublication changes
@@ -680,7 +694,7 @@ export const useArticle = (articleSlug: string | null) => {
         ownerCapId: stableOwnerData.current.ownerCapId
       }, 'useArticle');
     }
-  }, [firstPublication?.publicationId, firstPublication?.ownerCapId]);
+  }, [ firstPublication?.publicationId, firstPublication?.ownerCapId ]);
 
   /**
    * Data-driven decryption trigger: Decrypt when all required data is available
@@ -795,8 +809,8 @@ export const useArticle = (articleSlug: string | null) => {
           publicationId: article.publicationId,
           // Policy selection fields for smart access control
           ownerCapId: stableOwnerData.current?.publicationId === article.publicationId
-            ? stableOwnerData.current?.ownerCapId
-            : undefined,
+              ? stableOwnerData.current?.ownerCapId
+              : undefined,
           // Use stable subscription data
           subscriptionPrice: stableSubscriptionData.current.subscriptionPrice,
           subscriptionId: stableSubscriptionData.current.subscriptionId,
@@ -815,8 +829,8 @@ export const useArticle = (articleSlug: string | null) => {
           subscriptionPriceFromAPI: subscriptionInfo?.subscriptionPrice,
           subscriptionPriceFromPublication: currentPublication?.subscriptionPrice,
           expectedPolicy: isFreeContent ? 'FREE (wallet-free)' :
-            decryptionParams.ownerCapId ? 'OWNER' :
-            (decryptionParams.subscriptionPrice && decryptionParams.subscriptionPrice > 0 && decryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
+              decryptionParams.ownerCapId ? 'OWNER' :
+                  (decryptionParams.subscriptionPrice && decryptionParams.subscriptionPrice > 0 && decryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
         }, 'useArticle');
 
         // Decrypt content - use wallet-free decryption for FREE content
@@ -833,9 +847,32 @@ export const useArticle = (articleSlug: string | null) => {
           decryptedContent = await stableDecryptContent(decryptionParams);
         }
 
-
         // Transform media URLs to CDN format with real blob IDs
         const transformedContent = transformMediaUrls(decryptedContent, article.quiltBlobId);
+
+        // Decryption successful. Post message to service worker to cache the article.
+        const CACHE_ARTICLE_TYPE = 'CACHE_ARTICLE';
+        const cachedArticle: Omit<CachedArticle, 'updatedAt' | 'cached'> = {
+          article,
+          slug: article.slug,
+          content: transformedContent,
+        };
+
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: CACHE_ARTICLE_TYPE,
+            cachedArticle
+          });
+        } else if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(registration => {
+            if (registration.active) {
+              registration.active.postMessage({
+                type: CACHE_ARTICLE_TYPE,
+                cachedArticle
+              });
+            }
+          });
+        }
 
         // Update state with decrypted content
         setState(prev => ({
@@ -927,9 +964,9 @@ export const useArticle = (articleSlug: string | null) => {
 
     // Only update if the subscription fields need to change
     const needsUpdate =
-      article.requiresPublicationSubscription !== publicationRequiresSubscription ||
-      article.hasActivePublicationSubscription !== hasActiveSubscription ||
-      (publicationRequiresSubscription && !article.publicationSubscriptionInfo && subscriptionInfo);
+        article.requiresPublicationSubscription !== publicationRequiresSubscription ||
+        article.hasActivePublicationSubscription !== hasActiveSubscription ||
+        (publicationRequiresSubscription && !article.publicationSubscriptionInfo && subscriptionInfo);
 
     if (needsUpdate) {
       const enhancedArticle: Article = {
@@ -937,16 +974,16 @@ export const useArticle = (articleSlug: string | null) => {
         requiresPublicationSubscription: publicationRequiresSubscription,
         hasActivePublicationSubscription: hasActiveSubscription,
         publicationSubscriptionInfo: publicationRequiresSubscription ?
-          (subscriptionInfo ? {
-            id: subscriptionInfo.id,
-            subscriptionPrice: subscriptionInfo.subscriptionPrice,
-            subscriptionPeriod: subscriptionInfo.subscriptionPeriod,
-          } : {
-            // Fallback to stable subscription data
-            id: currentPublicationId || '',
-            subscriptionPrice: stableSubscriptionData.current.subscriptionPrice || 0,
-            subscriptionPeriod: 30, // Default
-          }) : undefined,
+            (subscriptionInfo ? {
+              id: subscriptionInfo.id,
+              subscriptionPrice: subscriptionInfo.subscriptionPrice,
+              subscriptionPeriod: subscriptionInfo.subscriptionPeriod,
+            } : {
+              // Fallback to stable subscription data
+              id: currentPublicationId || '',
+              subscriptionPrice: stableSubscriptionData.current.subscriptionPrice || 0,
+              subscriptionPeriod: 30, // Default
+            }) : undefined,
         publicationSubscriptionExpiresAt: subscriptionStatus?.subscription?.expiresAt?.toISOString(),
       };
 
@@ -987,7 +1024,7 @@ export const useArticle = (articleSlug: string | null) => {
     if (articleSlug) {
       loadArticle(articleSlug);
     }
-  }, [articleSlug, loadArticle]);
+  }, [ articleSlug, loadArticle ]);
 
   /**
    * Manual decryption that bypasses the auto-decryption flag
@@ -1047,8 +1084,8 @@ export const useArticle = (articleSlug: string | null) => {
           publicationId: article.publicationId, // Add publication ID for subscription verification
           // Policy selection fields for smart access control
           ownerCapId: firstPublication?.ownerCapId && firstPublication.publicationId === article.publicationId
-            ? firstPublication.ownerCapId
-            : undefined,
+              ? firstPublication.ownerCapId
+              : undefined,
           // Use stable subscription data
           subscriptionPrice: stableSubscriptionData.current.subscriptionPrice,
           subscriptionId: stableSubscriptionData.current.subscriptionId,
@@ -1061,7 +1098,7 @@ export const useArticle = (articleSlug: string | null) => {
           publicationId: manualDecryptionParams.publicationId,
           hasActiveSubscription: subscriptionStatus?.hasActiveSubscription,
           expectedPolicy: manualDecryptionParams.ownerCapId ? 'OWNER' :
-            (manualDecryptionParams.subscriptionPrice && manualDecryptionParams.subscriptionPrice > 0 && manualDecryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
+              (manualDecryptionParams.subscriptionPrice && manualDecryptionParams.subscriptionPrice > 0 && manualDecryptionParams.subscriptionId) ? 'SUBSCRIPTION' : 'FREE'
         }, 'useArticle');
 
         const decryptedContent = await stableDecryptContent(manualDecryptionParams);
@@ -1090,8 +1127,8 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
     }
   }, [
-    suiClient, 
-    currentAccount, 
+    suiClient,
+    currentAccount,
     stableDecryptContent,
     firstPublication?.ownerCapId,
     firstPublication?.publicationId,
@@ -1105,15 +1142,15 @@ export const useArticle = (articleSlug: string | null) => {
       try {
         // Use manual decryption for encrypted content, regular loading for others
         const content = state.article.contentSealId
-          ? await manualDecryptContent(state.article)
-          : await loadArticleContent(state.article);
+            ? await manualDecryptContent(state.article)
+            : await loadArticleContent(state.article);
         setState(prev => ({ ...prev, content, error: null }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to reload content';
         setState(prev => ({ ...prev, error: errorMessage }));
       }
     }
-  }, [state.article, loadArticleContent, manualDecryptContent]);
+  }, [ state.article, loadArticleContent, manualDecryptContent ]);
 
   // Calculate if user has decryption access for current article
   const hasDecryptionAccess = state.article ? shouldAttemptDecryption(state.article).hasAccess : true;
@@ -1146,9 +1183,9 @@ export const useArticle = (articleSlug: string | null) => {
     canLoadContent: !!state.article?.quiltBlobId,
     // Free content doesn't need wallet - only paid encrypted content does
     needsWalletForContent: !!(
-      state.article?.contentSealId &&
-      !isWalletReady &&
-      stableSubscriptionData.current.requiresSubscription
+        state.article?.contentSealId &&
+        !isWalletReady &&
+        stableSubscriptionData.current.requiresSubscription
     ),
     hasDecryptionAccess,
   };

@@ -79,7 +79,8 @@ interface FeedPostProps {
   // Article deletion props
   vaultId?: string
   onDelete?: (articleId: string, publicationId: string, vaultId: string) => void
-  isDeleting?: boolean
+  isDeleting?: boolean;
+  isOffline?: boolean;
 }
 
 export function FeedPost({
@@ -101,7 +102,8 @@ export function FeedPost({
   showFollowButton = true, // Default to true for backward compatibility
   vaultId,
   onDelete,
-  isDeleting = false
+  isDeleting = false,
+  isOffline = false,
 }: FeedPostProps) {
   const router = useRouter()
   const { address } = useWalletConnection()
@@ -342,15 +344,16 @@ export function FeedPost({
               onToggleFollow={handleFollowToggle}
               showFollowerCount={false}
               className="h-7 px-2.5 text-xs"
+              disabled={isOffline}
             />
           )}
-          {canDeleteArticle ? (
+          {canDeleteArticle && !isOffline ? (
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleDeleteArticle}
-              disabled={isDeleting}
+              disabled={isOffline || isDeleting}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -414,6 +417,7 @@ export function FeedPost({
                       onToggleLike={handleLikeToggle}
                       showLikeCount={true}
                       variant="engagement"
+                      disabled={isOffline}
                     />
                   ) : (
                     <button className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group">
@@ -534,6 +538,7 @@ export function FeedPost({
                       onToggleBookmark={handleBookmarkToggle}
                       showBookmarkCount={true}
                       variant="engagement"
+                      disabled={isOffline}
                     />
                   )}
                 </div>
