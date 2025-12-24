@@ -46,40 +46,42 @@ export function CommentItem({
   return (
     <div
       className={cn(
-        "group relative py-4 first:pt-0 last:pb-0",
-        "border-b border-gray-100 last:border-b-0",
-        "transition-colors duration-200"
+        "group relative py-5 first:pt-0",
+        "pl-4 border-l-2 border-gray-100",
+        "hover:border-primary/30 hover:bg-primary/[0.015]",
+        "transition-all duration-300 ease-out",
+        "-ml-4 rounded-r-lg"
       )}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-3.5">
         {/* Avatar */}
         <button
           type="button"
           onClick={handleAuthorClick}
-          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+          className="flex-shrink-0 hover:scale-105 transition-transform duration-200"
         >
           <Avatar
             src={author.avatar}
             alt={displayName}
             size="sm"
             fallbackText={displayName.slice(0, 2).toUpperCase()}
-            gradientColors="from-indigo-400 to-purple-500"
+            gradientColors="from-primary/60 to-primary"
           />
         </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
             <div className="flex items-center gap-2 min-w-0">
               <button
                 type="button"
                 onClick={handleAuthorClick}
-                className="text-sm font-semibold text-gray-900 truncate hover:text-primary hover:underline transition-colors"
+                className="text-sm font-semibold text-gray-800 truncate hover:text-primary transition-colors"
               >
                 {displayName}
               </button>
-              <span className="text-gray-300">·</span>
+              <span className="text-gray-200">·</span>
               <span className="text-xs text-gray-400 flex-shrink-0">
                 {timeAgo}
               </span>
@@ -91,8 +93,8 @@ export function CommentItem({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "h-7 w-7 rounded-full",
-                  "text-gray-400 hover:text-red-500 hover:bg-red-50",
+                  "h-7 w-7 rounded-lg",
+                  "text-gray-300 hover:text-red-400 hover:bg-red-50/80",
                   "opacity-0 group-hover:opacity-100",
                   "transition-all duration-200",
                   isDeleting && "opacity-100"
@@ -110,7 +112,7 @@ export function CommentItem({
           </div>
 
           {/* Comment Text */}
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
+          <p className="text-[15px] text-gray-600 leading-relaxed whitespace-pre-line break-words">
             {content}
           </p>
         </div>

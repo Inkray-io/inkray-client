@@ -368,20 +368,20 @@ function ArticlePageContent() {
                       <Avatar
                         {...(article.followInfo?.publicationAvatar
                           ? createPublicationAvatarConfig(
-                              {
-                                id: article.publicationId,
-                                name: article.followInfo?.publicationName || 'Publication',
-                                avatar: article.followInfo.publicationAvatar,
-                              },
-                              'md'
-                            )
+                            {
+                              id: article.publicationId,
+                              name: article.followInfo?.publicationName || 'Publication',
+                              avatar: article.followInfo.publicationAvatar,
+                            },
+                            'md'
+                          )
                           : createUserAvatarConfig(
-                              {
-                                publicKey: article.author || '',
-                                avatar: null,
-                              },
-                              'md'
-                            )
+                            {
+                              publicKey: article.author || '',
+                              avatar: null,
+                            },
+                            'md'
+                          )
                         )}
                         size="md"
                       />
@@ -738,6 +738,13 @@ function ArticlePageContent() {
                       </div>
                     )}
                   </div>
+
+                  {/* Comments Section - Inside article card for seamless flow */}
+                  {article.articleId && (
+                    <CommentsSection
+                      articleId={article.articleId}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -753,14 +760,6 @@ function ArticlePageContent() {
                     followerCount: article.followInfo.followerCount,
                     followedAt: article.followInfo.followedAt,
                   }}
-                  className="mb-6"
-                />
-              )}
-
-              {/* Comments Section */}
-              {article.articleId && (
-                <CommentsSection
-                  articleId={article.articleId}
                   className="mb-6"
                 />
               )}

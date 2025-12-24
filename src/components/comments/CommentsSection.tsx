@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  MessageCircle,
   Loader2,
   AlertCircle,
   ChevronDown,
+  PenLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useComments } from "@/hooks/useComments";
@@ -34,34 +34,41 @@ export function CommentsSection({ articleId, className }: CommentsSectionProps) 
   } = useComments(articleId);
 
   return (
-    <div className={cn("bg-white rounded-xl p-6", className)}>
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-5">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
-          <MessageCircle className="h-4 w-4 text-gray-600" />
-        </div>
-        <h3 className="font-semibold text-gray-900">Comments</h3>
-        {comments.length > 0 && (
-          <span className="text-sm text-gray-400 font-normal">
-            ({comments.length}
-            {hasMore ? "+" : ""})
+    <div className={cn("pt-10 mt-6", className)}>
+      {/* Editorial Section Divider */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+        <div className="flex items-center gap-2.5">
+          <span className="text-primary/50 text-xs">✦</span>
+          <span className="font-medium tracking-widest uppercase text-[11px] text-gray-400">
+            Conversation
           </span>
-        )}
+          <span className="text-primary/50 text-xs">✦</span>
+        </div>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
       </div>
 
+      {/* Response Count */}
+      {!isLoading && comments.length > 0 && (
+        <p className="text-sm text-gray-500 mb-6">
+          {comments.length} {comments.length === 1 ? 'response' : 'responses'}
+          {hasMore ? '+' : ''}
+        </p>
+      )}
+
       {/* Comment Input */}
-      <div className="mb-6">
+      <div className="mb-8">
         <CommentInput onSubmit={submitComment} isSubmitting={isSubmitting} />
       </div>
 
       {/* Error Alert */}
       {hasError && error && (
-        <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 p-3 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="flex items-center gap-3 text-sm text-red-600 bg-red-50/80 p-4 rounded-xl mb-6 animate-in fade-in slide-in-from-top-2 duration-300 border border-red-100">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1">{error}</span>
           <button
             onClick={clearError}
-            className="text-red-600 hover:text-red-800 text-xs font-medium transition-colors"
+            className="text-red-500 hover:text-red-700 text-xs font-medium transition-colors"
           >
             Dismiss
           </button>
@@ -70,15 +77,19 @@ export function CommentsSection({ articleId, className }: CommentsSectionProps) 
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-300 mb-2" />
-          <span className="text-sm text-gray-400">Loading comments...</span>
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-primary/40" />
+            </div>
+          </div>
+          <span className="text-sm text-gray-400 mt-4">Loading responses...</span>
         </div>
       )}
 
       {/* Comments List */}
       {!isLoading && comments.length > 0 && (
-        <div className="divide-y divide-gray-100">
+        <div className="space-y-1">
           {comments.map((comment, index) => (
             <div
               key={comment.id}
@@ -101,30 +112,31 @@ export function CommentsSection({ articleId, className }: CommentsSectionProps) 
 
       {/* Empty State */}
       {!isLoading && comments.length === 0 && (
-        <div className="text-center py-10">
-          <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-            <MessageCircle className="h-7 w-7 text-gray-300" />
+        <div className="text-center py-12">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center mx-auto mb-4">
+            <PenLine className="h-6 w-6 text-primary/40" />
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">
-            No comments yet
+          <p className="text-gray-600 text-sm font-medium mb-1">
+            No responses yet
           </p>
-          <p className="text-gray-400 text-xs">
-            Be the first to share your thoughts!
+          <p className="text-gray-400 text-xs max-w-[200px] mx-auto">
+            Start the conversation by sharing your thoughts above
           </p>
         </div>
       )}
 
       {/* Load More Button */}
       {hasMore && !isLoading && (
-        <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
           <Button
             variant="ghost"
             onClick={loadMore}
             disabled={isLoadingMore}
             className={cn(
-              "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
-              "gap-1.5 h-9 px-4 rounded-lg",
-              "transition-all duration-200"
+              "text-gray-500 hover:text-gray-700 hover:bg-gray-50/80",
+              "gap-2 h-10 px-5 rounded-xl",
+              "transition-all duration-300",
+              "border border-transparent hover:border-gray-200"
             )}
           >
             {isLoadingMore ? (
@@ -135,7 +147,7 @@ export function CommentsSection({ articleId, className }: CommentsSectionProps) 
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
-                <span>Load more comments</span>
+                <span>Load more responses</span>
               </>
             )}
           </Button>
