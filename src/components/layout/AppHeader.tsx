@@ -6,6 +6,8 @@ import { ConnectButton } from "@mysten/dapp-kit"
 import { MobileMenu } from "./MobileMenu"
 import { UserProfile } from "@/components/wallet/UserProfile"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
+import { useSearchModal } from "@/hooks/useSearchModal"
+import { SearchModal } from "@/components/search/SearchModal"
 import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
 import NotificationsBell from "@/components/layout/NotificationsBell";
@@ -16,8 +18,11 @@ interface AppHeaderProps {
 
 export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
   const { isConnected } = useWalletConnection()
-  
+  const { isOpen: isSearchOpen, setIsOpen: setSearchOpen, open: openSearch } = useSearchModal()
+
   return (
+    <>
+      <SearchModal open={isSearchOpen} onOpenChange={setSearchOpen} />
     <header className="flex items-center justify-between px-4 sm:px-8 lg:px-[60px] xl:px-[80px] py-6 lg:py-10 max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto w-full">
       {/* Left side - Logo and Mobile Menu */}
       <div className="flex items-center gap-4">
@@ -42,7 +47,13 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
           {isConnected ? (
             <>
               {/* Connected: Show search, notifications, and user profile */}
-              <Button variant="ghost" size="icon" className="size-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                onClick={openSearch}
+                title="Search (⌘K)"
+              >
                 <HiMagnifyingGlass className="size-6" />
               </Button>
              <NotificationsBell />
@@ -70,5 +81,6 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
         )}
       </div>
     </header>
+    </>
   )
 }
