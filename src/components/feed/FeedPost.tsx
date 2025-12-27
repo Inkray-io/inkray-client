@@ -15,7 +15,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { useLikes } from "@/hooks/useLikes"
 import { useBookmarks } from "@/hooks/useBookmarks"
 import { useState } from "react"
-import { copyToClipboard, formatAddress } from "@/utils/address"
+import { copyToClipboard } from "@/utils/address"
+import { AddressDisplay } from "@/components/ui/AddressDisplay"
 import { SubscriptionButton } from "@/components/subscription"
 import { log } from "@/lib/utils/Logger"
 import { useFollows } from "@/hooks/useFollows"
@@ -158,9 +159,7 @@ export function FeedPost({
 
   const displayAvatarConfig = publicationAvatarConfig || authorAvatarConfig;
 
-  const displayAuthor = author.address
-    ? formatAddress(author.address)
-    : author.name;
+  // displayAuthor is now handled by AddressDisplay component
 
   // Check if current user can delete this article (publication owner)
   const canDeleteArticle = publication && 
@@ -301,21 +300,19 @@ export function FeedPost({
             ) : (
               <div className="font-semibold text-black text-xs">{author.name}</div>
             )}
-            <div className="text-[11px] text-gray-500">
-              By{" "}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  if (author.address) {
-                    router.push(ROUTES.PROFILE_WITH_ID(author.address))
-                  }
-                }}
-                className="font-medium hover:text-primary hover:underline transition-colors"
-              >
-                {displayAuthor}
-              </button>
+            <div className="text-[11px] text-gray-500 flex items-center gap-1">
+              <span>By</span>
+              {author.address ? (
+                <AddressDisplay
+                  address={author.address}
+                  variant="compact"
+                  linkToProfile
+                  className="font-medium"
+                  textSize="text-[11px]"
+                />
+              ) : (
+                <span className="font-medium">{author.name}</span>
+              )}
             </div>
           </div>
         </div>

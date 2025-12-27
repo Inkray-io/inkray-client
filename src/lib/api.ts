@@ -590,3 +590,28 @@ export const rssFeedsAPI = {
   previewFeed: (url: string) =>
     api.post<ApiResponse<RssFeedPreviewResult>>('/rss-feeds/preview', { url }),
 };
+
+// SuiNS (Sui Name Service) API
+export interface SuinsNameResult {
+  address: string;
+  name: string | null;
+}
+
+export interface SuinsResolveNameResponse {
+  address: string;
+  name: string | null;
+}
+
+export interface SuinsResolveNamesResponse {
+  results: SuinsNameResult[];
+}
+
+export const suinsAPI = {
+  // Resolve a single address to its SuiNS name
+  resolveName: (address: string) =>
+    api.get<ApiResponse<SuinsResolveNameResponse>>(`/suins/${address}`),
+
+  // Resolve multiple addresses to their SuiNS names (max 50)
+  resolveNames: (addresses: string[]) =>
+    api.post<ApiResponse<SuinsResolveNamesResponse>>('/suins/batch', { addresses }),
+};

@@ -5,6 +5,7 @@ import { Send, Loader2, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/Avatar";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 
 interface CommentInputProps {
@@ -18,7 +19,8 @@ export function CommentInput({
   isSubmitting,
   placeholder = "Share your thoughts...",
 }: CommentInputProps) {
-  const { address, isConnected } = useWalletConnection();
+  const { address, isConnected, suiNSName } = useWalletConnection();
+  const { profile } = useProfile(address);
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -27,6 +29,8 @@ export function CommentInput({
   const shortAddress = address
     ? `${address.slice(0, 4)}...${address.slice(-4)}`
     : "";
+
+  const displayName = suiNSName || shortAddress;
 
   const charCount = content.length;
   const maxChars = 1000;
@@ -93,9 +97,10 @@ export function CommentInput({
           {/* User Avatar */}
           <div className="flex-shrink-0 pt-0.5">
             <Avatar
-              alt={shortAddress}
+              src={profile?.avatar || undefined}
+              alt={displayName}
               size="sm"
-              fallbackText={shortAddress.slice(0, 2).toUpperCase()}
+              fallbackText={(displayName || shortAddress).slice(0, 2).toUpperCase()}
               gradientColors="from-primary/60 to-primary"
             />
           </div>

@@ -10,6 +10,7 @@ import { HiMagnifyingGlass, HiXMark, HiDocumentText, HiUserGroup, HiSparkles, Hi
 import { searchClient, ARTICLES_INDEX, PUBLICATIONS_INDEX, isAlgoliaConfigured, type ArticleHit, type PublicationHit } from "@/lib/algolia"
 import { ROUTES } from "@/constants/routes"
 import { cn } from "@/lib/utils"
+import { AddressDisplay } from "@/components/ui/AddressDisplay"
 
 interface SearchModalProps {
   open: boolean
@@ -224,10 +225,6 @@ interface ArticleHitComponentProps {
 }
 
 function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
-  const truncatedAuthor = hit.author
-    ? `${hit.author.slice(0, 6)}...${hit.author.slice(-4)}`
-    : "Unknown"
-
   return (
     <button
       onClick={() => onClick("article", hit.slug)}
@@ -255,7 +252,16 @@ function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
             {hit.summary}
           </p>
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="font-mono">{truncatedAuthor}</span>
+            {hit.author ? (
+              <AddressDisplay
+                address={hit.author}
+                variant="compact"
+                textSize="text-[11px]"
+                className="font-mono"
+              />
+            ) : (
+              <span className="font-mono">Unknown</span>
+            )}
             <span className="size-1 rounded-full bg-muted-foreground/30" />
             <span>{hit.categoryName}</span>
             <span className="size-1 rounded-full bg-muted-foreground/30" />
@@ -273,9 +279,6 @@ interface PublicationHitComponentProps {
 }
 
 function PublicationHitComponent({ hit, onClick }: PublicationHitComponentProps) {
-  const truncatedOwner = hit.owner
-    ? `${hit.owner.slice(0, 6)}...${hit.owner.slice(-4)}`
-    : "Unknown"
   const displayName = hit.name || "Unnamed Publication"
 
   return (
@@ -314,7 +317,16 @@ function PublicationHitComponent({ hit, onClick }: PublicationHitComponentProps)
             </p>
           )}
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="font-mono">{truncatedOwner}</span>
+            {hit.owner ? (
+              <AddressDisplay
+                address={hit.owner}
+                variant="compact"
+                textSize="text-[11px]"
+                className="font-mono"
+              />
+            ) : (
+              <span className="font-mono">Unknown</span>
+            )}
             {hit.tags && hit.tags.length > 0 && (
               <>
                 <span className="size-1 rounded-full bg-muted-foreground/30" />

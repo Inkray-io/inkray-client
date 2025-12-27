@@ -33,6 +33,7 @@ import { useLikes } from "@/hooks/useLikes";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { SubscriptionPaywall } from "@/components/subscription";
 import { copyToClipboard } from "@/utils/address";
+import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { ROUTES } from "@/constants/routes";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useArticleDeletion } from "@/hooks/useArticleDeletion";
@@ -404,19 +405,18 @@ function ArticlePageContent() {
                         </div>
                         {/* Author & Meta - Secondary */}
                         <div className="text-xs text-gray-500 flex items-center gap-1">
-                          <span>By{' '}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (article.author) {
-                                router.push(ROUTES.PROFILE_WITH_ID(article.author))
-                              }
-                            }}
-                            className="font-medium hover:text-primary hover:underline transition-colors"
-                          >
-                            {article.authorShortAddress || (article.author ? `${article.author.slice(0, 6)}...${article.author.slice(-4)}` : 'Unknown')}
-                          </button>
+                          <span>By</span>
+                          {article.author ? (
+                            <AddressDisplay
+                              address={article.author}
+                              variant="compact"
+                              linkToProfile
+                              className="font-medium"
+                              textSize="text-xs"
+                            />
+                          ) : (
+                            <span className="font-medium">Unknown</span>
+                          )}
                           <span>•</span>
                           <span>
                             {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}

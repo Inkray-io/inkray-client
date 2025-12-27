@@ -1,9 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
-import { log } from '@/lib/utils/Logger'
-import { CONFIG } from '@/lib/config'
+import { useQuery } from '@tanstack/react-query'
+import { suinsAPI } from '@/lib/api'
 
 interface UseSuiNSResult {
   name: string
@@ -11,48 +9,31 @@ interface UseSuiNSResult {
   error: string | null
 }
 
-export const useSuiNS = (address?: string): UseSuiNSResult => {
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+interface UseSuiNSOptions {
+  enabled?: boolean
+}
 
-  useEffect(() => {
-    if (!address) {
-      setName('')
-      setLoading(false)
-      setError(null)
-      return
-    }
-
-    const resolveAddress = async () => {
-      setLoading(true)
-      setError(null)
-      
-      try {
-        const client = new SuiClient({
-          url: getFullnodeUrl(CONFIG.NETWORK),
-        })
-        
-        const { data } = await client.resolveNameServiceNames({
-          address
-        })
-        
-        setName(data?.[0] || '')
-      } catch (err) {
-        log.error('Failed to resolve SuiNS name', { error: err }, 'useSuiNS')
-        setError('Failed to resolve SuiNS name')
-        setName('')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    resolveAddress()
-  }, [address])
+/**
+ * Hook to resolve a Sui address to its SuiNS name
+ * Uses React Query for caching and deduplication
+ */
+export const useSuiNS = (address?: string, options?: UseSuiNSOptions): UseSuiNSResult => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['suins', 'name', address],
+    queryFn: async () => {
+      if (!address) return null
+      const response = await suinsAPI.resolveName(address)
+      return response.data.data?.name ?? null
+    },
+    enabled: !!address && (options?.enabled !== false),
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60, // 1 hour garbage collection
+    retry: 1, // Only retry once on failure
+  })
 
   return {
-    name,
-    loading,
-    error
+    name: data ?? '',
+    loading: isLoading,
+    error: error ? 'Failed to resolve SuiNS name' : null
   }
 }

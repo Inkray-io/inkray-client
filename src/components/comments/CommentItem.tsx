@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/button";
+import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -74,13 +75,22 @@ export function CommentItem({
           {/* Header */}
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <div className="flex items-center gap-2 min-w-0">
-              <button
-                type="button"
-                onClick={handleAuthorClick}
-                className="text-sm font-semibold text-gray-800 truncate hover:text-primary transition-colors"
-              >
-                {displayName}
-              </button>
+              {author.username ? (
+                <button
+                  type="button"
+                  onClick={handleAuthorClick}
+                  className="text-sm font-semibold text-gray-800 truncate hover:text-primary transition-colors"
+                >
+                  {author.username}
+                </button>
+              ) : (
+                <AddressDisplay
+                  address={author.publicKey}
+                  variant="compact"
+                  linkToProfile
+                  className="text-sm font-semibold text-gray-800"
+                />
+              )}
               <span className="text-gray-200">·</span>
               <span className="text-xs text-gray-400 flex-shrink-0">
                 {timeAgo}
