@@ -308,7 +308,6 @@ function ArticlePageContent() {
             </Button>
           </div>
 
-
           {/* Error State - but don't show access denied errors when user lacks subscription access */}
           {error && !isWaitingForWallet && !(hasDecryptionAccess === false && error.includes('access')) && (
             <div className="bg-white rounded-2xl p-8">

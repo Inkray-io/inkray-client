@@ -44,4 +44,5 @@ export interface PublicationHit {
   owner: string;
   tags: string[];
   isVerified: boolean;
+  followerCount: number;
 }

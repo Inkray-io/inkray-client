@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
 import { log } from '@/lib/utils/Logger'
+import { CONFIG } from '@/lib/config'
 
 interface UseSuiNSResult {
   name: string
@@ -29,7 +30,7 @@ export const useSuiNS = (address?: string): UseSuiNSResult => {
       
       try {
         const client = new SuiClient({
-          url: getFullnodeUrl('mainnet'), // SuiNS is on mainnet
+          url: getFullnodeUrl(CONFIG.NETWORK),
         })
         
         const { data } = await client.resolveNameServiceNames({

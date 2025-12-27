@@ -10,7 +10,9 @@ import { useSearchModal } from "@/hooks/useSearchModal"
 import { SearchModal } from "@/components/search/SearchModal"
 import { ROUTES } from "@/constants/routes"
 import Link from "next/link"
-import NotificationsBell from "@/components/layout/NotificationsBell";
+import NotificationsBell from "@/components/layout/NotificationsBell"
+import { useScrollDirection } from "@/hooks/useScrollDirection"
+import { cn } from "@/lib/utils"
 
 interface AppHeaderProps {
   currentPage?: string
@@ -19,11 +21,21 @@ interface AppHeaderProps {
 export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
   const { isConnected } = useWalletConnection()
   const { isOpen: isSearchOpen, setIsOpen: setSearchOpen, open: openSearch } = useSearchModal()
+  const { scrollDirection, isAtTop } = useScrollDirection({ threshold: 5 })
+
+  // Show header when: at top, scrolling up, or initially (scrollDirection is null)
+  const showHeader = isAtTop || scrollDirection === "up" || scrollDirection === null
 
   return (
     <>
       <SearchModal open={isSearchOpen} onOpenChange={setSearchOpen} />
-    <header className="flex items-center justify-between px-4 sm:px-8 lg:px-[60px] xl:px-[80px] py-6 lg:py-10 max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto w-full">
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-neutral-50 transition-transform duration-300 ease-in-out",
+        showHeader ? "translate-y-0" : "-translate-y-full"
+      )}
+    >
+      <div className="flex items-center justify-between px-4 sm:px-8 lg:px-[60px] xl:px-[80px] py-6 lg:py-10 max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto w-full">
       {/* Left side - Logo and Mobile Menu */}
       <div className="flex items-center gap-4">
         <Link href={ROUTES.FEED}>
@@ -79,6 +91,7 @@ export function AppHeader({ currentPage = "feed" }: AppHeaderProps) {
             </Button>
           </Link>
         )}
+      </div>
       </div>
     </header>
     </>

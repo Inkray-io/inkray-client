@@ -24,6 +24,9 @@ export function AppLayout({
       <div className="min-h-screen bg-neutral-50">
         <AppHeader/>
 
+        {/* Spacer for fixed header - header is ~80px on mobile, ~120px on desktop */}
+        <div className="h-[80px] lg:h-[120px]" />
+
         {/* Main Content */}
         <div
             className={cn("px-4 sm:px-8 lg:px-[60px] xl:px-[80px] pb-[124px] max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto", className)}>
