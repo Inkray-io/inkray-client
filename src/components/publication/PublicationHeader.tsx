@@ -114,24 +114,15 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   const avatarConfig = createPublicationAvatarConfig(publication, 'xl');
 
   return (
-    <div className="px-5 py-5">
+    <div className="px-5 py-4">
       <div className="flex items-start gap-4">
-        {/* Avatar with animated gradient ring */}
-        <div className="relative flex-shrink-0 group/avatar">
-          <div
-            className={cn(
-              'absolute -inset-1 rounded-full blur-md opacity-60',
-              'bg-gradient-to-br from-primary via-blue-400 to-purple-500',
-              'group-hover/avatar:opacity-80 group-hover/avatar:scale-105',
-              'transition-all duration-300'
-            )}
-          />
-          <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/30 via-blue-400/30 to-purple-500/30 rounded-full" />
+        {/* Avatar */}
+        <div className="flex-shrink-0">
           <Avatar
             src={avatarConfig.src}
             alt={avatarConfig.alt}
             fallbackText={avatarConfig.fallbackText}
-            className="relative w-[72px] h-[72px] ring-[3px] ring-white shadow-sm"
+            className="w-16 h-16"
           />
         </div>
 

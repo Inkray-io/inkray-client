@@ -75,12 +75,11 @@ export function ProfileHeader({
   return (
     <div className="px-5 py-4">
       <div className="flex items-start gap-4">
-        {/* Avatar with gradient ring */}
-        <div className="relative flex-shrink-0">
-          <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 via-blue-400/20 to-purple-500/20 rounded-full blur-sm" />
+        {/* Avatar */}
+        <div className="flex-shrink-0">
           <Avatar
             {...avatarConfig}
-            className="relative w-16 h-16 ring-2 ring-white"
+            className="w-16 h-16"
           />
         </div>
 

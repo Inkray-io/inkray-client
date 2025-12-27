@@ -163,140 +163,150 @@ const PublicationPageContent: React.FC = () => {
         {!publicationLoading && publication?.socialAccounts && (
           <ProfileSocialLinks socialAccounts={publication.socialAccounts} />
         )}
+      </div>
 
-        {/* Articles Feed */}
-        {!publicationLoading && publication && (
-          <div className="pt-6 pb-10 border-t border-gray-200">
-            {/* Articles Error Alert */}
-            {articlesError && (
-              <Alert variant="destructive" className="mb-4 mx-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{articlesError}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* Articles Loading State */}
-            {articlesLoading && articles.length === 0 && (
-              <div className="space-y-6 px-6">
-                <FeedPostSkeleton />
-                <FeedPostSkeleton />
-              </div>
-            )}
-
-            {/* Empty State */}
-            {isEmpty && !articlesLoading && !articlesError && (
-              <div className="text-center py-20 px-6">
-                <div className="space-y-3">
-                  <p className="text-gray-900 text-lg font-medium">
-                    No articles published yet
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    This publication hasn&apos;t shared any articles. Check back
-                    later!
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Articles List */}
+      {/* Articles Feed - Outside container */}
+      {!publicationLoading && publication && (
+        <div className="mt-6">
+          {/* Articles Header */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Articles</h2>
             {articles.length > 0 && (
-              <div className="space-y-6">
-                {articles.map((article) => {
-                  // Format article data for FeedPost component
-                  const coverImage =
-                    article.hasCover && article.quiltBlobId
-                      ? createCdnUrl(article.quiltBlobId, 'media0')
-                      : undefined;
-
-                  const formattedArticle = {
-                    author: {
-                      name: article.authorShortAddress,
-                      avatar: createUserAvatarConfig(
-                        {
-                          publicKey: article.author,
-                        },
-                        'md'
-                      ).src,
-                      address: article.author,
-                      date: article.timeAgo,
-                      readTime: '2 min',
-                      mintedBy: 0,
-                    },
-                    title: article.title,
-                    image: coverImage,
-                    description:
-                      article.summary ||
-                      `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
-                    engagement: article.engagement,
-                    slug: article.slug,
-                    publication: publication
-                      ? {
-                          id: publication.id,
-                          name: publication.name,
-                          avatar: publication.avatar ?? null,
-                          owner: publication.owner,
-                          isVerified: publication.isVerified,
-                        }
-                      : undefined,
-                  };
-
-                  return (
-                    <FeedPost
-                      key={article.articleId}
-                      {...formattedArticle}
-                      articleId={article.articleId}
-                      publicationId={article.publicationId}
-                      totalTips={article.totalTips}
-                      showFollowButton={false}
-                      vaultId={article.vaultId}
-                      onDelete={handleDeleteArticle}
-                      isDeleting={isDeletingArticle(article.articleId)}
-                    />
-                  );
-                })}
-
-                {/* Load More Button */}
-                {hasMore && (
-                  <div className="text-center pt-4">
-                    <Button
-                      onClick={loadMore}
-                      disabled={!canLoadMore}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      {articlesLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        'Load More Articles'
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Retry Button for Articles */}
-            {articlesError && (
-              <div className="text-center pt-4 px-6">
-                <Button
-                  onClick={() => {
-                    clearArticlesError();
-                    refreshArticles();
-                  }}
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Try Again
-                </Button>
-              </div>
+              <span className="text-sm text-gray-500">
+                {articles.length} {articles.length === 1 ? 'article' : 'articles'}
+              </span>
             )}
           </div>
-        )}
-      </div>
+
+          {/* Articles Error Alert */}
+          {articlesError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{articlesError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Articles Loading State */}
+          {articlesLoading && articles.length === 0 && (
+            <div className="space-y-5">
+              <FeedPostSkeleton />
+              <FeedPostSkeleton />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {isEmpty && !articlesLoading && !articlesError && (
+            <div className="bg-white rounded-2xl border border-gray-100 text-center py-20 px-6">
+              <div className="space-y-3">
+                <p className="text-gray-900 text-lg font-medium">
+                  No articles published yet
+                </p>
+                <p className="text-gray-500 text-sm">
+                  This publication hasn&apos;t shared any articles. Check back
+                  later!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Articles List */}
+          {articles.length > 0 && (
+            <div className="space-y-5">
+              {articles.map((article) => {
+                // Format article data for FeedPost component
+                const coverImage =
+                  article.hasCover && article.quiltBlobId
+                    ? createCdnUrl(article.quiltBlobId, 'media0')
+                    : undefined;
+
+                const formattedArticle = {
+                  author: {
+                    name: article.authorShortAddress,
+                    avatar: createUserAvatarConfig(
+                      {
+                        publicKey: article.author,
+                      },
+                      'md'
+                    ).src,
+                    address: article.author,
+                    date: article.timeAgo,
+                    readTime: '2 min',
+                    mintedBy: 0,
+                  },
+                  title: article.title,
+                  image: coverImage,
+                  description:
+                    article.summary ||
+                    `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+                  engagement: article.engagement,
+                  slug: article.slug,
+                  publication: publication
+                    ? {
+                        id: publication.id,
+                        name: publication.name,
+                        avatar: publication.avatar ?? null,
+                        owner: publication.owner,
+                        isVerified: publication.isVerified,
+                      }
+                    : undefined,
+                };
+
+                return (
+                  <FeedPost
+                    key={article.articleId}
+                    {...formattedArticle}
+                    articleId={article.articleId}
+                    publicationId={article.publicationId}
+                    totalTips={article.totalTips}
+                    showFollowButton={false}
+                    vaultId={article.vaultId}
+                    onDelete={handleDeleteArticle}
+                    isDeleting={isDeletingArticle(article.articleId)}
+                  />
+                );
+              })}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="text-center pt-4">
+                  <Button
+                    onClick={loadMore}
+                    disabled={!canLoadMore}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    {articlesLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Articles'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Retry Button for Articles */}
+          {articlesError && (
+            <div className="text-center pt-4">
+              <Button
+                onClick={() => {
+                  clearArticlesError();
+                  refreshArticles();
+                }}
+                variant="outline"
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Edit Publication Modal */}
       {isOwner && (

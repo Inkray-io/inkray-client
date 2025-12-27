@@ -39,7 +39,7 @@ export function ProfileArticles({
   onLoadMore,
 }: ProfileArticlesProps) {
   return (
-    <section className="px-5 py-4 border-t border-gray-100">
+    <section>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Articles</h2>
         {articles.length > 0 && (
@@ -106,7 +106,7 @@ export function ProfileArticles({
                 publication={
                   article.publication
                     ? {
-                        id: article.publication.id,
+                        id: article.publicationId,
                         name: article.publication.name,
                         avatar: article.publication.avatar,
                         owner: article.publication.owner,

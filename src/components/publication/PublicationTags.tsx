@@ -13,7 +13,7 @@ export function PublicationTags({ tags }: PublicationTagsProps) {
   if (!tags || tags.length === 0) return null;
 
   return (
-    <section className="px-5 py-3.5 border-t border-gray-100/80">
+    <section className="px-5 py-3 border-t border-gray-100">
       <div className="flex items-center gap-2.5 flex-wrap">
         <div className="flex items-center gap-1.5 mr-1">
           <div className="flex items-center justify-center w-5 h-5 rounded-md bg-gray-100">
@@ -35,7 +35,7 @@ export function PublicationTags({ tags }: PublicationTagsProps) {
                 'group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg',
                 'bg-gradient-to-r',
                 config.gradient,
-                'border border-gray-100/80 hover:border-gray-200',
+                'border border-gray-100 hover:border-gray-200',
                 'hover:shadow-sm cursor-default',
                 'transition-all duration-200'
               )}

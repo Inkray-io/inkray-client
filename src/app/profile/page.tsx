@@ -197,8 +197,10 @@ const ProfilePageContent: React.FC = () => {
         {!profileLoading && profile?.socialAccounts && (
           <ProfileSocialLinks socialAccounts={profile.socialAccounts} />
         )}
+      </div>
 
-        {/* Articles Section */}
+      {/* Articles Section - Outside container */}
+      <div className="mt-6">
         <ProfileArticles
           articles={articles}
           isLoading={articlesLoading}
@@ -209,7 +211,7 @@ const ProfilePageContent: React.FC = () => {
 
         {/* Articles Error */}
         {articlesError && !articlesLoading && (
-          <div className="px-6 sm:px-8 py-4">
+          <div className="mt-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{articlesError}</AlertDescription>

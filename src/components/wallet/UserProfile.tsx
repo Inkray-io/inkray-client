@@ -29,9 +29,11 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   
   if (!address || !isAuthenticated) return null
   
-  const { primary } = getDisplayName(suiNSName, address)
+  const { primary, secondary } = getDisplayName(suiNSName, address)
   // Display SuiNS name if available, otherwise show shortened address
   const displayName = suiNSName || primary
+  // Shortened wallet address for display below SuiNS name
+  const shortAddress = secondary || primary
   
   const handleCopyAddress = async () => {
     if (!address || copying) return
@@ -93,7 +95,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           </div>
           {suiNSName && !suiNSLoading && (
             <div className="text-xs text-gray-500 truncate">
-              {primary}
+              {shortAddress}
             </div>
           )}
         </div>
