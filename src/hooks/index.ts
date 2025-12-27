@@ -47,11 +47,15 @@ export {
 } from '@/types/article';
 
 // Publication Management Hooks
-export { 
-  usePublicationFlow, 
+export {
+  usePublicationFlow,
   type PublicationResult,
   type ContributorResult,
 } from './usePublicationFlow';
+
+// Topic and Recommendation Hooks (Onboarding)
+export { useTopics } from './useTopics';
+export { useRecommendedPublications } from './useRecommendedPublications';
 
 // Transaction Hooks
 export { 

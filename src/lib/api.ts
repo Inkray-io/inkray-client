@@ -279,6 +279,29 @@ export interface UpdatePublicationData {
   socialAccounts?: SocialAccounts;
 }
 
+export interface TopicConfig {
+  slug: string;
+  name: string;
+  gradient: string;
+  iconBg: string;
+}
+
+export interface RecommendedPublication {
+  id: string;
+  name: string;
+  avatar: string | null;
+  description: string | null;
+  tags: string[];
+  followerCount: number;
+  isVerified: boolean;
+}
+
+export interface RecommendedPublicationsResponse {
+  publications: RecommendedPublication[];
+  matchedTopics: string[];
+  fallback: boolean;
+}
+
 export const publicationsAPI = {
   getPublication: (publicationId: string, userId?: string) =>
     api.get(`/publications/${publicationId}`, {
@@ -304,6 +327,20 @@ export const publicationsAPI = {
 
   updatePublication: (publicationId: string, data: UpdatePublicationData) =>
     api.patch(`/publications/${publicationId}`, data),
+
+  getTopics: () =>
+    api.get<ApiResponse<{ topics: TopicConfig[] }>>('/publications/topics'),
+
+  getRecommendedPublications: (params: { topics: string[]; limit?: number }) =>
+    api.get<ApiResponse<RecommendedPublicationsResponse>>(
+      '/publications/recommended',
+      {
+        params,
+        paramsSerializer: {
+          indexes: null, // Serializes arrays as topics=a&topics=b instead of topics[]=a
+        },
+      }
+    ),
 };
 
 export const nftAPI = {

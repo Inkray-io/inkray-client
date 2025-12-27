@@ -1,5 +1,7 @@
 export { OnboardingModal } from './OnboardingModal'
 export { OnboardingStep } from './OnboardingStep'
+export { TopicSelector } from './TopicSelector'
+export { PublicationRecommendations } from './PublicationRecommendations'
 export { useOnboarding } from './useOnboarding'
 export { onboardingSteps, ONBOARDING_CONFIG } from './onboarding-config'
-export type { OnboardingStep as OnboardingStepConfig } from './onboarding-config'
+export type { OnboardingStep as OnboardingStepConfig, OnboardingStepType } from './onboarding-config'

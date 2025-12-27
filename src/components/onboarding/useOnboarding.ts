@@ -15,6 +15,10 @@ interface UseOnboardingReturn {
   skipOnboarding: () => void
   closeOnboarding: () => void
   isHydrated: boolean
+  // Topic selection state
+  selectedTopics: string[]
+  setSelectedTopics: (topics: string[]) => void
+  canContinue: boolean
 }
 
 function getOnboardingStatus(): boolean {
@@ -54,11 +58,21 @@ export function useOnboarding(): UseOnboardingReturn {
   const [isCompleted, setIsCompleted] = useState<boolean>(() => getOnboardingStatus())
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isHydrated, setIsHydrated] = useState(false)
-  
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+
   const steps = ONBOARDING_CONFIG.steps
   const totalSteps = steps.length
   const isLastStep = currentStep === totalSteps - 1
   const currentStepData = steps[currentStep] || null
+
+  // Determine if user can continue based on current step type
+  const canContinue = (() => {
+    if (!currentStepData) return false
+    if (currentStepData.type === 'topic-selection') {
+      return selectedTopics.length > 0
+    }
+    return true
+  })()
   
   // Mark as hydrated after mount
   useEffect(() => {
@@ -101,6 +115,10 @@ export function useOnboarding(): UseOnboardingReturn {
     nextStep,
     skipOnboarding,
     closeOnboarding,
-    isHydrated
+    isHydrated,
+    // Topic selection state
+    selectedTopics,
+    setSelectedTopics,
+    canContinue,
   }
 }
