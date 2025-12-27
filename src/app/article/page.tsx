@@ -16,18 +16,17 @@ import {
   Link,
   Share,
   Check,
-  Trash2
+  Trash2,
+  Info
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/utils/avatar";
 import ReactMarkdown from "react-markdown";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
-import { FollowBar } from "@/components/follow";
 import { NftMintingSection } from "@/components/nft";
 import { CommentsSection } from "@/components/comments";
 import { TipButton } from "@/components/article/TipButton";
-import { TipDisplay } from "@/components/ui/TipDisplay";
 import { LikeButton } from "@/components/like/LikeButton";
 import { BookmarkButton } from "@/components/bookmark/BookmarkButton";
 import { useLikes } from "@/hooks/useLikes";
@@ -38,6 +37,8 @@ import { ROUTES } from "@/constants/routes";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useArticleDeletion } from "@/hooks/useArticleDeletion";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { BlockchainInfoPopup } from "@/components/article/BlockchainInfoPopup";
+import { CONFIG } from "@/lib/config";
 
 function ArticlePageContent() {
   const router = useRouter();
@@ -48,6 +49,7 @@ function ArticlePageContent() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [showBlockchainInfo, setShowBlockchainInfo] = useState(false);
   const subscriptionFoundRef = useRef(false);
 
   // Mark as hydrated after mount to prevent SSR/client mismatch
@@ -583,6 +585,16 @@ function ArticlePageContent() {
                         </Button>
                       )}
 
+                      {/* Blockchain Info Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 sm:size-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-h-[36px] min-w-[36px]"
+                        onClick={() => setShowBlockchainInfo(true)}
+                      >
+                        <Info className="size-4" />
+                      </Button>
+
                       {/* Support Button */}
                       {article?.publicationId ? (
                         <button
@@ -748,21 +760,6 @@ function ArticlePageContent() {
               </div>
 
 
-              {/* Follow Bar */}
-              {article.followInfo && (
-                <FollowBar
-                  publicationId={article.publicationId}
-                  publicationName={article.followInfo.publicationName}
-                  publicationAvatar={article.followInfo.publicationAvatar || null}
-                  initialFollowInfo={{
-                    isFollowing: article.followInfo.isFollowing,
-                    followerCount: article.followInfo.followerCount,
-                    followedAt: article.followInfo.followedAt,
-                  }}
-                  className="mb-6"
-                />
-              )}
-
               {/* NFT Minting Section */}
               {article.articleId && (
                 <NftMintingSection
@@ -772,49 +769,14 @@ function ArticlePageContent() {
                 />
               )}
 
-              {/* Tip Section */}
-              {article.publicationId && (
-                <div className="bg-white rounded-2xl p-4 sm:p-5">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-sm font-semibold">Support this article</h3>
-                      <TipDisplay amount={article.totalTips || 0} size="default" />
-                    </div>
-                    <button
-                      className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
-                      onClick={() => setIsTipDialogOpen(true)}
-                    >
-                      Tip
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Tips help support content creators on the platform
-                  </p>
-                </div>
-              )}
-
-
-              {/* Article Footer */}
-              <div className="bg-white rounded-2xl p-4 sm:p-5">
-                <div className="text-xs text-gray-500">
-                  <p>Published on Sui blockchain</p>
-                  <p className="flex items-center gap-2">
-                    Object ID:{' '}
-                    <button
-                      onClick={() => article.articleId && window.open(`https://suiexplorer.com/object/${article.articleId}?network=testnet`, '_blank')}
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                    >
-                      <span className="font-mono">
-                        {article.articleId ?
-                          `${article.articleId.slice(0, 8)}...${article.articleId.slice(-8)}` :
-                          'Unknown'
-                        }
-                      </span>
-                      <ExternalLink className="h-3 w-3" />
-                    </button>
-                  </p>
-                </div>
-              </div>
+              {/* Blockchain Info Popup */}
+              <BlockchainInfoPopup
+                isOpen={showBlockchainInfo}
+                onClose={() => setShowBlockchainInfo(false)}
+                articleId={article.articleId}
+                walrusBlobId={article.quiltBlobId}
+                network={CONFIG.NETWORK as 'testnet' | 'mainnet'}
+              />
             </div>
           )}
 
