@@ -16,7 +16,6 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  output: 'export',
   serverExternalPackages: [ '@mysten/walrus', '@mysten/walrus-wasm' ],
 };
 
