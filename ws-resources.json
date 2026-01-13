@@ -5,7 +5,11 @@
     "/auth": "/auth.html",
     "/create": "/create.html",
     "/create-publication": "/create-publication.html",
+    "/drafts": "/drafts.html",
     "/feed": "/feed.html",
+    "/notifications": "/notifications.html",
+    "/offline/article": "/offline/article.html",
+    "/profile": "/profile.html",
     "/publication": "/publication.html",
     "/publication/settings": "/publication/settings.html"
   },
