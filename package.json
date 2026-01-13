@@ -70,6 +70,8 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@assistant-ui/tap": "0.3.1"
+    "@assistant-ui/tap": "0.3.1",
+    "@mysten/sui": "$@mysten/sui",
+    "@mysten/bcs": "$@mysten/bcs"
   }
 }
