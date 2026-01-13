@@ -47,7 +47,7 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
       }
     } catch (err: unknown) {
       console.error("Failed to generate mobile auth session:", err)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const axiosError = err as any
       const errorMessage = axiosError?.response?.data?.error?.message
         || axiosError?.response?.data?.message
@@ -81,10 +81,10 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
         // Backend wraps response in { success: true, data: {...} }
         const status = response.data.data
 
-        if (status.status === "authenticated") {
+        if (status?.status === "authenticated") {
           setState("connected")
           clearInterval(pollInterval)
-        } else if (status.status === "expired") {
+        } else if (status?.status === "expired") {
           setState("expired")
           clearInterval(pollInterval)
         }

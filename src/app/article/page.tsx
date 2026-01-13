@@ -399,7 +399,7 @@ function ArticlePageContent() {
                             }}
                             className="font-semibold text-black text-sm hover:text-primary hover:underline transition-colors"
                           >
-                            {article.followInfo?.publicationName || article.publicationName || 'Publication'}
+                            {article.followInfo?.publicationName || 'Publication'}
                           </button>
                           {article.followInfo?.isVerified && <VerifiedBadge size="sm" />}
                         </div>

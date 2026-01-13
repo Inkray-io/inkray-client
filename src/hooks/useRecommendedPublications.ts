@@ -70,7 +70,7 @@ export function useRecommendedPublications(): UseRecommendedPublicationsReturn {
           limit,
         });
 
-        if (response.data.success) {
+        if (response.data.success && response.data.data) {
           const { publications: pubs, matchedTopics: matched, fallback } = response.data.data;
           setPublications(transformPublications(pubs));
           setMatchedTopics(matched);

@@ -7,7 +7,6 @@ import { Clock, User, Lock } from 'lucide-react';
 import { TipButton } from './TipButton';
 import { TipDisplay } from '@/components/ui/TipDisplay';
 import { AddressDisplay } from '@/components/ui/AddressDisplay';
-import { ROUTES } from '@/constants/routes';
 
 interface ArticleCardProps {
   article: FeedArticle;
@@ -28,7 +27,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-6">
-        <Link 
+        <Link
           href={`/article?id=${article.slug}`}
           className="block space-y-4"
           onClick={handleCardClick}
@@ -43,7 +42,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
                 <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
               )}
             </div>
-            
+
             {article.summary && (
               <p className="text-muted-foreground leading-relaxed line-clamp-3">
                 {article.summary}
@@ -63,7 +62,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
                   textSize="text-sm"
                 />
               </div>
-              
+
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>{article.timeAgo}</span>
@@ -76,7 +75,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
                   Premium
                 </Badge>
               )}
-              
+
               {article.category && (
                 <Badge variant="secondary" className="text-xs">
                   {article.category.name}
@@ -104,7 +103,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         {/* Tip Display and Button Section */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <TipDisplay amount={article.totalTips || 0} size="sm" />
-          <TipButton 
+          <TipButton
             publicationId={article.publicationId}
             articleTitle={article.title}
           />

@@ -28,7 +28,7 @@ export function useTopics(): UseTopicsReturn {
 
       const response = await publicationsAPI.getTopics();
 
-      if (response.data.success) {
+      if (response.data.success && response.data.data) {
         setTopics(response.data.data.topics);
       } else {
         throw new Error('Failed to fetch topics');

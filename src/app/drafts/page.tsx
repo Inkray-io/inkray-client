@@ -8,7 +8,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { TopWriters } from "@/components/widgets/TopWriters";
 import { AlertCircle, Loader2, RefreshCw, Pencil, Trash2, FileText } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import type { DraftArticle } from '@/types/article';
 import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
 import Link from 'next/link';
@@ -80,7 +80,7 @@ function DraftListItem({ draft, onDelete, isDeleting }: DraftListItemProps) {
   );
 }
 
-export default function DraftsPage() {
+function DraftsPageContent() {
   const { drafts, isLoading, hasMore, loadMore, refresh, error } = useDrafts();
   const { deleteDraft, deletingDraft } = useDraftMode();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -208,5 +208,17 @@ export default function DraftsPage() {
         />
       </AppLayout>
     </RequireAuth>
+  );
+}
+
+export default function DraftsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    }>
+      <DraftsPageContent />
+    </Suspense>
   );
 }
