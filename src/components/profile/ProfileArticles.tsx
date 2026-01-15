@@ -10,6 +10,7 @@ import { FeedPost } from '@/components/feed/FeedPost';
 import { FeedPostSkeleton } from '@/components/feed/FeedPostSkeleton';
 import { formatAddress } from '@/utils/address';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
+import { CONFIG } from '@/lib/config';
 
 interface ProfileArticlesProps {
   articles: UserArticle[];
@@ -79,10 +80,17 @@ export function ProfileArticles({
               { publicKey: article.author },
               'md'
             );
-            const coverImage =
-              article.hasCover && article.quiltId
-                ? createCdnUrl(article.quiltId, 'media0')
-                : undefined;
+            // Determine cover image URL based on storage type
+            let coverImage: string | undefined;
+            if (article.hasCover) {
+              if (article.coverImageId) {
+                // S3-backed article: use backend proxy URL
+                coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
+              } else if (article.quiltId) {
+                // Legacy Walrus-backed article: use CDN URL
+                coverImage = createCdnUrl(article.quiltId, 'media0');
+              }
+            }
 
             return (
               <FeedPost

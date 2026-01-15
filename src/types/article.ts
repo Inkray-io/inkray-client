@@ -385,6 +385,7 @@ export interface PublicationArticle {
   slug: string;
   summary?: string;
   hasCover?: boolean;
+  coverImageId?: string | null;
   author: string;
   authorShortAddress: string;
   createdAt: string;

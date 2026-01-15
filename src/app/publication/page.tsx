@@ -22,6 +22,7 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
 import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 import { useArticleDeletion } from '@/hooks/useArticleDeletion';
 import { addressesEqual } from '@/utils/address';
+import { CONFIG } from '@/lib/config';
 
 /**
  * Publication page content component
@@ -214,10 +215,17 @@ const PublicationPageContent: React.FC = () => {
             <div className="space-y-5">
               {articles.map((article) => {
                 // Format article data for FeedPost component
-                const coverImage =
-                  article.hasCover && article.quiltBlobId
-                    ? createCdnUrl(article.quiltBlobId, 'media0')
-                    : undefined;
+                // Determine cover image URL based on storage type
+                let coverImage: string | undefined;
+                if (article.hasCover) {
+                  if (article.coverImageId) {
+                    // S3-backed article: use backend proxy URL
+                    coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
+                  } else if (article.quiltBlobId) {
+                    // Legacy Walrus-backed article: use CDN URL
+                    coverImage = createCdnUrl(article.quiltBlobId, 'media0');
+                  }
+                }
 
                 const formattedArticle = {
                   author: {

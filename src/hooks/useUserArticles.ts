@@ -11,6 +11,7 @@ export interface UserArticle {
   summary: string;
   slug: string;
   hasCover: boolean;
+  coverImageId?: string | null;
   quiltId: string;
   publicationId: string;
   vaultId: string;

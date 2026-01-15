@@ -81,6 +81,7 @@ export const usePublicationFeed = (publicationId: string) => {
           quiltBlobId: article.quiltBlobId || '',
           quiltObjectId: article.quiltObjectId || '',
           hasCover: article.hasCover ?? false,
+          coverImageId: article.coverImageId || null,
           createdAt: article.createdAt,
           transactionHash: article.transactionHash,
           timeAgo: article.timeAgo,
