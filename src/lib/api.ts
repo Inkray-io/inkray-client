@@ -478,6 +478,24 @@ export const analyticsAPI = {
     api.get(`/analytics/${publicationId}/tips`, {
       params: { startDate, endDate },
     }),
+
+  // Get retention analytics for a publication
+  getRetention: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/retention`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get non-follower views analytics for a publication
+  getNonFollowerViews: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/non-follower-views`, {
+      params: { startDate, endDate },
+    }),
+
+  // Get referrer analytics for a publication
+  getReferrers: (publicationId: string, startDate: string, endDate: string) =>
+    api.get(`/analytics/${publicationId}/referrers`, {
+      params: { startDate, endDate },
+    }),
 };
 
 export const notificationsAPI = {

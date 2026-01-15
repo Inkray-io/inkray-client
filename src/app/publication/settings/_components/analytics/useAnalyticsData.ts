@@ -9,13 +9,63 @@ import {
 } from "date-fns";
 import { analyticsAPI } from "@/lib/api";
 
-export type MetricType = "views" | "likes" | "follows" | "tips";
+export type MetricType = "views" | "likes" | "follows" | "tips" | "retention" | "nonFollowers" | "referrers";
 export type TimeRange = "7d" | "1m" | "1y" | "all" | "custom";
 
 export interface ChartDataPoint {
   date: string;
   value: number;
   rawDate: Date;
+}
+
+// Retention analytics types
+export interface RetentionDataPoint {
+  cohortDate: string;
+  day: number;
+  retentionRate: number;
+  usersReturned: number;
+  cohortSize: number;
+}
+
+export interface RetentionData {
+  cohorts: RetentionDataPoint[];
+  averageRetention: {
+    day1: number;
+    day7: number;
+    day14: number;
+    day30: number;
+  };
+}
+
+// Non-follower views types
+export interface NonFollowerData {
+  chartData: ChartDataPoint[];
+  total: number;
+  percentOfTotal: number;
+  previousTotal: number;
+  percentChange: number;
+  averagePerDay: number;
+}
+
+// Referrer analytics types
+export interface ReferrerBreakdown {
+  type: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopReferrer {
+  domain: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ReferrerData {
+  breakdown: ReferrerBreakdown[];
+  chartData: ChartDataPoint[];
+  topReferrers: TopReferrer[];
+  total: number;
 }
 
 export interface AnalyticsData {
@@ -26,6 +76,10 @@ export interface AnalyticsData {
   averagePerDay: number;
   isLoading: boolean;
   error: Error | null;
+  // Extended data for new analytics types
+  retentionData?: RetentionData;
+  nonFollowerData?: NonFollowerData;
+  referrerData?: ReferrerData;
 }
 
 interface UseAnalyticsDataParams {
@@ -100,9 +154,34 @@ async function fetchAnalytics(
     case "tips":
       response = await analyticsAPI.getTips(publicationId, startStr, endStr);
       break;
+    case "retention":
+      response = await analyticsAPI.getRetention(publicationId, startStr, endStr);
+      break;
+    case "nonFollowers":
+      response = await analyticsAPI.getNonFollowerViews(publicationId, startStr, endStr);
+      break;
+    case "referrers":
+      response = await analyticsAPI.getReferrers(publicationId, startStr, endStr);
+      break;
   }
 
-  return response.data.data;
+  return { data: response.data.data, metric };
+}
+
+// Helper to transform chart data
+function transformChartData(
+  apiChartData: Array<{ date: string; value: number }>,
+  range: TimeRange,
+  totalDays: number
+): ChartDataPoint[] {
+  return apiChartData.map((point) => {
+    const rawDate = parseISO(point.date);
+    return {
+      date: formatDateForRange(rawDate, range, totalDays),
+      value: point.value,
+      rawDate,
+    };
+  });
 }
 
 export function useAnalyticsData({
@@ -128,31 +207,85 @@ export function useAnalyticsData({
     enabled: !!publicationId,
   });
 
-  // Transform API response to chart format with formatted dates
+  // Transform API response based on metric type
   if (query.data) {
-    const apiData = query.data;
+    const { data: apiData, metric: responseMetric } = query.data;
 
-    // Transform chart data to include rawDate and formatted date labels
-    const chartData: ChartDataPoint[] = apiData.chartData.map(
-      (point: { date: string; value: number }) => {
-        const rawDate = parseISO(point.date);
-        return {
-          date: formatDateForRange(rawDate, range, totalDays),
-          value: point.value,
-          rawDate,
-        };
-      }
-    );
+    // Handle standard metrics (views, likes, follows, tips)
+    if (["views", "likes", "follows", "tips"].includes(responseMetric)) {
+      const chartData = transformChartData(apiData.chartData, range, totalDays);
 
-    return {
-      chartData,
-      total: apiData.total,
-      previousTotal: apiData.previousTotal,
-      percentChange: apiData.percentChange,
-      averagePerDay: apiData.averagePerDay,
-      isLoading: false,
-      error: null,
-    };
+      return {
+        chartData,
+        total: apiData.total,
+        previousTotal: apiData.previousTotal,
+        percentChange: apiData.percentChange,
+        averagePerDay: apiData.averagePerDay,
+        isLoading: false,
+        error: null,
+      };
+    }
+
+    // Handle retention analytics
+    if (responseMetric === "retention") {
+      return {
+        chartData: [],
+        total: 0,
+        previousTotal: 0,
+        percentChange: 0,
+        averagePerDay: 0,
+        isLoading: false,
+        error: null,
+        retentionData: {
+          cohorts: apiData.cohorts,
+          averageRetention: apiData.averageRetention,
+        },
+      };
+    }
+
+    // Handle non-follower views analytics
+    if (responseMetric === "nonFollowers") {
+      const chartData = transformChartData(apiData.chartData, range, totalDays);
+
+      return {
+        chartData: [],
+        total: 0,
+        previousTotal: 0,
+        percentChange: 0,
+        averagePerDay: 0,
+        isLoading: false,
+        error: null,
+        nonFollowerData: {
+          chartData,
+          total: apiData.total,
+          percentOfTotal: apiData.percentOfTotal,
+          previousTotal: apiData.previousTotal,
+          percentChange: apiData.percentChange,
+          averagePerDay: apiData.averagePerDay,
+        },
+      };
+    }
+
+    // Handle referrer analytics
+    if (responseMetric === "referrers") {
+      const chartData = transformChartData(apiData.chartData, range, totalDays);
+
+      return {
+        chartData: [],
+        total: 0,
+        previousTotal: 0,
+        percentChange: 0,
+        averagePerDay: 0,
+        isLoading: false,
+        error: null,
+        referrerData: {
+          breakdown: apiData.breakdown,
+          chartData,
+          topReferrers: apiData.topReferrers,
+          total: apiData.total,
+        },
+      };
+    }
   }
 
   // Return loading/error state or empty data

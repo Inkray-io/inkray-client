@@ -52,6 +52,14 @@ function getMetricLabel(metric: MetricType): string {
       return "New Followers";
     case "tips":
       return "Total Tips (SUI)";
+    case "retention":
+      return "Retention Rate";
+    case "nonFollowers":
+      return "Discovery Views";
+    case "referrers":
+      return "Traffic Sources";
+    default:
+      return "Total";
   }
 }
 

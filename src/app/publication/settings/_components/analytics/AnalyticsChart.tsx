@@ -40,6 +40,14 @@ function getMetricLabel(metric: MetricType): string {
       return "Followers";
     case "tips":
       return "SUI";
+    case "retention":
+      return "Retention";
+    case "nonFollowers":
+      return "Discovery Views";
+    case "referrers":
+      return "Referrals";
+    default:
+      return "Value";
   }
 }
 
@@ -100,6 +108,14 @@ export function AnalyticsChart({
         return "var(--chart-2)";
       case "tips":
         return "var(--chart-3)";
+      case "retention":
+        return "var(--chart-4)";
+      case "nonFollowers":
+        return "#6366f1";
+      case "referrers":
+        return "#f59e0b";
+      default:
+        return "var(--chart-1)";
     }
   }, [metric]);
 

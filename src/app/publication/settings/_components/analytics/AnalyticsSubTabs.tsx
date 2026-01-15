@@ -1,7 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { HiEye, HiHeart, HiUserPlus, HiCurrencyDollar } from "react-icons/hi2";
+import {
+  HiEye,
+  HiHeart,
+  HiUserPlus,
+  HiCurrencyDollar,
+  HiArrowPath,
+  HiGlobeAlt,
+  HiLink,
+} from "react-icons/hi2";
 import { MetricType } from "./useAnalyticsData";
 
 interface AnalyticsSubTabsProps {
@@ -14,11 +22,14 @@ const TABS: { id: MetricType; label: string; icon: React.ComponentType<{ classNa
   { id: "likes", label: "Likes", icon: HiHeart },
   { id: "follows", label: "Follows", icon: HiUserPlus },
   { id: "tips", label: "Tips", icon: HiCurrencyDollar },
+  { id: "retention", label: "Retention", icon: HiArrowPath },
+  { id: "nonFollowers", label: "Discovery", icon: HiGlobeAlt },
+  { id: "referrers", label: "Referrers", icon: HiLink },
 ];
 
 export function AnalyticsSubTabs({ activeTab, onChange }: AnalyticsSubTabsProps) {
   return (
-    <div className="inline-flex rounded-xl bg-gray-100 p-1 mb-6">
+    <div className="flex overflow-x-auto scrollbar-hide rounded-xl bg-gray-100 p-1 mb-6 max-w-full">
       {TABS.map((tab) => {
         const isActive = tab.id === activeTab;
         const Icon = tab.icon;
