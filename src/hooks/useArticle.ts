@@ -9,7 +9,7 @@ import { useSubscription } from './useSubscription';
 import { EncryptedObject } from '@mysten/seal';
 import { log } from '@/lib/utils/Logger';
 import { parseContentError } from '@/lib/utils/errorHandling';
-import { transformMediaUrls } from '@/lib/utils/mediaUrlTransform';
+import { transformArticleMediaUrls } from '@/lib/utils/mediaUrlTransform';
 import { Article, ArticleState, ArticleContentResponse } from '@/types/article';
 import { CachedArticle } from "@/lib/idb";
 
@@ -489,8 +489,8 @@ export const useArticle = (articleSlug: string | null) => {
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const result: ArticleContentResponse = response.data;
 
-        // Transform media URLs to CDN format with real blob IDs
-        const transformedContent = transformMediaUrls(result.content, article.quiltBlobId);
+        // Transform media URLs for display (S3-backed images + legacy CDN)
+        const transformedContent = transformArticleMediaUrls(result.content, article.articleId, article.quiltBlobId);
 
         return transformedContent;
       }
@@ -847,8 +847,8 @@ export const useArticle = (articleSlug: string | null) => {
           decryptedContent = await stableDecryptContent(decryptionParams);
         }
 
-        // Transform media URLs to CDN format with real blob IDs
-        const transformedContent = transformMediaUrls(decryptedContent, article.quiltBlobId);
+        // Transform media URLs for display (S3-backed images + legacy CDN)
+        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId, article.quiltBlobId);
 
         // Decryption successful. Post message to service worker to cache the article.
         const CACHE_ARTICLE_TYPE = 'CACHE_ARTICLE';
@@ -1104,8 +1104,8 @@ export const useArticle = (articleSlug: string | null) => {
         const decryptedContent = await stableDecryptContent(manualDecryptionParams);
 
 
-        // Transform media URLs to CDN format with real blob IDs
-        const transformedContent = transformMediaUrls(decryptedContent, article.quiltBlobId);
+        // Transform media URLs for display (S3-backed images + legacy CDN)
+        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId, article.quiltBlobId);
 
         return transformedContent;
       } else {
@@ -1113,8 +1113,8 @@ export const useArticle = (articleSlug: string | null) => {
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const result: ArticleContentResponse = response.data;
 
-        // Transform media URLs to CDN format with real blob IDs
-        const transformedContent = transformMediaUrls(result.content, article.quiltBlobId);
+        // Transform media URLs for display (S3-backed images + legacy CDN)
+        const transformedContent = transformArticleMediaUrls(result.content, article.articleId, article.quiltBlobId);
 
         return transformedContent;
       }

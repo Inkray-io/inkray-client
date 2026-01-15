@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { draftsAPI } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
 import { log } from '@/lib/utils/Logger';
 import { DraftArticle, TemporaryImage } from "@/types/article";
 import { useThrottledCallback } from "@/hooks/useThrottledCallback";
@@ -146,63 +147,31 @@ export default function useDraftMode() {
     return transformBackendDraftMediaUrlForUrl(url, id);
   }, [ id ]);
 
-  const uploadDraftImage = async (image: TemporaryImage) => {
-    if (!draft) {return;}
+  const uploadDraftImage = async (image: TemporaryImage): Promise<string | null> => {
+    if (!draft) { return null; }
     setUploadingImage(true);
     try {
-      // Convert File to base64 string (strip the data: prefix)
-      const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onerror = () => reject(new Error('Failed to read file'));
-          reader.onload = () => {
-            const result = reader.result as string | ArrayBuffer | null;
-            if (!result) {
-              reject(new Error('Empty file result'));
-              return;
-            }
-            // readAsDataURL returns a string like: data:<mime>;base64,AAA...
-            if (typeof result === 'string') {
-              const commaIndex = result.indexOf(',');
-              const base64 = commaIndex >= 0 ? result.slice(commaIndex + 1) : result;
-              resolve(base64);
-            } else {
-              // Fallback: convert ArrayBuffer to base64
-              const bytes = new Uint8Array(result);
-              let binary = '';
-              for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-              }
-              resolve(btoa(binary));
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-      };
+      const response = await draftsAPI.uploadImage(draft.id, image.file, image.imageId);
+      const imageId = response.data?.data?.imageId;
 
-      const blobBase64 = await fileToBase64(image.file);
-
-      await draftsAPI.uploadImage(draft.id,
-          {
-            mediaIndex: image.index,
-            filename: image.filename,
-            mimeType: image.mimeType,
-            blob: blobBase64
-          }
-      );
-
+      if (imageId) {
+        // Return the backend proxy URL for the uploaded image (using UUID)
+        return `${CONFIG.API_URL}/articles/draft/${draft.id}/media/${imageId}`;
+      }
+      return null;
     } catch (e) {
       log.error('Draft image upload error:', e);
+      return null;
     } finally {
       setUploadingImage(false);
     }
   };
 
-  const deleteDraftImage = async (mediaIndex: number | string) => {
+  const deleteDraftImage = async (imageId: string) => {
     if (!draft) { return false; }
     setDeletingImage(true);
     try {
-      await draftsAPI.deleteImage(draft.id, String(mediaIndex));
+      await draftsAPI.deleteImage(draft.id, imageId);
       return true;
     } catch (err) {
       log.error('Draft image delete error:', err);

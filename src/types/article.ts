@@ -53,6 +53,8 @@ export interface Article {
   highlights?: string[];
   /** Whether the article has at least one media file that can be used as cover */
   hasCover?: boolean;
+  /** First image UUID for S3-backed articles (used for cover image) */
+  coverImageId?: string | null;
   /** Publication follow information */
   followInfo?: {
     publicationName: string;
@@ -270,8 +272,8 @@ export interface TemporaryImage {
   mimeType: string;
   /** File size in bytes */
   size: number;
-  /** Predicted media index (media0, media1, etc.) */
-  index: number;
+  /** Image ID (UUID) used for URL and S3 storage */
+  imageId: string;
   /** Final URL that will remain in markdown */
   finalUrl: string;
   /** Blob URL for preview in editor */

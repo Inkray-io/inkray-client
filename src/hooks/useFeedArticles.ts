@@ -4,6 +4,7 @@ import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
 import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
+import { CONFIG } from '@/lib/config';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed
@@ -208,11 +209,18 @@ export const useFeedArticles = (
       // Don't pass the short address as name - let the function detect it's an address
     }, 'md');
     const hasCover = Boolean(article.hasCover);
-    // Use CDN for cover images with the article's quilt blob ID
-    // Example: https://testnet-cdn.inkray.xyz/blob/{quiltBlobId}?file=media0
-    const coverImage = hasCover && article.quiltBlobId
-      ? createCdnUrl(article.quiltBlobId, 'media0')
-      : undefined;
+
+    // Determine cover image URL based on storage type
+    let coverImage: string | undefined;
+    if (hasCover) {
+      if (article.coverImageId) {
+        // S3-backed article: use backend proxy URL
+        coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
+      } else if (article.quiltBlobId) {
+        // Legacy Walrus-backed article: use CDN URL
+        coverImage = createCdnUrl(article.quiltBlobId, 'media0');
+      }
+    }
 
     return {
       id: article.articleId,

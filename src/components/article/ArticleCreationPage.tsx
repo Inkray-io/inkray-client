@@ -297,8 +297,8 @@ export default function ArticleCreationPage() {
                           ref={editorRef}
                           initialValue={content}
                           onChange={setContent}
-                          onImageAdded={(image) => {uploadDraftImage(image)}}
-                          onImageDeleted={(index: number) => {deleteDraftImage(index)}}
+                          onImageUpload={uploadDraftImage}
+                          onImageDeleted={(imageId: string) => {deleteDraftImage(imageId)}}
                           computeDraftImageURL={(url) => computeImageDraftUrl(url)}
                           placeholder="What's on your mind?"
                           className="min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"

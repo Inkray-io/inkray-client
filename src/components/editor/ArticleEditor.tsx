@@ -17,7 +17,10 @@ interface ArticleEditorProps {
   onChange?: (markdown: string) => void
   onTempImagesChange?: (images: TemporaryImage[]) => void
   onImageAdded?: (image: TemporaryImage) => void
-  onImageDeleted?: (index: number) => void
+  onImageDeleted?: (imageId: string) => void
+  // Async upload handler that uploads to backend and returns the URL to store in markdown
+  // If provided, this is called instead of using local temp storage
+  onImageUpload?: (image: TemporaryImage) => Promise<string | null>
   // Optional synchronous callback that can compute a draft (preview) URL
   // for non-temporary images. If provided and returns a non-empty string,
   // `proxyDomURL` will return that value for previewing inside the editor.
@@ -37,6 +40,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
   onTempImagesChange,
   onImageAdded,
   onImageDeleted,
+  onImageUpload,
   computeDraftImageURL,
   placeholder = 'Start writing your article...',
   className = ''
@@ -46,11 +50,13 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
   const onTempImagesChangeRef = useRef(onTempImagesChange)
   const onImageAddedRef = useRef(onImageAdded)
   const onImageDeletedRef = useRef(onImageDeleted)
+  const onImageUploadRef = useRef(onImageUpload)
   const computeDraftImageURLRef = useRef<((originalURL: string) => string | undefined) | undefined>(computeDraftImageURL)
   onChangeRef.current = onChange
   onTempImagesChangeRef.current = onTempImagesChange
   onImageAddedRef.current = onImageAdded
   onImageDeletedRef.current = onImageDeleted
+  onImageUploadRef.current = onImageUpload
   computeDraftImageURLRef.current = computeDraftImageURL
 
   // Create temporary image manager instance
@@ -64,7 +70,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
       const all = tempImageManager.current.getAllImages()
       if (onImageDeletedRef.current) {
         for (const img of all) {
-          try { onImageDeletedRef.current(img.index) } catch { /* ignore callback errors */ }
+          try { onImageDeletedRef.current(img.imageId) } catch { /* ignore callback errors */ }
         }
       }
 
@@ -101,11 +107,11 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
               throw new Error(validation.errors.join(', '))
             }
 
-            // Add to temporary storage and return FINAL URL that stays in markdown
-            const finalUrl = tempImageManager.current.addImage(file)
+            // Add to temporary storage for blob URL preview
+            const tempUrl = tempImageManager.current.addImage(file)
 
             // Get the TemporaryImage object we just added
-            const addedImage = tempImageManager.current.getImageByUrl(finalUrl)
+            const addedImage = tempImageManager.current.getImageByUrl(tempUrl)
 
             // Notify parent component about temp images change
             if (onTempImagesChangeRef.current) {
@@ -113,18 +119,29 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
               onTempImagesChangeRef.current(allImages)
             }
 
-            // Notify single-image added callback
+            // If async upload handler is provided, use it to upload to backend
+            if (addedImage && onImageUploadRef.current) {
+              try {
+                const backendUrl = await onImageUploadRef.current(addedImage)
+                if (backendUrl) {
+                  // Store mapping from backend URL to blob URL for preview
+                  tempImageManager.current.mapUrlToBlob(backendUrl, addedImage.blobUrl)
+                  log.debug('Uploaded image to backend', { backendUrl }, 'ArticleEditor')
+                  return backendUrl
+                }
+              } catch (err) {
+                log.error('Failed to upload image to backend', { err }, 'ArticleEditor')
+              }
+            }
+
+            // Fallback: notify via legacy callback and return temp URL
             if (addedImage && onImageAddedRef.current) {
               try { onImageAddedRef.current(addedImage) } catch { /* ignore callback errors */ }
             }
 
-            // Simulate upload delay for UX
-            await new Promise(resolve => setTimeout(resolve, 500))
-
-            // Return the final URL - this URL will remain in the markdown permanently
-            // Example: "http://localhost:3000/articles/media/media0"
-            log.debug('Generated URL', { finalUrl }, 'ArticleEditor')
-            return finalUrl
+            // Return the temp URL - will be replaced on publish
+            log.debug('Generated temp URL', { tempUrl }, 'ArticleEditor')
+            return tempUrl
           },
           proxyDomURL: (originalURL: string) => {
             // Check if this is one of our temporary image URLs
@@ -194,36 +211,25 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
             for (const url of deletedUrls) {
               const img = tempImageManager.current.getImageByUrl(url)
               if (img) {
-                // remove and notify with index
+                // remove and notify with imageId
                 const removed = tempImageManager.current.removeImage(url)
                 if (removed) {
                   log.debug('Temporary image removed from manager because it was deleted from markdown', { url }, 'ArticleEditor')
                   if (onImageDeletedRef.current) {
-                    try { onImageDeletedRef.current(img.index) } catch { /* ignore callback errors */ }
+                    try { onImageDeletedRef.current(img.imageId) } catch { /* ignore callback errors */ }
                   }
                 }
               } else {
                 // Image not in temp manager (e.g., loaded from external source).
-                // Extract index from URL. Expected format ends with /media/{index}
+                // Extract imageId (UUID) from URL. Expected format ends with /media/{uuid}
                 try {
-                  let extractedIndex: number | null = null
-                  // Match URL ending with /media/{index}
-                  const match = url.match(/\/media\/(\d+)$/)
-                  if (match && match[1]) {
-                    extractedIndex = parseInt(match[1], 10)
-                  } else {
-                    // Fallback: extract trailing digits from the URL
-                    const trailing = url.match(/(\d+)$/)
-                    if (trailing && trailing[1]) {
-                      extractedIndex = parseInt(trailing[1], 10)
-                    }
-                  }
-
-                  if (extractedIndex !== null && onImageDeletedRef.current) {
-                    try { onImageDeletedRef.current(extractedIndex) } catch { /* ignore callback errors */ }
+                  // Match URL ending with /media/{uuid} (UUID pattern)
+                  const match = url.match(/\/media\/([a-f0-9-]{36})$/i)
+                  if (match && match[1] && onImageDeletedRef.current) {
+                    try { onImageDeletedRef.current(match[1]) } catch { /* ignore callback errors */ }
                   }
                 } catch (err) {
-                  log.debug('Failed to extract image index from deleted URL', { url, err }, 'ArticleEditor')
+                  log.debug('Failed to extract imageId from deleted URL', { url, err }, 'ArticleEditor')
                 }
               }
             }

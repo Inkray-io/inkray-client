@@ -520,15 +520,22 @@ export const draftsAPI = {
 
   delete: (id: string) => api.delete(`/articles/draft/${id}`),
 
-  deleteImage: (draftId: string, mediaIndex: string) => api.delete(`/articles/draft/${draftId}/media/${mediaIndex}`),
+  deleteImage: (draftId: string, imageId: string) => api.delete(`/articles/draft/${draftId}/media/${imageId}`),
 
-  uploadImage: (draftId: string, data: {
-    blob: string;
-    filename: string;
-    mimeType: string;
-    mediaIndex: number;
-  }) =>
-      api.post(`/articles/draft/${draftId}/image`, data),
+  uploadImage: (draftId: string, file: File, imageId: string) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('imageId', imageId);
+    return api.post<{ data: { imageId: string } }>(
+      `/articles/draft/${draftId}/image`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+  },
   setEditLock: (draftId: string, allow: boolean) => api.patch(`/articles/draft/${draftId}/allow-editing`, { allow }),
   listArticles: (page: number = 1, limit: number = 20) => api.get<ApiResponse<PaginatedDraftArticles>>('/articles/draft/list', {
     params: {

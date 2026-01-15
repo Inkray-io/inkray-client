@@ -6,36 +6,37 @@ import { TemporaryImage } from '@/types/article'
  */
 export class TemporaryImageManager {
   private images: Map<string, TemporaryImage> = new Map()
-  
+  // Map backend URLs to blob URLs for preview
+  private urlToBlobMap: Map<string, string> = new Map()
+
   /**
    * Add an image and return a deterministic final URL that stays in markdown
    * @param file - The image file to add
-   * @returns Full API URL that will work after publication
+   * @returns Placeholder URL with UUID (will be replaced with backend URL after upload)
    */
   addImage(file: File): string {
-    const id = crypto.randomUUID()
-    const index = Math.floor(Date.now()/1000);
-    
-    // Generate the final URL that will be used in the published article
-    // This URL will remain unchanged in the markdown
-    const finalUrl = `${process.env.NEXT_PUBLIC_API_URL}/articles/media/media${index}`
-    
+    const imageId = crypto.randomUUID()
+
+    // Generate a placeholder URL with the UUID
+    // This will be replaced with the actual backend URL after upload
+    const finalUrl = `PENDING_UPLOAD/${imageId}`
+
     // Create blob URL for immediate preview in editor
     const blobUrl = URL.createObjectURL(file)
-    
+
     const tempImage: TemporaryImage = {
-      id,
+      id: imageId,
       file,
       filename: file.name,
       mimeType: file.type,
       size: file.size,
-      index,
+      imageId,
       finalUrl,
       blobUrl,
     }
-    
+
     this.images.set(finalUrl, tempImage) // Key by final URL
-    return finalUrl // Return the final URL that stays in markdown
+    return finalUrl // Return the placeholder URL
   }
 
   /**
@@ -53,16 +54,31 @@ export class TemporaryImageManager {
    * @returns Blob URL for preview or undefined if not found
    */
   getBlobUrl(url: string): string | undefined {
+    // First check the temp image map
     const image = this.images.get(url)
-    return image?.blobUrl
+    if (image?.blobUrl) {
+      return image.blobUrl
+    }
+    // Then check the backend URL to blob URL map
+    return this.urlToBlobMap.get(url)
   }
 
   /**
-   * Get all temporary images sorted by index for upload
-   * @returns Array of temporary images in order
+   * Map a backend URL to a blob URL for preview
+   * Used when images are uploaded to backend but need local preview
+   * @param backendUrl - The URL returned from backend
+   * @param blobUrl - The local blob URL for preview
+   */
+  mapUrlToBlob(backendUrl: string, blobUrl: string): void {
+    this.urlToBlobMap.set(backendUrl, blobUrl)
+  }
+
+  /**
+   * Get all temporary images
+   * @returns Array of temporary images
    */
   getAllImages(): TemporaryImage[] {
-    return Array.from(this.images.values()).sort((a, b) => a.index - b.index)
+    return Array.from(this.images.values())
   }
 
   /**
@@ -82,6 +98,7 @@ export class TemporaryImageManager {
       URL.revokeObjectURL(image.blobUrl)
     }
     this.images.clear()
+    this.urlToBlobMap.clear()
   }
 
   /**
