@@ -303,5 +303,8 @@ export function transformArticleMediaUrls(
     transformed = transformMediaUrls(transformed, quiltBlobId);
   }
 
+  // Remove <br /> tags (markdown doesn't render HTML)
+  transformed = transformed.replace(/<br\s*\/?>/gi, '');
+
   return transformed;
 }
