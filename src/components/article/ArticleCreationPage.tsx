@@ -23,6 +23,7 @@ function calculateReadingTime(plainText: string): number {
 export default function ArticleCreationPage() {
   const { account } = useAuth();
   const {
+    draftId,
     saveDraftStateThrottled,
     uploadDraftImage,
     deleteDraftImage,
@@ -49,6 +50,7 @@ export default function ArticleCreationPage() {
   const [ title, setTitle ] = useState('')
   const [ content, setContent ] = useState('')
   const [ gated ] = useState(false)
+  const [ contentInitialized, setContentInitialized ] = useState(false)
   const [ isWaitingForRedirect, setIsWaitingForRedirect ] = useState(false)
   const [ clearDialogOpen, setClearDialogOpen ] = useState(false)
 
@@ -72,15 +74,16 @@ export default function ArticleCreationPage() {
   }, [ title, content, gated, draft, saveDraftStateThrottled ])
 
   useEffect(() => {
-    if (draft && !content && !title) {
+    if (draft && !contentInitialized) {
       if (draft.title) {
         setTitle(draft.title);
       }
       if (draft.content) {
         setContent(draft.content);
       }
+      setContentInitialized(true);
     }
-  }, [ draft ]);
+  }, [ draft, contentInitialized ]);
 
 
   const handlePublish = async () => {
@@ -144,6 +147,7 @@ export default function ArticleCreationPage() {
       // Clear local editor state so the auto-save effect won't create a new draft
       setTitle('')
       setContent('')
+      setContentInitialized(false)
       editorRef.current?.clearTemporaryImages()
     }
     // Clear the guard on the next tick — autosave is allowed again after that.
@@ -290,7 +294,7 @@ export default function ArticleCreationPage() {
 
 
               {/* Content Editor */}
-              {(draft || (!draft && !loadingDraft)) && (
+              {((draft && contentInitialized) || (!draftId && !loadingDraft)) && (
                   <div>
                     <MilkdownEditorWrapper>
                       <ArticleEditor
