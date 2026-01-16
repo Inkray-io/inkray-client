@@ -31,6 +31,14 @@ interface PublicationEditModalProps {
   onClose: () => void;
   publication: Publication | null;
   onSuccess: () => void;
+  /** Custom title for the modal header (default: "Edit Publication") */
+  title?: string;
+  /** Optional subtitle shown below the title */
+  subtitle?: string;
+  /** Show a "Skip for now" button in the footer */
+  showSkipButton?: boolean;
+  /** Callback when skip button is clicked */
+  onSkip?: () => void;
 }
 
 const SOCIAL_FIELDS = [
@@ -46,6 +54,10 @@ export function PublicationEditModal({
   onClose,
   publication,
   onSuccess,
+  title = "Edit Publication",
+  subtitle,
+  showSkipButton = false,
+  onSkip,
 }: PublicationEditModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -149,7 +161,10 @@ export function PublicationEditModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-hidden flex flex-col gap-0">
         <DialogHeader className="pb-4">
-          <DialogTitle className="text-xl font-bold tracking-tight">Edit Publication</DialogTitle>
+          <DialogTitle className="text-xl font-bold tracking-tight">{title}</DialogTitle>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+          )}
         </DialogHeader>
 
         {/* Tab Navigation */}
@@ -287,24 +302,41 @@ export function PublicationEditModal({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="rounded-xl gap-2"
-            >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save Changes
-            </Button>
+          <div className="flex justify-between gap-3 pt-4 border-t border-gray-100">
+            <div>
+              {showSkipButton && onSkip && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onSkip}
+                  disabled={isLoading}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Skip for now
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              {!showSkipButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isLoading}
+                  className="rounded-xl"
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-xl gap-2"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

@@ -3,6 +3,7 @@
 import { AppLayout } from '@/components/layout'
 import { RequireAuth } from '@/components/auth/RequireAuth'
 import { RequirePublication } from '@/components/auth/RequirePublication'
+import { PublicationCompletionPrompt } from '@/components/publication/PublicationCompletionPrompt'
 import { Suspense } from "react";
 import ArticleCreationPage from "@/components/article/ArticleCreationPage";
 
@@ -16,6 +17,7 @@ export default function CreateArticlePage() {
             <Suspense>
               <ArticleCreationPage/>
             </Suspense>
+            <PublicationCompletionPrompt />
           </AppLayout>
         </RequirePublication>
       </RequireAuth>
