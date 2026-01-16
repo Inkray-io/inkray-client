@@ -87,14 +87,16 @@ export const usePublicationFeed = (publicationId: string) => {
           timeAgo: article.timeAgo,
           summary: article.summary,
           totalTips: article.totalTips,
+          categoryName: article.categoryName || null,
+          readTimeMinutes: article.readTimeMinutes || null,
           authorInfo: {
             name: article.authorShortAddress,
             avatar: createUserAvatarConfig({
               publicKey: article.author,
               // Don't pass short address as name - let the function detect it's an address
             }, 'md').src,
-            readTime: "2 min",
-            mintedBy: 0,
+            readTime: article.readTimeMinutes ? `${article.readTimeMinutes} min` : "2 min",
+            category: article.categoryName || undefined,
           },
           engagement: {
             likes: article.totalLikes,
