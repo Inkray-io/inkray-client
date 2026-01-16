@@ -78,6 +78,13 @@ export const useFeedArticles = (
           totalLikes: article.totalLikes || 0,
           totalTips: article.totalTips || 0,
           isLiked: article.isLiked || false,
+          // Map publication data to followInfo for consistency with feed display
+          followInfo: {
+            publicationName: article.publicationName || null,
+            publicationAvatar: article.publicationAvatar || null,
+            followerCount: 0,
+            isFollowing: false,
+          },
         }));
 
         return {
@@ -229,8 +236,8 @@ export const useFeedArticles = (
         avatar: avatarConfig.src,
         address: article.author,
         date: article.timeAgo,
-        readTime: "2 min", // TODO: Calculate from content
-        mintedBy: 0, // TODO: Add this metric from backend
+        readTime: article.readTimeMinutes ? `${article.readTimeMinutes} min` : "2 min",
+        category: article.categoryName || undefined,
       },
       title: article.title,
       slug: article.slug,

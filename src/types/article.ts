@@ -94,6 +94,10 @@ export interface Article {
   publicationSubscriptionExpiresAt?: string;
   /** Indicates if the article data is cached locally */
   cached?: boolean;
+  /** Category name (flattened from category object for convenience) */
+  categoryName?: string | null;
+  /** Estimated reading time in minutes */
+  readTimeMinutes?: number | null;
 }
 
 /**
@@ -402,6 +406,8 @@ export interface PublicationArticle {
   publicationOwner?: string;
   vaultId?: string;
   publicationId?: string;
+  categoryName?: string | null;
+  readTimeMinutes?: number | null;
 }
 
 export interface DraftImage {

@@ -100,8 +100,8 @@ export function ProfileArticles({
                   avatar: avatarConfig.src,
                   address: article.author,
                   date: formatTimeAgo(article.createdAt),
-                  readTime: '2 min',
-                  mintedBy: 0,
+                  readTime: article.readTimeMinutes ? `${article.readTimeMinutes} min` : '2 min',
+                  category: article.category?.name || undefined,
                 }}
                 title={article.title}
                 description={

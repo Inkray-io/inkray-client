@@ -29,7 +29,7 @@ interface FeedPostProps {
     name: string
     avatar: string | null
     address?: string // Full address for proper avatar config generation
-    mintedBy: number
+    category?: string // Article category name
     date: string
     readTime: string
   }
@@ -372,7 +372,7 @@ export function FeedPost({
             {title}
           </h2>
           <div className="text-[11px] text-gray-500 mt-0.5">
-            Minted by <span className="font-medium">{author.mintedBy}</span> • {author.date} • {author.readTime}
+            {author.category && <><span className="font-medium">{author.category}</span> • </>}{author.date} • {author.readTime}
           </div>
           <p className="text-gray-600 text-xs sm:text-sm mt-1.5 leading-relaxed line-clamp-2">
             {description}

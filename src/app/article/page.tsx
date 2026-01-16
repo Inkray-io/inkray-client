@@ -421,10 +421,10 @@ function ArticlePageContent() {
                           <span>
                             {article.timeAgo || (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Unknown date')}
                           </span>
-                          {content && (
+                          {(article.readTimeMinutes || content) && (
                             <>
                               <span>•</span>
-                              <span>{Math.ceil((content.length || 0) / 1000)} min read</span>
+                              <span>{article.readTimeMinutes || Math.ceil((content?.length || 0) / 1000)} min read</span>
                             </>
                           )}
                           {article.category && (

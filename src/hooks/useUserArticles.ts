@@ -38,6 +38,7 @@ export interface UserArticle {
     name: string;
     slug: string;
   } | null;
+  readTimeMinutes?: number | null;
 }
 
 interface UseUserArticlesState {
