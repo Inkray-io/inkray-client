@@ -13,7 +13,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { CacheProvider } from '@/components/providers/CacheProvider'
 import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
-import { OnboardingModal } from '@/components/onboarding'
+import { OnboardingModal, ProfileCompletionPrompt } from '@/components/onboarding'
 import { ChatModal } from '@/components/chat'
 import { ChatProvider } from '@/components/chat/ChatProvider'
 
@@ -89,6 +89,7 @@ export default function RootLayout({
                   {children}
                   <Toaster />
                   <OnboardingModal />
+                  <ProfileCompletionPrompt />
                   <ChatModal />
                 </ChatProvider>
               </AuthProvider>
