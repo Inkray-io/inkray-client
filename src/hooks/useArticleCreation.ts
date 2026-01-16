@@ -187,7 +187,7 @@ export const useArticleCreation = () => {
         });
 
         const mediaFiles: MediaFile[] = await Promise.all(
-            tempImages.map(async (tempImg) => {
+            tempImages.map(async (tempImg, index) => {
               // Use FileReader API for reliable base64 conversion (handles large files)
               const base64 = await new Promise<string>((resolve) => {
                 const reader = new FileReader();
@@ -203,7 +203,7 @@ export const useArticleCreation = () => {
                 filename: tempImg.filename,
                 mimeType: tempImg.mimeType,
                 size: tempImg.size,
-                index: tempImg.index,
+                index,
               };
             })
         );
