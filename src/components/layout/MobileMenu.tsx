@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth } from "react-icons/hi2"
+import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiUser } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@mysten/dapp-kit"
 import {
@@ -19,6 +19,7 @@ import { getDisplayName, copyToClipboard } from "@/utils/address"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { Avatar } from "@/components/ui/Avatar"
 import { ROUTES } from "@/constants/routes"
+import { CONFIG } from "@/lib/config"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -70,6 +71,12 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
     }, 100)
   }
 
+  const handleOnRamp = () => {
+    if (!address || !CONFIG.ONRAMP_URL) return
+    const onRampUrl = `${CONFIG.ONRAMP_URL}${address}`
+    window.open(onRampUrl, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -85,7 +92,7 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
           <div className="px-4 pt-4 pb-4 border-b border-gray-200">
             {isConnected ? (
               <div className="space-y-3">
-                {/* Connected User Profile Card - More Compact */}
+                {/* Connected User Profile Card */}
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
                   <div className="flex items-center gap-2.5">
                     {account ? (
@@ -110,54 +117,100 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                       <div className="font-semibold text-black text-sm truncate">
                         {suiNSLoading ? 'Loading...' : primary}
                       </div>
-                      {secondary && !suiNSLoading && (
-                        <div className="text-xs text-gray-600 truncate">{secondary}</div>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-600 truncate font-mono">
+                          {secondary || primary}
+                        </span>
+                        <button
+                          onClick={handleCopyAddress}
+                          disabled={copying}
+                          className="p-0.5 rounded hover:bg-white/50 transition-colors shrink-0"
+                          title={copying ? 'Copied!' : 'Copy address'}
+                        >
+                          {copying ? (
+                            <HiCheck className="size-3 text-green-600" />
+                          ) : (
+                            <HiClipboard className="size-3 text-gray-400 hover:text-gray-600" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Profile Actions Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {hasPublications && firstPublication ? (
+                {/* Account Section */}
+                <div>
+                  <div className="pb-1.5">
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                      Account
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
                     <SheetClose asChild>
-                      <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)}>
+                      <Link href={ROUTES.PROFILE}>
                         <Button
                           variant="outline"
                           size="sm"
                           className="w-full justify-start gap-2 text-xs h-9"
                         >
-                          <HiCog6Tooth className="size-3.5" />
-                          <span className="truncate">My Publication</span>
+                          <HiUser className="size-3.5" />
+                          <span className="truncate">My Profile</span>
                         </Button>
                       </Link>
                     </SheetClose>
-                  ) : (
+
+                    {hasPublications && firstPublication ? (
+                      <SheetClose asChild>
+                        <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start gap-2 text-xs h-9"
+                          >
+                            <HiCog6Tooth className="size-3.5" />
+                            <span className="truncate">Publication</span>
+                          </Button>
+                        </Link>
+                      </SheetClose>
+                    ) : (
+                      <SheetClose asChild>
+                        <Link href="/create-publication">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start gap-2 text-xs h-9"
+                            disabled={publicationsLoading}
+                          >
+                            <HiPlus className="size-3.5" />
+                            <span className="truncate">{publicationsLoading ? 'Loading...' : 'Create Pub'}</span>
+                          </Button>
+                        </Link>
+                      </SheetClose>
+                    )}
+                  </div>
+                </div>
+
+                {/* Wallet Section */}
+                <div>
+                  <div className="pb-1.5">
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                      Wallet
+                    </span>
+                  </div>
+                  {CONFIG.ONRAMP_URL && (
                     <SheetClose asChild>
-                      <Link href="/create-publication">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start gap-2 text-xs h-9"
-                          disabled={publicationsLoading}
-                        >
-                          <HiPlus className="size-3.5" />
-                          <span className="truncate">{publicationsLoading ? 'Loading...' : 'Create Pub'}</span>
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleOnRamp}
+                        className="w-full justify-start gap-2 text-xs h-9"
+                      >
+                        <HiBanknotes className="size-3.5" />
+                        <span className="flex-1 text-left truncate">On-Ramp</span>
+                        <HiArrowTopRightOnSquare className="size-3 text-gray-400" />
+                      </Button>
                     </SheetClose>
                   )}
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyAddress}
-                    disabled={copying}
-                    className="w-full justify-start gap-2 text-xs h-9"
-                  >
-                    <HiClipboard className="size-3.5" />
-                    <span className="truncate">{copying ? 'Copied!' : 'Copy Address'}</span>
-                  </Button>
                 </div>
 
                 {/* Sign Out Button */}

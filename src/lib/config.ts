@@ -38,6 +38,9 @@ const ConfigSchema = z.object({
   // Application Configuration
   API_URL: z.string().url('NEXT_PUBLIC_API_URL must be a valid URL'),
   APP_NAME: z.string().min(1, 'NEXT_PUBLIC_APP_NAME is required'),
+
+  // On-Ramp Configuration (optional)
+  ONRAMP_URL: z.string().url('NEXT_PUBLIC_ONRAMP_URL must be a valid URL').optional(),
 });
 
 // Default configuration based on network
@@ -92,6 +95,7 @@ function loadAndValidateConfig() {
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',
+      ONRAMP_URL: process.env.NEXT_PUBLIC_ONRAMP_URL,
     };
 
     // Debug logging for troubleshooting
@@ -161,6 +165,7 @@ try {
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',
+      ONRAMP_URL: process.env.NEXT_PUBLIC_ONRAMP_URL,
     };
   } else {
     // In production, fail fast with configuration errors

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser, HiDevicePhoneMobile } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser, HiDevicePhoneMobile, HiBanknotes, HiArrowTopRightOnSquare, HiCheck } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -10,6 +10,7 @@ import { getDisplayName, copyToClipboard } from "@/utils/address"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
 import { Avatar } from "@/components/ui/Avatar"
 import { ROUTES } from "@/constants/routes"
+import { CONFIG } from "@/lib/config"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MobileConnectPopup } from "@/components/auth/MobileConnectPopup"
@@ -53,14 +54,21 @@ export function UserProfile({ className = "" }: UserProfileProps) {
     logout() // Clear auth state
     disconnect() // Disconnect wallet
     setIsOpen(false)
-    
+
     // Add a small delay to allow wallet disconnection to complete
     // before redirecting to homepage to avoid race condition
     setTimeout(() => {
       router.push('/') // Redirect to homepage
     }, 100)
   }
-  
+
+  const handleOnRamp = () => {
+    if (!address || !CONFIG.ONRAMP_URL) return
+    const onRampUrl = `${CONFIG.ONRAMP_URL}${address}`
+    window.open(onRampUrl, '_blank', 'noopener,noreferrer')
+    setIsOpen(false)
+  }
+
   return (
     <div className={`relative ${className}`}>
       <Button
@@ -113,76 +121,114 @@ export function UserProfile({ className = "" }: UserProfileProps) {
           
           {/* Dropdown Menu */}
           <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+            {/* Header with address and copy button */}
             <div className="p-4 border-b border-gray-100">
               <div className="font-medium text-black text-sm mb-1">
                 {displayName}
               </div>
-              <div className="text-xs text-gray-500 font-mono break-all">
-                {address}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-500 font-mono">
+                  {shortAddress}
+                </span>
+                <button
+                  onClick={handleCopyAddress}
+                  disabled={copying}
+                  className="p-1 rounded hover:bg-gray-100 transition-colors"
+                  title={copying ? 'Copied!' : 'Copy address'}
+                >
+                  {copying ? (
+                    <HiCheck className="size-3.5 text-green-600" />
+                  ) : (
+                    <HiClipboard className="size-3.5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
               </div>
             </div>
-            
-            <div className="p-2">
-              <Link href={ROUTES.PROFILE} onClick={() => setIsOpen(false)}>
+
+            {/* Account Section */}
+            <div className="py-2">
+              <div className="px-3 pb-1.5">
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                  Account
+                </span>
+              </div>
+              <div className="px-2">
+                <Link href={ROUTES.PROFILE} onClick={() => setIsOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-2 text-sm"
+                  >
+                    <HiUser className="size-4" />
+                    My Profile
+                  </Button>
+                </Link>
+
+                {hasPublications && firstPublication ? (
+                  <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-sm"
+                    >
+                      <HiCog6Tooth className="size-4" />
+                      Publication Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/create-publication" onClick={() => setIsOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-sm"
+                      disabled={publicationsLoading}
+                    >
+                      <HiPlus className="size-4" />
+                      {publicationsLoading ? 'Loading...' : 'Create Publication'}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Wallet Section */}
+            <div className="py-2 border-t border-gray-100">
+              <div className="px-3 pb-1.5">
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                  Wallet
+                </span>
+              </div>
+              <div className="px-2">
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => {
+                    setShowMobileConnect(true)
+                    setIsOpen(false)
+                  }}
                   className="w-full justify-start gap-2 text-sm"
                 >
-                  <HiUser className="size-4" />
-                  My Profile
+                  <HiDevicePhoneMobile className="size-4" />
+                  Mobile Connect
                 </Button>
-              </Link>
 
-              {hasPublications && firstPublication ? (
-                <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
+                {CONFIG.ONRAMP_URL && (
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={handleOnRamp}
                     className="w-full justify-start gap-2 text-sm"
                   >
-                    <HiCog6Tooth className="size-4" />
-                    Publication Dashboard
+                    <HiBanknotes className="size-4" />
+                    <span className="flex-1 text-left">On-Ramp</span>
+                    <HiArrowTopRightOnSquare className="size-3 text-gray-400" />
                   </Button>
-                </Link>
-              ) : (
-                <Link href="/create-publication" onClick={() => setIsOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start gap-2 text-sm"
-                    disabled={publicationsLoading}
-                  >
-                    <HiPlus className="size-4" />
-                    {publicationsLoading ? 'Loading...' : 'Create Publication'}
-                  </Button>
-                </Link>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyAddress}
-                disabled={copying}
-                className="w-full justify-start gap-2 text-sm"
-              >
-                <HiClipboard className="size-4" />
-                {copying ? 'Copied!' : 'Copy Address'}
-              </Button>
+                )}
+              </div>
+            </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowMobileConnect(true)
-                  setIsOpen(false)
-                }}
-                className="w-full justify-start gap-2 text-sm"
-              >
-                <HiDevicePhoneMobile className="size-4" />
-                Mobile Connect
-              </Button>
-
+            {/* Sign Out */}
+            <div className="py-2 border-t border-gray-100 px-2">
               <Button
                 variant="ghost"
                 size="sm"
