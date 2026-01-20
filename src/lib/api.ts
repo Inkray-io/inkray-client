@@ -543,6 +543,10 @@ export const draftsAPI = {
       limit
     }
   }),
+  schedule: (draftId: string, data: { scheduledPublishAt: string }) =>
+    api.patch(`/articles/draft/${draftId}/schedule`, data),
+  cancelSchedule: (draftId: string) =>
+    api.delete(`/articles/draft/${draftId}/schedule`),
 };
 
 // RSS Feeds types

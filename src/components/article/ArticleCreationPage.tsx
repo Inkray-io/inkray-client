@@ -6,12 +6,13 @@ import { useArticleCreation, useToast } from "@/hooks";
 import { useEffect, useRef, useState } from "react";
 import { ArticleEditor, ArticleEditorRef } from "@/components/editor/ArticleEditor";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, Trash2, CalendarClock, X } from "lucide-react";
 import { HiDocumentText } from "react-icons/hi2";
 import { MilkdownEditorWrapper } from "@/components/editor/MilkdownEditorWrapper";
 import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScheduleModal } from "@/components/article/ScheduleModal";
 
 // Calculate reading time from word count (average 200 words per minute)
 function calculateReadingTime(plainText: string): number {
@@ -35,7 +36,11 @@ export default function ArticleCreationPage() {
     savingDraft,
     deletingDraft,
     settingEditLock,
-    setEditLock
+    setEditLock,
+    schedulingDraft,
+    scheduleDraft,
+    cancellingSchedule,
+    cancelSchedule,
   } = useDraftMode();
   const router = useRouter()
   const { toast } = useToast()
@@ -53,6 +58,7 @@ export default function ArticleCreationPage() {
   const [ contentInitialized, setContentInitialized ] = useState(false)
   const [ isWaitingForRedirect, setIsWaitingForRedirect ] = useState(false)
   const [ clearDialogOpen, setClearDialogOpen ] = useState(false)
+  const [ scheduleModalOpen, setScheduleModalOpen ] = useState(false)
 
   // Prevent autosave from running when we programmatically clear editor state
   // (for example after deleting a draft). This is a short-lived guard used
@@ -162,6 +168,61 @@ export default function ArticleCreationPage() {
     setClearDialogOpen(false)
   }
 
+  const handleSchedule = async (date: Date) => {
+    if (!title.trim() || !content.trim()) {
+      toast({
+        title: "Missing Content",
+        description: "Please fill in both title and content to schedule.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const success = await scheduleDraft(date);
+    if (success) {
+      setScheduleModalOpen(false);
+      toast({
+        title: "Article Scheduled!",
+        description: `Your article will be published on ${date.toLocaleString()}.`,
+      });
+    } else {
+      toast({
+        title: "Scheduling Failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const handleCancelSchedule = async () => {
+    const success = await cancelSchedule();
+    if (success) {
+      toast({
+        title: "Schedule Cancelled",
+        description: "Your article is no longer scheduled for publishing.",
+      });
+    } else {
+      toast({
+        title: "Failed to Cancel",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  // Format scheduled time for display
+  const formatScheduledTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
   return (
       <>
         <div className="mx-auto space-y-6">
@@ -230,10 +291,69 @@ export default function ArticleCreationPage() {
                       )}
                     </Button>
                 )}
+                {/* Schedule Button / Scheduled Status */}
+                {account && account.id === draft?.authorId && draft && (
+                    draft.scheduledPublishAt ? (
+                        // Show scheduled status with edit/cancel options
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <CalendarClock className="size-4 text-amber-600" />
+                          <span className="text-xs text-amber-700">
+                            {formatScheduledTime(draft.scheduledPublishAt)}
+                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setScheduleModalOpen(true)}
+                                  disabled={schedulingDraft}
+                                  className="size-6 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+                              >
+                                <CalendarClock className="size-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit schedule</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={handleCancelSchedule}
+                                  disabled={cancellingSchedule}
+                                  className="size-6 text-amber-600 hover:text-red-600 hover:bg-red-50"
+                              >
+                                {cancellingSchedule ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                    <X className="size-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Cancel schedule</TooltipContent>
+                          </Tooltip>
+                        </div>
+                    ) : (
+                        // Show Schedule button
+                        <Button
+                            variant="outline"
+                            onClick={() => setScheduleModalOpen(true)}
+                            disabled={schedulingDraft || !title.trim() || !content.trim()}
+                            className="gap-2 min-h-[40px]"
+                        >
+                          {schedulingDraft ? (
+                              <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                              <CalendarClock className="size-4" />
+                          )}
+                          Schedule
+                        </Button>
+                    )
+                )}
                 {account && account.id === draft?.authorId && (
                     <Button
                         onClick={handlePublish}
-                        disabled={isProcessing || isWaitingForRedirect || !title.trim() || !content.trim()}
+                        disabled={isProcessing || isWaitingForRedirect || !title.trim() || !content.trim() || !!draft?.scheduledPublishAt}
                         className="bg-primary hover:bg-primary/90 text-white gap-2 disabled:opacity-50 min-h-[40px] flex-1 sm:flex-initial"
                     >
                       {(isProcessing || isWaitingForRedirect) ? (
@@ -346,6 +466,12 @@ export default function ArticleCreationPage() {
             onConfirm={handleConfirmClearDraft}
             isLoading={deletingDraft}
             variant="destructive"
+        />
+        <ScheduleModal
+            open={scheduleModalOpen}
+            onOpenChange={setScheduleModalOpen}
+            onSchedule={handleSchedule}
+            isLoading={schedulingDraft}
         />
       </>
   );

@@ -9,7 +9,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { TopWriters } from "@/components/widgets/TopWriters";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Loader2, RefreshCw, Pencil, Trash2, FileText, Clock, ImageIcon, Plus } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw, Pencil, Trash2, FileText, Clock, ImageIcon, Plus, CalendarClock, AlertTriangle } from "lucide-react";
 import React, { useState, Suspense } from "react";
 import type { DraftArticle } from '@/types/article';
 import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
@@ -31,6 +31,18 @@ function formatRelativeTime(dateString: string): string {
   if (diffDays < 7) return `${diffDays}d ago`;
 
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// Helper to format scheduled time for display
+function formatScheduledTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 // Draft Card Skeleton
@@ -127,6 +139,31 @@ function DraftCard({ draft, onDelete, isDeleting }: DraftCardProps) {
         {/* Content Section */}
         <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between min-h-[140px]">
           <div>
+            {/* Status badges */}
+            {(draft.scheduledPublishAt || draft.publishError) && (
+              <div className="flex items-center gap-2 mb-2">
+                {draft.scheduledPublishAt && !draft.publishError && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium rounded-md">
+                    <CalendarClock className="w-3 h-3" />
+                    {formatScheduledTime(draft.scheduledPublishAt)}
+                  </span>
+                )}
+                {draft.publishError && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-md cursor-help">
+                        <AlertTriangle className="w-3 h-3" />
+                        Failed
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">{draft.publishError}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+
             {/* Title */}
             <Link href={editUrl}>
               <h3 className="text-base font-semibold text-gray-900 leading-snug group-hover:text-primary transition-colors line-clamp-2 mb-2">

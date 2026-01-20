@@ -21,6 +21,8 @@ export default function useDraftMode() {
   const [ savingDraft, setSavingDraft ] = useState<boolean>(false);
   const [ deletingDraft, setDeletingDraft ] = useState<boolean>(false);
   const [ settingEditLock, setSettingEditLock ] = useState<boolean>(false);
+  const [ schedulingDraft, setSchedulingDraft ] = useState<boolean>(false);
+  const [ cancellingSchedule, setCancellingSchedule ] = useState<boolean>(false);
 
   useEffect(() => {
     if (pathname !== '/create' && pathname !== 'draft') {
@@ -212,6 +214,58 @@ export default function useDraftMode() {
     }
   };
 
+  // Schedule a draft for automatic publishing
+  const scheduleDraft = async (scheduledAt: Date): Promise<boolean> => {
+    if (!draft?.id) {
+      setError('No draft available to schedule');
+      return false;
+    }
+
+    setSchedulingDraft(true);
+    try {
+      const response = await draftsAPI.schedule(draft.id, {
+        scheduledPublishAt: scheduledAt.toISOString(),
+      });
+      // Update local draft state with scheduling info
+      if (response?.data?.data) {
+        setDraft(response.data.data);
+      }
+      setError(null);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to schedule draft');
+      log.error('Schedule draft error:', err);
+      return false;
+    } finally {
+      setSchedulingDraft(false);
+    }
+  };
+
+  // Cancel scheduled publishing
+  const cancelSchedule = async (): Promise<boolean> => {
+    if (!draft?.id) {
+      setError('No draft available to cancel schedule');
+      return false;
+    }
+
+    setCancellingSchedule(true);
+    try {
+      const response = await draftsAPI.cancelSchedule(draft.id);
+      // Update local draft state to clear scheduling info
+      if (response?.data?.data) {
+        setDraft(response.data.data);
+      }
+      setError(null);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel schedule');
+      log.error('Cancel schedule error:', err);
+      return false;
+    } finally {
+      setCancellingSchedule(false);
+    }
+  };
+
 
   return {
     draftId: id,
@@ -231,5 +285,10 @@ export default function useDraftMode() {
     // Edit lock controls
     settingEditLock,
     setEditLock,
+    // Scheduling controls
+    schedulingDraft,
+    scheduleDraft,
+    cancellingSchedule,
+    cancelSchedule,
   };
 }

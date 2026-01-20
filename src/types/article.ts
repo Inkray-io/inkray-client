@@ -428,6 +428,10 @@ export interface DraftArticle {
   createdAt: string;
   updatedAt: string;
   images?: DraftImage[]
+  // Scheduling fields
+  scheduledPublishAt?: string;  // ISO date string
+  lastPublishAttempt?: string;  // ISO date string
+  publishError?: string;
 }
 
 export type CreateDraftArticleDto = Omit<DraftArticle, 'id' | 'authorId' | 'createdAt' | 'updatedAt' | 'images'>;
