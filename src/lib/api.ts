@@ -135,6 +135,7 @@ export const feedAPI = {
     cursor?: string;
     author?: string;
     publicationId?: string;
+    categoryId?: string;
     fromDate?: string;
     toDate?: string;
     timeframe?: 'day' | 'week' | 'month'; // For popular feed

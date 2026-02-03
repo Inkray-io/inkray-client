@@ -39,6 +39,7 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useArticleDeletion } from "@/hooks/useArticleDeletion";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { BlockchainInfoPopup } from "@/components/article/BlockchainInfoPopup";
+import { RelatedArticles } from "@/components/article/RelatedArticles";
 import { CONFIG } from "@/lib/config";
 
 function ArticlePageContent() {
@@ -749,6 +750,15 @@ function ArticlePageContent() {
                       </div>
                     )}
                   </div>
+
+                  {/* Related Articles Section */}
+                  {article.articleId && (
+                    <RelatedArticles
+                      currentArticleId={article.articleId}
+                      currentArticleSlug={article.slug}
+                      categoryId={article.category?.id}
+                    />
+                  )}
 
                   {/* Comments Section - Inside article card for seamless flow */}
                   {article.articleId && (
