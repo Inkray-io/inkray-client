@@ -16,6 +16,8 @@ import {
   TrendingUp,
   Share2,
   ChevronRight,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
 import { useToast } from "@/hooks/use-toast";
@@ -123,7 +125,27 @@ export default function InvitesPage() {
     );
   }
 
-  const { available, used, stats } = data;
+  const { available, used, expired, stats } = data;
+
+  // Helper to calculate expiration info
+  const getExpirationInfo = (expiresAt: string | null) => {
+    if (!expiresAt) return null;
+
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffMs = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const totalDays = 7; // Total expiration period
+    const progress = Math.max(0, Math.min(100, (diffDays / totalDays) * 100));
+
+    return {
+      daysLeft: Math.max(0, diffDays),
+      hoursLeft: Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60))),
+      progress,
+      isUrgent: diffDays <= 2,
+      isExpiringSoon: diffDays <= 3,
+    };
+  };
 
   return (
     <AppLayout currentPage="invites">
@@ -209,62 +231,115 @@ export default function InvitesPage() {
 
           {available.length > 0 ? (
             <div className="grid gap-3">
-              {available.map((invite, index) => (
-                <motion.div
-                  key={invite.id}
-                  className="bg-card border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.05 }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center">
-                      <span className="text-white text-xl">🎟️</span>
-                    </div>
-                    <div>
-                      <p className="font-mono text-lg font-semibold tracking-wider">
-                        {invite.code}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Earned via {invite.earnedVia.replace(/_/g, " ")}
-                      </p>
-                    </div>
-                  </div>
+              {available.map((invite, index) => {
+                const expirationInfo = getExpirationInfo(invite.expiresAt);
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(invite.code)}
-                      className="gap-2"
-                    >
-                      {copiedCode === invite.code ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                      Copy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyShareLink(invite.code)}
-                      className="gap-2"
-                    >
-                      <Share2 className="w-4 h-4" />
-                      Link
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => shareOnTwitter(invite.code)}
-                      className="gap-2"
-                    >
-                      <FaXTwitter className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
+                return (
+                  <motion.div
+                    key={invite.id}
+                    className="bg-card border rounded-xl p-4"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.05 }}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center">
+                          <span className="text-white text-xl">🎟️</span>
+                        </div>
+                        <div>
+                          <p className="font-mono text-lg font-semibold tracking-wider">
+                            {invite.code}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Earned via {invite.earnedVia.replace(/_/g, " ")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(invite.code)}
+                          className="gap-2"
+                        >
+                          {copiedCode === invite.code ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                          Copy
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyShareLink(invite.code)}
+                          className="gap-2"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          Link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => shareOnTwitter(invite.code)}
+                          className="gap-2"
+                        >
+                          <FaXTwitter className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Expiration Progress Bar */}
+                    {expirationInfo && (
+                      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {expirationInfo.isUrgent ? (
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                            )}
+                            <span
+                              className={`text-xs font-medium ${
+                                expirationInfo.isUrgent
+                                  ? "text-red-500"
+                                  : expirationInfo.isExpiringSoon
+                                  ? "text-amber-500"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {expirationInfo.daysLeft === 0
+                                ? `${expirationInfo.hoursLeft}h left`
+                                : expirationInfo.daysLeft === 1
+                                ? "1 day left"
+                                : `${expirationInfo.daysLeft} days left`}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            Expires {new Date(invite.expiresAt!).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <motion.div
+                            className={`h-full rounded-full ${
+                              expirationInfo.isUrgent
+                                ? "bg-red-500"
+                                : expirationInfo.isExpiringSoon
+                                ? "bg-amber-500"
+                                : "bg-green-500"
+                            }`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${expirationInfo.progress}%` }}
+                            transition={{ duration: 0.5, delay: 0.3 + index * 0.05 }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
             <div className="bg-card border rounded-xl p-8 text-center">
@@ -336,6 +411,49 @@ export default function InvitesPage() {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Expired Codes */}
+        {expired && expired.length > 0 && (
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-400" />
+              <span className="text-gray-500">Expired Codes ({expired.length})</span>
+            </h2>
+
+            <div className="bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-4 opacity-60">
+              <div className="grid gap-2">
+                {expired.slice(0, 3).map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">🎟️</span>
+                      </div>
+                      <span className="font-mono text-sm text-gray-500 line-through">
+                        {invite.code}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      Expired {invite.expiresAt ? new Date(invite.expiresAt).toLocaleDateString() : ""}
+                    </span>
+                  </div>
+                ))}
+                {expired.length > 3 && (
+                  <p className="text-xs text-center text-gray-400 pt-2">
+                    +{expired.length - 3} more expired codes
+                  </p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

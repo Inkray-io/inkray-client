@@ -690,6 +690,7 @@ export interface InviteCodeWithUser {
   code: string;
   earnedVia: string;
   createdAt: string;
+  expiresAt: string | null;
   usedAt: string | null;
   usedBy: {
     id: string;
@@ -720,6 +721,7 @@ export interface InviteStats {
 export interface InviteCodesResponse {
   available: InviteCodeWithUser[];
   used: InviteCodeWithUser[];
+  expired: InviteCodeWithUser[];
   stats: InviteStats;
 }
 
