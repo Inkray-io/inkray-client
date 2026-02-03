@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
-import { authAPI } from "@/lib/api";
+import { authAPI, invitesAPI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,14 +13,17 @@ import { log } from "@/lib/utils/Logger";
 
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuth();
   const { disconnect, isConnected, address } = useWalletConnection();
   const { toast } = useToast();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
-  
+
   const [authData, setAuthData] = useState<{ nonce: string; message: string; timestamp: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'connect' | 'sign' | 'authenticate'>('connect');
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteSystemChecked, setInviteSystemChecked] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -28,6 +31,45 @@ export default function AuthPage() {
       router.push('/feed');
     }
   }, [isAuthenticated, router]);
+
+  // Check invite system and get invite code
+  useEffect(() => {
+    const checkInviteSystem = async () => {
+      try {
+        // Get invite code from URL or sessionStorage
+        const codeFromUrl = searchParams.get('code');
+        const codeFromStorage = sessionStorage.getItem('inkray_invite_code');
+        const code = codeFromUrl || codeFromStorage;
+
+        // Check if invite system is enabled
+        const response = await invitesAPI.getSystemStatus();
+        const data = response.data.data || response.data;
+
+        if (data.enabled) {
+          // Invite system is enabled
+          if (code) {
+            setInviteCode(code);
+            // Store in sessionStorage for later use
+            sessionStorage.setItem('inkray_invite_code', code);
+          } else {
+            // No invite code, redirect to invite page
+            router.push('/invite');
+            return;
+          }
+        }
+
+        setInviteSystemChecked(true);
+      } catch (error) {
+        log.error('Failed to check invite system', { error }, 'AuthPage');
+        // On error, proceed without invite code (fail open)
+        setInviteSystemChecked(true);
+      }
+    };
+
+    if (!isAuthenticated) {
+      checkInviteSystem();
+    }
+  }, [searchParams, router, isAuthenticated]);
 
   const initializeNonce = useCallback(async () => {
     try {
@@ -182,7 +224,15 @@ export default function AuthPage() {
     if (!authData || !address) return;
 
     try {
-      const authPayload = {
+      const authPayload: {
+        nonce: string;
+        timestamp: string;
+        signature: string;
+        publicKey: string;
+        wallet: string;
+        blockchain: string;
+        inviteCode?: string;
+      } = {
         nonce: authData.nonce,
         timestamp: authData.timestamp,
         signature,
@@ -190,6 +240,11 @@ export default function AuthPage() {
         wallet: "Sui Wallet", // TODO: Get actual wallet name
         blockchain: "SUI",
       };
+
+      // Include invite code if available
+      if (inviteCode) {
+        authPayload.inviteCode = inviteCode;
+      }
 
       log.debug('Frontend sending auth payload', {
         nonce: authPayload.nonce,
@@ -223,6 +278,8 @@ export default function AuthPage() {
 
       // Clear any retry failure flags on successful auth
       sessionStorage.removeItem('auth_retry_failed');
+      // Clear invite code after successful registration
+      sessionStorage.removeItem('inkray_invite_code');
 
       log.debug('Calling login function with verified data', {}, 'AuthPage');
 
@@ -235,6 +292,23 @@ export default function AuthPage() {
     } catch (error: unknown) {
       log.error('Authentication failed', { error }, 'AuthPage');
 
+      const errorResponse = (error as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
+      const errorCode = errorResponse?.code;
+      const errorMessage = errorResponse?.message;
+
+      // Handle invite-related errors
+      if (errorCode === 'INVITE_REQUIRED' || errorCode === 'INVALID_INVITE_CODE') {
+        toast({
+          title: errorCode === 'INVITE_REQUIRED' ? "Invite Required" : "Invalid Invite Code",
+          description: errorMessage || "Please enter a valid invite code to register.",
+          variant: "destructive",
+        });
+        // Clear any stored invite code and redirect to invite page
+        sessionStorage.removeItem('inkray_invite_code');
+        router.push('/invite');
+        return;
+      }
+
       // Mark that auth failed to prevent auto-retry loops
       sessionStorage.setItem('auth_retry_failed', 'true');
       setTimeout(() => {
@@ -244,27 +318,27 @@ export default function AuthPage() {
       setIsLoading(false);
       setStep('sign');
 
-      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-
       toast({
         title: "Authentication Failed",
         description: errorMessage || "Please try signing the message again.",
         variant: "destructive",
       });
     }
-  }, [authData, address, login, toast, router]);
+  }, [authData, address, login, toast, router, inviteCode]);
 
   const handleDisconnect = () => {
     disconnect();
     setStep('connect');
   };
 
-  if (isLoading && step === 'connect') {
+  if ((isLoading && step === 'connect') || !inviteSystemChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground">Initializing authentication...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">
+            {!inviteSystemChecked ? "Checking access..." : "Initializing authentication..."}
+          </p>
         </div>
       </div>
     );

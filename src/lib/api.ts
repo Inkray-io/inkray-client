@@ -56,6 +56,7 @@ export const authAPI = {
     wallet: string;
     blockchain?: string;
     username?: string;
+    inviteCode?: string;
   }) => api.post('/auth', data),
 };
 
@@ -681,4 +682,66 @@ export const suinsAPI = {
   // Resolve multiple addresses to their SuiNS names (max 50)
   resolveNames: (addresses: string[]) =>
     api.post<ApiResponse<SuinsResolveNamesResponse>>('/suins/batch', { addresses }),
+};
+
+// Invite System API
+export interface InviteCodeWithUser {
+  id: string;
+  code: string;
+  earnedVia: string;
+  createdAt: string;
+  usedAt: string | null;
+  usedBy: {
+    id: string;
+    publicKey: string;
+    username: string | null;
+    avatar: string | null;
+  } | null;
+}
+
+export interface InviteStats {
+  totalCodes: number;
+  usedCodes: number;
+  availableCodes: number;
+  invitedUsers: {
+    id: string;
+    publicKey: string;
+    username: string | null;
+    avatar: string | null;
+    joinedAt: string;
+  }[];
+  nextMilestone?: {
+    type: 'followers' | 'articles';
+    current: number;
+    target: number;
+  };
+}
+
+export interface InviteCodesResponse {
+  available: InviteCodeWithUser[];
+  used: InviteCodeWithUser[];
+  stats: InviteStats;
+}
+
+export interface InviteValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+export const invitesAPI = {
+  // Check if invite system is enabled (public)
+  getSystemStatus: () =>
+    api.get<ApiResponse<{ enabled: boolean }>>('/invites/system-status'),
+
+  // Validate an invite code (public)
+  validateCode: (code: string) =>
+    api.post<ApiResponse<InviteValidationResult>>('/invites/validate', { code }),
+
+  // Get current user's invite codes (auth required)
+  getMyCodes: () =>
+    api.get<ApiResponse<InviteCodesResponse>>('/invites/my-codes'),
+
+  // Get invite statistics (auth required)
+  getStats: () =>
+    api.get<ApiResponse<InviteStats>>('/invites/stats'),
 };
