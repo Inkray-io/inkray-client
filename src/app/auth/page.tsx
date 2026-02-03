@@ -292,9 +292,9 @@ export default function AuthPage() {
     } catch (error: unknown) {
       log.error('Authentication failed', { error }, 'AuthPage');
 
-      const errorResponse = (error as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
-      const errorCode = errorResponse?.code;
-      const errorMessage = errorResponse?.message;
+      const errorResponse = (error as { response?: { data?: { error?: { code?: string; message?: string }; message?: string } } })?.response?.data;
+      const errorCode = errorResponse?.error?.code;
+      const errorMessage = errorResponse?.error?.message || errorResponse?.message;
 
       // Handle invite-related errors
       if (errorCode === 'INVITE_REQUIRED' || errorCode === 'INVALID_INVITE_CODE') {
