@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiUser } from "react-icons/hi2"
+import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiUser, HiTicket } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@mysten/dapp-kit"
 import {
@@ -155,6 +155,19 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                         >
                           <HiUser className="size-3.5" />
                           <span className="truncate">My Profile</span>
+                        </Button>
+                      </Link>
+                    </SheetClose>
+
+                    <SheetClose asChild>
+                      <Link href={ROUTES.INVITES}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start gap-2 text-xs h-9"
+                        >
+                          <HiTicket className="size-3.5" />
+                          <span className="truncate">Your Invites</span>
                         </Button>
                       </Link>
                     </SheetClose>

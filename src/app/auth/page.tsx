@@ -32,44 +32,23 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Check invite system and get invite code
+  // Check for invite code in URL or sessionStorage (don't redirect - let backend handle validation)
   useEffect(() => {
-    const checkInviteSystem = async () => {
-      try {
-        // Get invite code from URL or sessionStorage
-        const codeFromUrl = searchParams.get('code');
-        const codeFromStorage = sessionStorage.getItem('inkray_invite_code');
-        const code = codeFromUrl || codeFromStorage;
+    // Get invite code from URL or sessionStorage
+    const codeFromUrl = searchParams.get('code');
+    const codeFromStorage = sessionStorage.getItem('inkray_invite_code');
+    const code = codeFromUrl || codeFromStorage;
 
-        // Check if invite system is enabled
-        const response = await invitesAPI.getSystemStatus();
-        const data = response.data.data || response.data;
-
-        if (data.enabled) {
-          // Invite system is enabled
-          if (code) {
-            setInviteCode(code);
-            // Store in sessionStorage for later use
-            sessionStorage.setItem('inkray_invite_code', code);
-          } else {
-            // No invite code, redirect to invite page
-            router.push('/invite');
-            return;
-          }
-        }
-
-        setInviteSystemChecked(true);
-      } catch (error) {
-        log.error('Failed to check invite system', { error }, 'AuthPage');
-        // On error, proceed without invite code (fail open)
-        setInviteSystemChecked(true);
-      }
-    };
-
-    if (!isAuthenticated) {
-      checkInviteSystem();
+    if (code) {
+      setInviteCode(code);
+      // Store in sessionStorage for later use
+      sessionStorage.setItem('inkray_invite_code', code);
     }
-  }, [searchParams, router, isAuthenticated]);
+
+    // Always mark as checked - we'll let the backend validate if invite is required
+    // The backend will return INVITE_REQUIRED error if user needs an invite code
+    setInviteSystemChecked(true);
+  }, [searchParams]);
 
   const initializeNonce = useCallback(async () => {
     try {

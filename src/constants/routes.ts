@@ -27,6 +27,7 @@ export const ROUTES = {
   
   // Profile
   PROFILE: '/profile',
+  INVITES: '/invites',
   PROFILE_WITH_ID: (address: string) => `/profile?id=${address}`,
 
   // Dynamic routes

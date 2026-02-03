@@ -149,7 +149,7 @@ export default function InvitesPage() {
 
   return (
     <AppLayout currentPage="invites">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl py-8">
         {/* Header */}
         <motion.div
           className="mb-8"
