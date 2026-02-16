@@ -169,7 +169,7 @@ export default function InvitePage() {
     {
       icon: HiUserGroup,
       title: "Ask your network",
-      description: "Every user has invite codes",
+      description: "Every Inkray user has invite codes",
       link: null,
       color: "bg-primary",
     },

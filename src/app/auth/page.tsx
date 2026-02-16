@@ -275,14 +275,8 @@ export default function AuthPage() {
       const errorCode = errorResponse?.error?.code;
       const errorMessage = errorResponse?.error?.message || errorResponse?.message;
 
-      // Handle invite-related errors
+      // Handle invite-related errors - redirect without toast, the invite page handles messaging
       if (errorCode === 'INVITE_REQUIRED' || errorCode === 'INVALID_INVITE_CODE') {
-        toast({
-          title: errorCode === 'INVITE_REQUIRED' ? "Invite Required" : "Invalid Invite Code",
-          description: errorMessage || "Please enter a valid invite code to register.",
-          variant: "destructive",
-        });
-        // Clear any stored invite code and redirect to invite page
         sessionStorage.removeItem('inkray_invite_code');
         router.push('/invite');
         return;
