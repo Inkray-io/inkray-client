@@ -275,6 +275,7 @@ export const followsAPI = {
 };
 
 export interface UpdatePublicationData {
+  name?: string;
   description?: string;
   avatar?: string;
   tags?: string[];
@@ -332,6 +333,9 @@ export const publicationsAPI = {
 
   getTopics: () =>
     api.get<ApiResponse<{ topics: TopicConfig[] }>>('/publications/topics'),
+
+  discoverPublications: (params: { page?: number; limit?: number; search?: string }) =>
+    api.get('/publications/discover', { params }),
 
   getRecommendedPublications: (params: { topics: string[]; limit?: number }) =>
     api.get<ApiResponse<RecommendedPublicationsResponse>>(

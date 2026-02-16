@@ -245,7 +245,7 @@ const PublicationPageContent: React.FC = () => {
                   image: coverImage,
                   description:
                     article.summary ||
-                    `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+                    `Published on Sui blockchain • ${article.gated ? '🔒 Gated content' : '📖 Free article'}`,
                   engagement: article.engagement,
                   slug: article.slug,
                   publication: publication

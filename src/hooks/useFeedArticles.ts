@@ -242,10 +242,10 @@ export const useFeedArticles = (
       title: article.title,
       slug: article.slug,
       image: coverImage,
-      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Premium content' : '📖 Free article'}`,
+      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Gated content' : '📖 Free article'}`,
       engagement: {
         likes: article.totalLikes,
-        comments: 0, // TODO: Implement comments count from backend
+        comments: article.totalComments || 0,
         views: (article.viewCount ?? 0) + (article.chatViewCount ?? 0), // Total views
         pageViews: article.viewCount ?? 0, // Views from article page
         chatViews: article.chatViewCount ?? 0, // Views from AI chat mentions

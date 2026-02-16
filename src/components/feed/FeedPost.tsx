@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { MoreHorizontal, MessageCircle, Link, Share, Check, ExternalLink, Trash2, FileText, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ROUTES } from "@/constants/routes"
 import { TipButton } from "@/components/article/TipButton"
 import { TipDisplay } from "@/components/ui/TipDisplay"
@@ -23,6 +24,7 @@ import { useFollows } from "@/hooks/useFollows"
 import { FollowButton } from "@/components/follow/FollowButton"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge"
+import { CommentsSection } from "@/components/comments/CommentsSection"
 
 interface FeedPostProps {
   author: {
@@ -109,6 +111,7 @@ export function FeedPost({
   const router = useRouter()
   const { address } = useWalletConnection()
   const [isTipDialogOpen, setIsTipDialogOpen] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
   // const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false) // Commented out as it's not used yet
@@ -421,7 +424,10 @@ export function FeedPost({
                       <span className="text-[11px] text-gray-500">{engagement.likes}</span>
                     </button>
                   )}
-                  <button className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group">
+                  <button
+                    className="flex items-center gap-1 p-0.5 rounded hover:bg-gray-100 transition-colors group"
+                    onClick={() => articleId && setIsCommentsOpen(true)}
+                  >
                     <MessageCircle className="size-3.5 text-gray-500 group-hover:text-gray-600" />
                     <span className="text-gray-500 text-xs group-hover:text-gray-600">{engagement.comments}</span>
                   </button>
@@ -593,12 +599,24 @@ export function FeedPost({
 
       {/* Tip Dialog */}
       {publicationId && isTipDialogOpen && (
-        <TipButton 
+        <TipButton
           publicationId={publicationId}
           articleTitle={title}
           isOpen={isTipDialogOpen}
           onOpenChange={setIsTipDialogOpen}
         />
+      )}
+
+      {/* Comments Dialog */}
+      {articleId && isCommentsOpen && (
+        <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+          <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-lg">Comments</DialogTitle>
+            </DialogHeader>
+            <CommentsSection articleId={articleId} compact />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

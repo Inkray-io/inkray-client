@@ -10,6 +10,7 @@ import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
+import { useToast } from "@/hooks/use-toast";
 
 interface PublicationTipButtonProps {
   publicationId: string;
@@ -24,6 +25,7 @@ export function PublicationTipButton({
 }: PublicationTipButtonProps) {
   const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isTipping, setIsTipping] = useState(false);
   const [tipError, setTipError] = useState<string | null>(null);
@@ -67,7 +69,11 @@ export function PublicationTipButton({
       });
 
       // Publication tip transaction successful
-      
+      toast({
+        title: "Tip sent!",
+        description: `Your tip was successfully sent to "${publicationName}".`,
+      });
+
       // Close dialog and call success callback
       setIsOpen(false);
       onTipSuccess?.();

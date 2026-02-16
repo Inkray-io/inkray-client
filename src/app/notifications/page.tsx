@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useNotificationsCount } from '@/hooks/useNotificationsCount';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,18 @@ export default function NotificationsPage() {
     const [page, setPage] = useState(1);
     const { notifications, isLoading, error, total, limit, markAllAsRead } = useNotifications(page);
     const { mutate: mutateCount } = useNotificationsCount();
+    const hasAutoMarked = useRef(false);
+
+    // Auto-mark notifications as read when they first load
+    useEffect(() => {
+        if (!isLoading && notifications.length > 0 && !hasAutoMarked.current) {
+            const hasUnread = notifications.some((n) => !n.readAt);
+            if (hasUnread) {
+                hasAutoMarked.current = true;
+                markAllAsRead().then(() => mutateCount());
+            }
+        }
+    }, [isLoading, notifications, markAllAsRead, mutateCount]);
 
     // Calculate pagination states
     const hasPrevious = page > 1;

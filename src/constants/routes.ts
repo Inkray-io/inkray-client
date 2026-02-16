@@ -13,6 +13,7 @@ export const ROUTES = {
   RULES: '/rules',
   ADVERTISING: '/advertising',
   DRAFTS: '/drafts',
+  PUBLICATIONS: '/publications',
   
   // Feed types
   FEED_POPULAR: '/feed?type=popular',

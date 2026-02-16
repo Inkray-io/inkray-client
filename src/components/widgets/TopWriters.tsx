@@ -147,9 +147,12 @@ export function TopWriters({ publications: propsPublications }: TopPublicationsP
         ))}
       </div>
 
-      <div className="text-primary text-sm font-medium cursor-pointer hover:underline pt-4">
+      <button
+        onClick={() => router.push('/publications')}
+        className="text-primary text-sm font-medium cursor-pointer hover:underline pt-4"
+      >
         View the entire list
-      </div>
+      </button>
     </div>
   )
 }

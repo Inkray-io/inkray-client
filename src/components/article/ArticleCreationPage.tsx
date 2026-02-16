@@ -416,6 +416,9 @@ export default function ArticleCreationPage() {
               {/* Content Editor */}
               {((draft && contentInitialized) || (!draftId && !loadingDraft)) && (
                   <div>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Tip: Type &quot;/&quot; in the editor to insert images, code blocks, and more. You can also drag and drop images directly.
+                    </p>
                     <MilkdownEditorWrapper>
                       <ArticleEditor
                           ref={editorRef}

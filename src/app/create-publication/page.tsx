@@ -19,6 +19,7 @@ import {
   Rocket,
   Check,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { setCachedPublication } from "@/lib/cache-manager";
@@ -204,6 +205,9 @@ export default function CreatePublicationPage() {
     <RequireAuth redirectTo="/">
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
         <div className="max-w-md w-full mx-4 p-8 bg-white dark:bg-slate-900 rounded-lg shadow-lg border">
+          <div className="mb-4">
+            <BackButton />
+          </div>
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-8 h-8 text-primary" />

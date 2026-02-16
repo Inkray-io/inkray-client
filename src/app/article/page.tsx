@@ -330,13 +330,13 @@ function ArticlePageContent() {
                   {article?.contentSealId && (
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-3">
                       <Lock className="h-4 w-4" />
-                      <span>This article contains encrypted content</span>
+                      <span>This article contains gated content</span>
                     </div>
                   )}
                   {needsWalletForContent && (
                     <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mt-2">
                       <AlertCircle className="h-4 w-4" />
-                      <span>Connect your wallet to access encrypted content</span>
+                      <span>Connect your wallet to access gated content</span>
                     </div>
                   )}
                 </div>
@@ -596,11 +596,11 @@ function ArticlePageContent() {
                           className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors min-h-[36px]"
                           onClick={() => setIsTipDialogOpen(true)}
                         >
-                          Support
+                          Tip
                         </button>
                       ) : (
                         <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg min-h-[36px] flex items-center">
-                          Support
+                          Tip
                         </div>
                       )}
                     </div>
@@ -681,11 +681,11 @@ function ArticlePageContent() {
                           )}
                           <div>
                             <p className="font-medium">
-                              {article.contentSealId ? 'Encrypted content available' : 'Content not loaded'}
+                              {article.contentSealId ? 'Gated content available' : 'Content not loaded'}
                             </p>
                             <p className="text-muted-foreground text-sm">
                               {article.contentSealId ?
-                                'Click to decrypt and load the article content using Seal' :
+                                'Click to decrypt and load the gated article content' :
                                 'Click to load the article content'
                               }
                             </p>

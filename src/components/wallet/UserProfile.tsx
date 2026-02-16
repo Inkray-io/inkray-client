@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser, HiDevicePhoneMobile, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiTicket } from "react-icons/hi2"
+import { HiChevronDown, HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiUser, HiDevicePhoneMobile, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiTicket, HiNewspaper } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
@@ -176,16 +176,28 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                 </Link>
 
                 {hasPublications && firstPublication ? (
-                  <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start gap-2 text-sm"
-                    >
-                      <HiCog6Tooth className="size-4" />
-                      Publication Dashboard
-                    </Button>
-                  </Link>
+                  <>
+                    <Link href={ROUTES.PUBLICATION_WITH_ID(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start gap-2 text-sm"
+                      >
+                        <HiNewspaper className="size-4" />
+                        My Publication
+                      </Button>
+                    </Link>
+                    <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)} onClick={() => setIsOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start gap-2 text-sm"
+                      >
+                        <HiCog6Tooth className="size-4" />
+                        Publication Settings
+                      </Button>
+                    </Link>
+                  </>
                 ) : (
                   <Link href="/create-publication" onClick={() => setIsOpen(false)}>
                     <Button

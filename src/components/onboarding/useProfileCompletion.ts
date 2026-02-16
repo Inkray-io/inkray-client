@@ -51,6 +51,9 @@ export function useProfileCompletion(): UseProfileCompletionReturn {
   const [isHydrated, setIsHydrated] = useState(false)
   const [isPrompted, setIsPrompted] = useState<boolean>(() => getStorageValue(PROFILE_COMPLETION_STORAGE_KEY))
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => getStorageValue(ONBOARDING_CONFIG.localStorageKey))
+  // Track when onboarding completion was first detected to avoid a race
+  // condition with the onboarding modal's exit animation.
+  const [onboardingCompletedAt, setOnboardingCompletedAt] = useState<number | null>(null)
 
   // Mark as hydrated after mount
   useEffect(() => {
@@ -61,14 +64,22 @@ export function useProfileCompletion(): UseProfileCompletionReturn {
   useEffect(() => {
     if (isHydrated) {
       setIsPrompted(getStorageValue(PROFILE_COMPLETION_STORAGE_KEY))
-      setIsOnboardingComplete(getStorageValue(ONBOARDING_CONFIG.localStorageKey))
+      const complete = getStorageValue(ONBOARDING_CONFIG.localStorageKey)
+      setIsOnboardingComplete(complete)
+      if (complete) {
+        setOnboardingCompletedAt(prev => prev ?? Date.now())
+      }
     }
   }, [isHydrated])
 
   // Listen for storage changes (when onboarding completes)
   useEffect(() => {
     const handleStorageChange = () => {
-      setIsOnboardingComplete(getStorageValue(ONBOARDING_CONFIG.localStorageKey))
+      const complete = getStorageValue(ONBOARDING_CONFIG.localStorageKey)
+      setIsOnboardingComplete(complete)
+      if (complete) {
+        setOnboardingCompletedAt(prev => prev ?? Date.now())
+      }
       setIsPrompted(getStorageValue(PROFILE_COMPLETION_STORAGE_KEY))
     }
 
@@ -102,9 +113,12 @@ export function useProfileCompletion(): UseProfileCompletionReturn {
   // Show profile completion prompt when:
   // 1. Component is hydrated (SSR safe)
   // 2. Onboarding is complete
-  // 3. Profile completion hasn't been prompted yet
-  // 4. User is on an eligible route
-  const shouldShow = isHydrated && isOnboardingComplete && !isPrompted && shouldShowForRoute(pathname)
+  // 3. At least 1.5 seconds have passed since onboarding completed
+  //    (prevents race condition with the onboarding modal exit animation)
+  // 4. Profile completion hasn't been prompted yet
+  // 5. User is on an eligible route
+  const hasSettled = onboardingCompletedAt !== null && Date.now() - onboardingCompletedAt > 1500
+  const shouldShow = isHydrated && isOnboardingComplete && hasSettled && !isPrompted && shouldShowForRoute(pathname)
 
   return {
     shouldShow,

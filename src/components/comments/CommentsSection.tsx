@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils";
 interface CommentsSectionProps {
   articleId: string;
   className?: string;
+  compact?: boolean;
 }
 
-export function CommentsSection({ articleId, className }: CommentsSectionProps) {
+export function CommentsSection({ articleId, className, compact = false }: CommentsSectionProps) {
   const {
     comments,
     isLoading,
@@ -34,19 +35,21 @@ export function CommentsSection({ articleId, className }: CommentsSectionProps) 
   } = useComments(articleId);
 
   return (
-    <div className={cn("pt-10 mt-6", className)}>
+    <div className={cn(compact ? "pt-0 mt-0" : "pt-10 mt-6", className)}>
       {/* Editorial Section Divider */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-        <div className="flex items-center gap-2.5">
-          <span className="text-primary/50 text-xs">✦</span>
-          <span className="font-medium tracking-widest uppercase text-[11px] text-gray-400">
-            Conversation
-          </span>
-          <span className="text-primary/50 text-xs">✦</span>
+      {!compact && (
+        <div className="flex items-center gap-4 mb-8">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+          <div className="flex items-center gap-2.5">
+            <span className="text-primary/50 text-xs">✦</span>
+            <span className="font-medium tracking-widest uppercase text-[11px] text-gray-400">
+              Conversation
+            </span>
+            <span className="text-primary/50 text-xs">✦</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
         </div>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-      </div>
+      )}
 
       {/* Response Count */}
       {!isLoading && comments.length > 0 && (

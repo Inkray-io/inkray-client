@@ -100,7 +100,7 @@ export const usePublicationFeed = (publicationId: string) => {
           },
           engagement: {
             likes: article.totalLikes,
-            comments: 0,
+            comments: article.totalComments || 0,
             views: (article.viewCount ?? 0) + ((article as { chatViewCount?: number }).chatViewCount ?? 0), // Total views
             pageViews: article.viewCount ?? 0, // Views from article page
             chatViews: (article as { chatViewCount?: number }).chatViewCount ?? 0, // Views from AI chat mentions

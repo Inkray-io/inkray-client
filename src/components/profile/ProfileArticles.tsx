@@ -106,7 +106,7 @@ export function ProfileArticles({
                 title={article.title}
                 description={
                   article.summary ||
-                  `Published on Sui blockchain • ${article.gating ? '🔒 Premium content' : '📖 Free article'}`
+                  `Published on Sui blockchain • ${article.gating ? '🔒 Gated content' : '📖 Free article'}`
                 }
                 image={coverImage}
                 hasReadMore={true}

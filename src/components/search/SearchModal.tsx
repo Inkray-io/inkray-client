@@ -244,7 +244,7 @@ function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
             {hit.gating > 0 && (
               <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-medium">
                 <HiSparkles className="size-3" />
-                Premium
+                Gated
               </span>
             )}
           </div>

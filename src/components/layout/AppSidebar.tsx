@@ -4,9 +4,21 @@ import { cn } from "@/lib/utils"
 import { ROUTES } from "@/constants/routes"
 import { useSidebarMode } from "@/hooks/useSidebarMode"
 import { useCategories } from "@/hooks/useCategories"
+import { getCategoryIcon } from "@/constants/categoryIcons"
 import { SidebarToggle } from "./SidebarToggle"
 import { ExpandableTooltip } from "./ExpandableTooltip"
 import { useRouter, useSearchParams } from "next/navigation"
+import {
+  HiFire,
+  HiBolt,
+  HiRectangleStack,
+  HiBookmark,
+  HiPencilSquare,
+  HiInformationCircle,
+  HiShieldCheck,
+  HiMegaphone,
+  HiSquares2X2,
+} from "react-icons/hi2"
 
 interface AppSidebarProps {
   currentPage?: string
@@ -23,29 +35,18 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
   const currentFeedType = searchParams.get('type') || 'fresh'
   const currentCategory = searchParams.get('category')
   
-  // Generate consistent colors for categories based on their names
-  const getColor = (name: string) => {
-    const colors = [
-      "bg-purple-400", "bg-yellow-300", "bg-green-400", "bg-orange-300", 
-      "bg-pink-500", "bg-blue-900", "bg-purple-500", "bg-orange-500", 
-      "bg-red-500", "bg-teal-400", "bg-indigo-400", "bg-lime-400"
-    ]
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    return colors[hash % colors.length]
-  }
-
   const navigationItems = [
     {
       id: "popular",
       label: "Popular",
-      icon: "👑",
+      icon: HiFire,
       active: currentPage === "feed" && currentFeedType === "popular",
       href: ROUTES.FEED_POPULAR
     },
     {
       id: "fresh",
       label: "Fresh",
-      icon: "⚡",
+      icon: HiBolt,
       active: currentPage === "feed" && currentFeedType === "fresh",
       href: ROUTES.FEED_FRESH,
       hasNotification: false
@@ -53,43 +54,43 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
     {
       id: "my-feed",
       label: "My feed",
-      icon: "🖱️",
+      icon: HiRectangleStack,
       active: currentPage === "feed" && currentFeedType === "my",
       href: ROUTES.FEED_MY_FEED
     },
     {
       id: "bookmarks",
       label: "Bookmarks",
-      icon: "🔖",
+      icon: HiBookmark,
       active: currentPage === "feed" && currentFeedType === "bookmarks",
       href: ROUTES.FEED_BOOKMARKS
     },
     {
       id: "drafts",
       label: "My drafts",
-      icon: "📝",
+      icon: HiPencilSquare,
       active: currentPage === "drafts",
       href: ROUTES.DRAFTS
-    }
+    },
   ]
 
   const inkrayLinks = [
     {
       id: "about",
       label: "About the project",
-      icon: "ℹ️",
+      icon: HiInformationCircle,
       href: ROUTES.ABOUT
     },
     {
       id: "rules",
       label: "Rules",
-      icon: "📋",
+      icon: HiShieldCheck,
       href: ROUTES.RULES
     },
     {
       id: "advertising",
       label: "Advertising",
-      icon: "⭐",
+      icon: HiMegaphone,
       href: ROUTES.ADVERTISING
     }
   ]
@@ -127,7 +128,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                     isCompact && "justify-center px-2"
                   )}
                 >
-                  <div className="size-4 text-xs flex-shrink-0">{item.icon}</div>
+                  <item.icon className="size-4 shrink-0" />
                   {!isCompact && <span className="font-medium">{item.label}</span>}
                 </button>
               </ExpandableTooltip>
@@ -149,23 +150,27 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
               {categoriesLoading ? (
                 <div className="px-2.5 py-1.5 text-sm text-gray-500">Loading categories...</div>
               ) : (
-                categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
-                    className={cn(
-                      "w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
-                      currentCategory === category.slug
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-gray-50 text-black"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`size-4 rounded-lg ${getColor(category.name)}`} />
-                      <span className="font-medium text-sm">{category.name}</span>
-                    </div>
-                  </button>
-                ))
+                categories.map((category) => {
+                  const { icon: CategoryIcon, color } = getCategoryIcon(category.slug)
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
+                      className={cn(
+                        "w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
+                        currentCategory === category.slug
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-gray-50 text-black"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon className={cn("size-4 shrink-0", currentCategory === category.slug ? "text-primary" : color)} />
+                        <span className="font-medium text-sm">{category.name}</span>
+                      </div>
+                    </button>
+                  )
+                })
+
               )}
             </div>
           </div>
@@ -174,33 +179,36 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
         {/* Categories - Compact Mode */}
         {isCompact && (
           <div className="space-y-0.5">
-            {!categoriesLoading && categories.slice(0, 3).map((category) => (
-              <ExpandableTooltip
-                key={category.id}
-                label={category.name}
-                isCompact={isCompact}
-                isActive={currentCategory === category.slug}
-              >
-                <button 
-                  onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
-                  className={cn(
-                    "w-full px-2 py-1.5 rounded-lg transition-colors flex justify-center",
-                    currentCategory === category.slug
-                      ? "bg-primary/10"
-                      : "hover:bg-gray-50"
-                  )}
+            {!categoriesLoading && categories.slice(0, 3).map((category) => {
+              const { icon: CategoryIcon, color } = getCategoryIcon(category.slug)
+              return (
+                <ExpandableTooltip
+                  key={category.id}
+                  label={category.name}
+                  isCompact={isCompact}
+                  isActive={currentCategory === category.slug}
                 >
-                  <div className={`size-4 rounded-lg ${getColor(category.name)}`} />
-                </button>
-              </ExpandableTooltip>
-            ))}
+                  <button
+                    onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
+                    className={cn(
+                      "w-full px-2 py-1.5 rounded-lg transition-colors flex justify-center",
+                      currentCategory === category.slug
+                        ? "bg-primary/10"
+                        : "hover:bg-gray-50"
+                    )}
+                  >
+                    <CategoryIcon className={cn("size-4", currentCategory === category.slug ? "text-primary" : color)} />
+                  </button>
+                </ExpandableTooltip>
+              )
+            })}
             {!categoriesLoading && categories.length > 3 && (
               <ExpandableTooltip
                 label="More categories..."
                 isCompact={isCompact}
               >
                 <button className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center">
-                  <div className="size-4 rounded-lg bg-gray-400" />
+                  <HiSquares2X2 className="size-4 text-gray-400" />
                 </button>
               </ExpandableTooltip>
             )}
@@ -221,7 +229,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                   className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="size-4 text-xs">{link.icon}</div>
+                    <link.icon className="size-4 text-gray-500" />
                     <span className="font-medium text-black text-sm">{link.label}</span>
                   </div>
                 </button>
@@ -240,7 +248,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                 isCompact={isCompact}
               >
                 <button className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center">
-                  <div className="size-4 text-xs">{link.icon}</div>
+                  <link.icon className="size-4 text-gray-500" />
                 </button>
               </ExpandableTooltip>
             ))}

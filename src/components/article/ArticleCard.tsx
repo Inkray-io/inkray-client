@@ -72,7 +72,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             <div className="flex items-center gap-2">
               {article.gated && (
                 <Badge variant="outline" className="text-xs">
-                  Premium
+                  Gated
                 </Badge>
               )}
 

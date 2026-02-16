@@ -34,7 +34,7 @@ export function ArticleHeader({ author }: ArticleHeaderProps) {
         </div>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-lg">
-            Support
+            Tip
           </div>
           <Button variant="ghost" size="icon">
             <MoreHorizontal className="size-5" />

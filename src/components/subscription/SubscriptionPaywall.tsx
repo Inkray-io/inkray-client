@@ -39,7 +39,7 @@ export function SubscriptionPaywall({
   onSubscriptionSuccess,
   articleTitle,
   benefits = [
-    "Access to all premium articles",
+    "Access to all gated articles",
     "Exclusive content and insights",
     "Support independent creators",
     "Ad-free reading experience"
@@ -84,7 +84,7 @@ export function SubscriptionPaywall({
         {/* Main Message */}
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-gray-900">
-            Premium Content
+            Gated Content
           </h2>
           <p className="text-gray-600 max-w-md mx-auto">
             {articleTitle 

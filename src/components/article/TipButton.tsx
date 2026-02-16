@@ -11,6 +11,7 @@ import { Heart, Loader2 } from "lucide-react";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { log } from "@/lib/utils/Logger";
+import { useToast } from "@/hooks/use-toast";
 
 interface TipButtonProps {
   publicationId: string;
@@ -23,6 +24,7 @@ interface TipButtonProps {
 export function TipButton({ publicationId, articleTitle, onTipSuccess, isOpen, onOpenChange }: TipButtonProps) {
   const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
+  const { toast } = useToast();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [isTipping, setIsTipping] = useState(false);
 
@@ -70,6 +72,11 @@ export function TipButton({ publicationId, articleTitle, onTipSuccess, isOpen, o
       });
 
       log.debug("Tip successful", { result }, "TipButton");
+
+      toast({
+        title: "Tip sent!",
+        description: "Your tip was successfully sent to the creator.",
+      });
 
       // Close dialog and call success callback
       setDialogOpen(false);

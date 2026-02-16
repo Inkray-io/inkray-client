@@ -16,6 +16,10 @@ import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 import { cn } from '@/lib/utils';
 import { publicationsAPI, UpdatePublicationData, SocialAccounts } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useEnhancedTransaction } from '@/hooks/useEnhancedTransaction';
+import { useUserPublications } from '@/hooks/useUserPublications';
+import { INKRAY_CONFIG } from '@/lib/sui-clients';
+import { Transaction } from '@mysten/sui/transactions';
 import { Loader2 } from 'lucide-react';
 import {
   SiX,
@@ -60,10 +64,13 @@ export function PublicationEditModal({
   onSkip,
 }: PublicationEditModalProps) {
   const { toast } = useToast();
+  const { signAndExecuteTransaction } = useEnhancedTransaction();
+  const { firstPublication } = useUserPublications();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'tags' | 'social'>('basic');
 
   // Form state
+  const [name, setName] = useState(publication?.name || '');
   const [description, setDescription] = useState(publication?.description || '');
   const [avatar, setAvatar] = useState<string | null>(publication?.avatar || null);
   const [tags, setTags] = useState<string[]>(publication?.tags || []);
@@ -81,6 +88,7 @@ export function PublicationEditModal({
   // Reset form when publication changes or modal opens
   useEffect(() => {
     if (isOpen && publication) {
+      setName(publication.name || '');
       setDescription(publication.description || '');
       setAvatar(publication.avatar || null);
       setTags(publication.tags || []);
@@ -112,11 +120,45 @@ export function PublicationEditModal({
     setIsLoading(true);
 
     try {
+      const nameChanged = name.trim() !== (publication.name || '');
+
+      // If name changed, send on-chain transaction first
+      if (nameChanged && name.trim()) {
+        const ownerCapId = firstPublication?.ownerCapId;
+        if (!ownerCapId) {
+          toast({
+            title: 'Error',
+            description: 'Owner capability not found. Only publication owners can update the name.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        const tx = new Transaction();
+        tx.moveCall({
+          target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::update_name`,
+          arguments: [
+            tx.object(ownerCapId),
+            tx.object(publication.id),
+            tx.pure.string(name.trim()),
+          ],
+        });
+
+        await signAndExecuteTransaction({ transaction: tx });
+      }
+
+      // Update off-chain data via API
       const updateData: UpdatePublicationData = {
         description: description.trim() || undefined,
         tags,
         socialAccounts,
       };
+
+      // Include name for immediate DB update
+      if (nameChanged && name.trim()) {
+        updateData.name = name.trim();
+      }
 
       // Only include avatar if it was changed
       if (avatarChanged) {
@@ -145,7 +187,7 @@ export function PublicationEditModal({
   const avatarConfig = createPublicationAvatarConfig(
     {
       id: publication?.id || '',
-      name: publication?.name || '',
+      name: name || publication?.name || '',
       avatar: avatar || undefined,
     },
     'xl'
@@ -216,6 +258,28 @@ export function PublicationEditModal({
                     onImageSelect={handleAvatarSelect}
                     currentAvatar={avatar}
                   />
+                </div>
+
+                {/* Name */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Name
+                  </label>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Publication name"
+                    maxLength={100}
+                    className="rounded-xl"
+                  />
+                  <p className={cn(
+                    'text-xs',
+                    name.trim() !== (publication?.name || '') ? 'text-amber-500' : 'text-gray-400'
+                  )}>
+                    {name.trim() !== (publication?.name || '')
+                      ? 'Name change requires a blockchain transaction'
+                      : 'Your publication\'s display name'}
+                  </p>
                 </div>
 
                 {/* Description */}

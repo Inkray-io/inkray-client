@@ -181,6 +181,15 @@ export function PublicationRecommendations({
         </motion.div>
       )}
 
+      {/* Fallback message */}
+      {isFallback && !isLoading && publications.length > 0 && (
+        <div className="w-full max-w-md px-4 py-3 bg-amber-50 border border-amber-100 rounded-lg text-center">
+          <p className="text-sm text-amber-700">
+            No exact matches for your topics — here are some popular publications instead.
+          </p>
+        </div>
+      )}
+
       {/* Publications list */}
       <motion.div
         className="w-full max-w-md space-y-3"
