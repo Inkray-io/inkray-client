@@ -31,7 +31,7 @@ const toastVariants = cva(
       variant: {
         default: "border bg-background text-foreground",
         destructive:
-          "destructive group border-red-600 bg-red-600 text-white shadow-[0_4px_20px_rgba(220,38,38,0.4)]",
+          "destructive group border-red-700 bg-red-600 text-white shadow-[0_4px_20px_rgba(220,38,38,0.4)]",
       },
     },
     defaultVariants: {
@@ -43,7 +43,7 @@ const toastVariants = cva(
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
+  VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
@@ -62,7 +62,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-white/30 group-[.destructive]:text-white group-[.destructive]:hover:border-white/50 group-[.destructive]:hover:bg-white/20 group-[.destructive]:focus:ring-white/50",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-white/30 group-[.destructive]:text-white group-[.destructive]:hover:border-white/50 group-[.destructive]:hover:bg-red-700 group-[.destructive]:focus:ring-white/50",
       className
     )}
     {...props}

@@ -5,7 +5,6 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { AppLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useArticle } from "@/hooks/useArticle";
-import { RequireAuth } from "@/components/auth/RequireAuth";
 import {
   AlertCircle,
   ArrowLeft,
@@ -258,46 +257,41 @@ function ArticlePageContent() {
   // Show loading state during hydration to prevent SSR mismatch
   if (!isHydrated) {
     return (
-      <RequireAuth redirectTo="/">
-        <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8 space-y-6">
-            {/* Back Button Skeleton */}
-            <div className="flex items-center gap-4">
-              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
-            </div>
-            <ArticleSkeleton />
+      <AppLayout currentPage="feed">
+        <div className="max-w-4xl mx-auto py-8 space-y-6">
+          {/* Back Button Skeleton */}
+          <div className="flex items-center gap-4">
+            <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
           </div>
-        </AppLayout>
-      </RequireAuth>
+          <ArticleSkeleton />
+        </div>
+      </AppLayout>
     );
   }
 
   // Show loading state when no slug is available
   if (!articleSlug) {
     return (
-      <RequireAuth redirectTo="/">
-        <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-orange-500 mx-auto" />
-              <h1 className="text-2xl font-bold">Article Not Found</h1>
-              <p className="text-muted-foreground">
-                No article specified in the URL.
-              </p>
-              <Button onClick={handleBack} variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Feed
-              </Button>
-            </div>
+      <AppLayout currentPage="feed">
+        <div className="max-w-4xl mx-auto py-8">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-orange-500 mx-auto" />
+            <h1 className="text-2xl font-bold">Article Not Found</h1>
+            <p className="text-muted-foreground">
+              No article specified in the URL.
+            </p>
+            <Button onClick={handleBack} variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Feed
+            </Button>
           </div>
-        </AppLayout>
-      </RequireAuth>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <RequireAuth redirectTo="/">
-      <AppLayout currentPage="feed" showRightSidebar={false}>
+    <AppLayout currentPage="feed" showRightSidebar={false}>
         <div className="space-y-6">
           {/* Back Button */}
           <div className="flex items-center gap-4">
@@ -830,25 +824,22 @@ function ArticlePageContent() {
             onOpenChange={setIsTipDialogOpen}
           />
         )}
-      </AppLayout>
-    </RequireAuth>
+    </AppLayout>
   );
 }
 
 export default function ArticlePage() {
   return (
     <Suspense fallback={
-      <RequireAuth redirectTo="/">
-        <AppLayout currentPage="feed">
-          <div className="max-w-4xl mx-auto py-8 space-y-6">
-            {/* Back Button Skeleton */}
-            <div className="flex items-center gap-4">
-              <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
-            </div>
-            <ArticleSkeleton />
+      <AppLayout currentPage="feed">
+        <div className="max-w-4xl mx-auto py-8 space-y-6">
+          {/* Back Button Skeleton */}
+          <div className="flex items-center gap-4">
+            <div className="h-9 w-32 bg-accent animate-pulse rounded-md" />
           </div>
-        </AppLayout>
-      </RequireAuth>
+          <ArticleSkeleton />
+        </div>
+      </AppLayout>
     }>
       <ArticlePageContent />
     </Suspense>
