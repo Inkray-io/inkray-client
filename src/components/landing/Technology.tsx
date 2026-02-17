@@ -28,16 +28,16 @@ const TECH_CARDS = [
 const containerVariants = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.12 },
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
   },
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 18 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
   },
 }
 
@@ -47,12 +47,23 @@ export function Technology() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
+          <p
+            className="text-xs font-bold tracking-[0.14em] uppercase mb-3"
+            style={{
+              background: "linear-gradient(135deg, #4d94ff 0%, #99c2ff 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Technology
+          </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Powered by the best of Web3
           </h2>

@@ -298,12 +298,12 @@ function SupportCard({ feature }: { feature: typeof SUPPORTING[0] }) {
 
 export function Features() {
   return (
-    <section id="features" className="bg-[#f8f9fc] px-6 py-16">
+    <section id="features" className="bg-[#f8f9fc] px-6 py-20">
       <div className="max-w-6xl mx-auto">
 
         {/* Section header */}
         <motion.div
-          className="mb-10"
+          className="mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}

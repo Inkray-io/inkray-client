@@ -13,7 +13,6 @@ import {
   HiBookmark,
   HiChatBubbleLeftRight,
   HiNoSymbol,
-  HiGlobeAlt,
 } from "react-icons/hi2"
 
 const CREATOR_FEATURES = [
@@ -46,7 +45,7 @@ function FeatureList({
           <div className="w-8 h-8 rounded-lg bg-primary/[0.08] flex items-center justify-center flex-shrink-0 mt-0.5">
             <item.icon className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-gray-600 text-sm leading-relaxed pt-1">
+          <span className="text-gray-500 text-sm leading-relaxed pt-1">
             {item.text}
           </span>
         </li>
@@ -57,22 +56,54 @@ function FeatureList({
 
 export function Audiences() {
   return (
-    <section id="audiences" className="bg-[#f8f9fc] px-6 py-24">
+    <section id="audiences" className="bg-[#f8f9fc] px-6 py-20">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+        {/* Section header — left-aligned with gradient eyebrow */}
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <p
+            className="text-xs font-bold tracking-[0.14em] uppercase mb-3"
+            style={{
+              background: "linear-gradient(135deg, #005EFC 0%, #4d94ff 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Who It&apos;s For
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Built for creators and readers alike
+          </h2>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-6">
           {/* For Creators */}
           <motion.div
-            className="bg-white rounded-2xl p-8 lg:p-10"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            className="bg-white rounded-2xl p-7 lg:p-8 border border-gray-100"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mb-8">
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide uppercase mb-4">
+            <div className="mb-6">
+              <p
+                className="text-[10px] font-bold tracking-[0.14em] uppercase mb-3"
+                style={{
+                  background: "linear-gradient(135deg, #005EFC, #4d94ff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
                 For Creators
-              </span>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              </p>
+              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
                 Built for writers who want to own their work
               </h3>
               <p className="text-gray-500 text-sm">
@@ -84,17 +115,25 @@ export function Audiences() {
 
           {/* For Readers */}
           <motion.div
-            className="bg-white rounded-2xl p-8 lg:p-10"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            className="bg-white rounded-2xl p-7 lg:p-8 border border-gray-100"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
           >
-            <div className="mb-8">
-              <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-semibold tracking-wide uppercase mb-4">
+            <div className="mb-6">
+              <p
+                className="text-[10px] font-bold tracking-[0.14em] uppercase mb-3"
+                style={{
+                  background: "linear-gradient(135deg, #0a7a3e, #22c55e)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
                 For Readers
-              </span>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              </p>
+              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
                 Discover voices that matter
               </h3>
               <p className="text-gray-500 text-sm">

@@ -97,7 +97,7 @@ export function Hero() {
           </h1>
 
           {/* Subtext */}
-          <p className="text-[#626262] text-lg leading-relaxed max-w-lg">
+          <p className="text-gray-500 text-lg leading-relaxed max-w-lg">
             The publishing platform where your words live on the blockchain.
             No gatekeepers, no takedowns — just your voice, permanently yours.
           </p>
@@ -121,7 +121,7 @@ export function Hero() {
 
           {/* Powered by logos */}
           <div className="flex items-center gap-3 pt-2">
-            <span className="text-sm text-[#626262]">Supported by</span>
+            <span className="text-sm text-gray-500">Supported by</span>
             <a href={ROUTES.EXTERNAL.WALRUS} target="_blank" rel="noopener noreferrer">
               <img src="/hero_section/walrus.svg" alt="Walrus" className="h-8" />
             </a>
@@ -170,7 +170,7 @@ export function Hero() {
                         <div className="font-semibold text-sm text-gray-900 truncate">
                           {card.name}
                         </div>
-                        <div className="text-xs text-[#626262]">
+                        <div className="text-xs text-gray-500">
                           <span className="hidden sm:inline">{card.handle} · </span>
                           {card.date}
                           <span className="hidden sm:inline"> · {card.readTime}</span>
@@ -186,7 +186,7 @@ export function Hero() {
                     <h3 className="font-semibold text-sm text-gray-900 mb-2">
                       {card.title}
                     </h3>
-                    <p className="text-xs text-[#626262]">{card.summary}</p>
+                    <p className="text-xs text-gray-500">{card.summary}</p>
 
                     {card.image && (
                       <motion.div
