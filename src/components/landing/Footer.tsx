@@ -64,14 +64,14 @@ export function Footer() {
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <img src="/sui_icon.svg" alt="Sui" className="h-4 opacity-40" />
+                <img src="/sui_icon.svg" alt="Sui" className="h-4 brightness-0 invert opacity-40" />
                 <span className="text-sm text-[#4A5A72]">Sui Blockchain</span>
               </div>
               <div className="flex items-center gap-2">
                 <img
                   src="/hero_section/walrus.svg"
                   alt="Walrus"
-                  className="h-4 opacity-40"
+                  className="h-4 brightness-0 invert opacity-40"
                 />
                 <span className="text-sm text-[#4A5A72]">Walrus Storage</span>
               </div>

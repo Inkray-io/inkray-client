@@ -81,7 +81,7 @@ export function Technology() {
                   <img
                     src={card.logo}
                     alt={card.name}
-                    className="h-10"
+                    className="h-10 brightness-0 invert opacity-80"
                   />
                 ) : card.icon ? (
                   <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
