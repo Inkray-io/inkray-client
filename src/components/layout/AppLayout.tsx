@@ -4,6 +4,7 @@ import { ReactNode, Suspense } from "react"
 import { AppHeader } from "./AppHeader"
 import { AppSidebar } from "./AppSidebar"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface AppLayoutProps {
   children: ReactNode
@@ -20,6 +21,8 @@ export function AppLayout({
                             className,
                             currentPage = "feed"
                           }: AppLayoutProps) {
+  const { isAuthenticated } = useAuth()
+
   return (
       <div className="min-h-screen bg-neutral-50">
         <AppHeader/>
@@ -31,12 +34,14 @@ export function AppLayout({
         <div
             className={cn("px-4 sm:px-8 lg:px-[60px] xl:px-[80px] pb-[124px] max-w-[2000px] xl:max-w-[2600px] 2xl:max-w-[3000px] mx-auto", className)}>
           <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
-            {/* Left Sidebar - Hidden on mobile, shown in mobile menu */}
-            <div className="hidden lg:block flex-shrink-0">
-              <Suspense>
-                <AppSidebar currentPage={currentPage}/>
-              </Suspense>
-            </div>
+            {/* Left Sidebar - Hidden on mobile and when not authenticated */}
+            {isAuthenticated && (
+              <div className="hidden lg:block flex-shrink-0">
+                <Suspense>
+                  <AppSidebar currentPage={currentPage}/>
+                </Suspense>
+              </div>
+            )}
 
             {/* Main Content Area */}
             <div className="flex-1">

@@ -681,33 +681,40 @@ function ArticlePageContent() {
                           )}
                           <div>
                             <p className="font-medium">
-                              {article.contentSealId ? 'Gated content available' : 'Content not loaded'}
+                              {article.contentSealId
+                                ? (address ? 'Encrypted content available' : 'This article requires a wallet')
+                                : 'Content not loaded'}
                             </p>
                             <p className="text-muted-foreground text-sm">
-                              {article.contentSealId ?
-                                'Click to decrypt and load the gated article content' :
-                                'Click to load the article content'
+                              {article.contentSealId
+                                ? (address
+                                    ? 'Click to decrypt and load the article content'
+                                    : 'Connect your wallet to decrypt and read this article')
+                                : 'Click to load the article content'
                               }
                             </p>
-                            {article.contentSealId && (
-                              <p className="text-xs text-blue-600 mt-2">
-                                Wallet connection required for decryption
-                              </p>
-                            )}
                           </div>
-                          <Button onClick={reloadContent} className="gap-2">
-                            {article.contentSealId ? (
-                              <>
-                                <Lock className="h-4 w-4" />
-                                Decrypt Content
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="h-4 w-4" />
-                                Load Content
-                              </>
-                            )}
-                          </Button>
+                          {address ? (
+                            <Button onClick={reloadContent} className="gap-2">
+                              {article.contentSealId ? (
+                                <>
+                                  <Lock className="h-4 w-4" />
+                                  Decrypt Content
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="h-4 w-4" />
+                                  Load Content
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            article.contentSealId && (
+                              <p className="text-xs text-muted-foreground">
+                                Use the connect button in the header to get started
+                              </p>
+                            )
+                          )}
                         </div>
                       ) : (
                         // For subscription-gated content without access, show subscription paywall inline

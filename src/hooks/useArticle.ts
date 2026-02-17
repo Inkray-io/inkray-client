@@ -555,7 +555,42 @@ export const useArticle = (articleSlug: string | null) => {
         // For encrypted content, skip direct loading to avoid race conditions
         // Let the data-driven decryption useEffect handle it when all policy data is ready
         if (isEncrypted) {
-          log.debug('Encrypted content detected - deferring to data-driven decryption', {
+          // Following the mobile app pattern: always try server-side decryption first
+          // for ALL encrypted articles (free or gated). The backend returns content
+          // for free articles and 403 for gated ones.
+          log.debug('Encrypted content - trying server-side decryption first', {
+            articleId: article.articleId,
+            gated: article.gated,
+          }, 'useArticle');
+
+          try {
+            const response = await articlesAPI.getContent(article.quiltBlobId);
+            // Response is wrapped: { success: true, data: { content, mediaFiles } }
+            const responseData = response.data;
+            const contentData = responseData?.data || responseData;
+            const rawContent = contentData?.content || contentData;
+
+            if (rawContent && typeof rawContent === 'string') {
+              const transformedContent = transformArticleMediaUrls(rawContent, article.articleId, article.quiltBlobId);
+              setState(prev => ({ ...prev, content: transformedContent }));
+              log.debug('Server-side decryption succeeded', { articleId: article.articleId }, 'useArticle');
+              return; // Content loaded, done
+            }
+          } catch (serverDecryptError: any) {
+            const status = serverDecryptError?.response?.status || serverDecryptError?.statusCode;
+            log.debug('Server-side decryption failed', {
+              articleId: article.articleId,
+              status,
+              message: serverDecryptError?.message,
+            }, 'useArticle');
+
+            // 403 = gated content, needs client-side decryption with wallet
+            // For other errors on free articles, also fall through to client-side path
+          }
+
+          // Server-side decryption failed — this is gated content or an error.
+          // Fall through to client-side decryption (requires wallet).
+          log.debug('Falling back to client-side decryption path', {
             articleId: article.articleId,
             contentSealId: article.contentSealId?.substring(0, 20) + '...'
           }, 'useArticle');
@@ -595,12 +630,26 @@ export const useArticle = (articleSlug: string | null) => {
               }));
             }
 
-          } catch (encryptedError) {
+          } catch (encryptedError: any) {
+            const status = encryptedError?.response?.status;
             log.error('Failed to download encrypted content', encryptedError, 'useArticle');
-            setState(prev => ({
-              ...prev,
-              error: `Failed to download encrypted content: ${encryptedError instanceof Error ? encryptedError.message : 'Unknown error'}`
-            }));
+
+            // If getRawContent also fails with 401 (guest user), show subscription paywall
+            // instead of a generic error
+            if (status === 401 || status === 403) {
+              log.debug('Guest user cannot access gated content - showing paywall', {
+                articleId: article.articleId,
+              }, 'useArticle');
+              setState(prev => ({
+                ...prev,
+                error: null // Clear errors to show subscription paywall
+              }));
+            } else {
+              setState(prev => ({
+                ...prev,
+                error: `Failed to download encrypted content: ${encryptedError instanceof Error ? encryptedError.message : 'Unknown error'}`
+              }));
+            }
           }
 
           return; // Exit early, let useEffect handle encrypted content

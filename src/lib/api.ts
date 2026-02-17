@@ -34,9 +34,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear invalid token
       Cookies.remove('access_token');
-      // Redirect to auth page
+
+      // Only redirect to /auth from pages that require authentication.
+      // Public pages (articles, publications, profiles) stay accessible.
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth';
+        const publicPaths = ['/article', '/publication/', '/user/', '/publications', '/about', '/rules'];
+        const isPublicPage = publicPaths.some(p => window.location.pathname.startsWith(p));
+
+        if (!isPublicPage) {
+          window.location.href = '/auth';
+        }
       }
     }
     return Promise.reject(error);
