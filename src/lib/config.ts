@@ -37,6 +37,7 @@ const ConfigSchema = z.object({
 
   // Application Configuration
   API_URL: z.string().url('NEXT_PUBLIC_API_URL must be a valid URL'),
+  APP_URL: z.string().url('NEXT_PUBLIC_APP_URL must be a valid URL'),
   APP_NAME: z.string().min(1, 'NEXT_PUBLIC_APP_NAME is required'),
 
   // On-Ramp Configuration (optional)
@@ -94,6 +95,7 @@ function loadAndValidateConfig() {
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || defaults.SEAL_API_URL,
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+      APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://inkray.xyz',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',
       ONRAMP_URL: process.env.NEXT_PUBLIC_ONRAMP_URL,
     };
@@ -164,6 +166,7 @@ try {
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || 'https://seal-testnet.mystenlabs.com',
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+      APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://inkray.xyz',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',
       ONRAMP_URL: process.env.NEXT_PUBLIC_ONRAMP_URL,
     };
