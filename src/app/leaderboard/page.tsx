@@ -5,9 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useLeaderboard, useMyRank } from '@/hooks/useLeaderboard';
 import { TierBadge } from '@/components/gamification/TierBadge';
-import { XpDisplay } from '@/components/gamification/XpDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Crown, Medal, Award, Users, ChevronUp } from 'lucide-react';
+import { Trophy, Crown, Medal, Award, Users } from 'lucide-react';
 import { useSuiNSBatch } from '@/hooks/useSuiNSBatch';
 import type { LeaderboardEntry } from '@/lib/api';
 
@@ -152,39 +151,43 @@ export default function LeaderboardPage() {
             transition={{ delay: 0.1 }}
           >
             {rankLoading ? (
-              <div className="bg-card border rounded-xl p-4 space-y-2.5">
-                <Skeleton className="h-4 w-20" />
-                <div className="flex items-center gap-3">
-                  <Skeleton className="size-10 rounded-xl" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-3.5 w-28" />
-                    <Skeleton className="h-2.5 w-full rounded-full" />
-                  </div>
-                </div>
+              <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3">
+                <Skeleton className="h-4 w-8" />
+                <Skeleton className="h-3.5 w-20" />
+                <div className="flex-1" />
+                <Skeleton className="h-4 w-16" />
               </div>
             ) : myRank ? (
-              <div className="bg-card border rounded-xl p-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-linear-to-r from-primary/3 to-transparent pointer-events-none" />
-                <div className="relative">
-                  <div className="flex items-center gap-1.5 mb-2.5">
-                    <ChevronUp className="size-3.5 text-primary" />
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                      Your Position
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center size-10 rounded-xl bg-primary/10 border border-primary/10">
-                      <span className="text-lg font-bold text-primary tabular-nums">
-                        {myRank.rank ? `#${myRank.rank}` : '—'}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <XpDisplay
-                        totalXp={myRank.points.totalXp}
-                        tier={myRank.points.tier}
+              <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-linear-to-r from-primary/4 to-transparent pointer-events-none" />
+                <div className="relative flex items-center gap-3">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider shrink-0">
+                    Your Position
+                  </span>
+                  <span className="text-sm font-bold text-primary tabular-nums shrink-0">
+                    {myRank.rank ? `#${myRank.rank}` : '—'}
+                  </span>
+                  <TierBadge
+                    tier={myRank.points.tier.tier}
+                    tierName={myRank.points.tier.name}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-primary/60"
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${myRank.points.tier.nextTierXp ? myRank.points.tier.progress : 100}%`,
+                        }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
                       />
                     </div>
                   </div>
+                  <span className="text-sm font-semibold tabular-nums shrink-0">
+                    {myRank.points.totalXp.toLocaleString()}
+                    <span className="text-xs text-muted-foreground ml-0.5">XP</span>
+                  </span>
                 </div>
               </div>
             ) : null}
