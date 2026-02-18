@@ -18,6 +18,8 @@ import {
   HiShieldCheck,
   HiMegaphone,
   HiSquares2X2,
+  HiTrophy,
+  HiRocketLaunch,
 } from "react-icons/hi2"
 
 interface AppSidebarProps {
@@ -71,6 +73,20 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       icon: HiPencilSquare,
       active: currentPage === "drafts",
       href: ROUTES.DRAFTS
+    },
+    {
+      id: "leaderboard",
+      label: "Leaderboard",
+      icon: HiTrophy,
+      active: currentPage === "leaderboard",
+      href: ROUTES.LEADERBOARD
+    },
+    {
+      id: "quests",
+      label: "Quests",
+      icon: HiRocketLaunch,
+      active: currentPage === "quests",
+      href: ROUTES.QUESTS
     },
   ]
 

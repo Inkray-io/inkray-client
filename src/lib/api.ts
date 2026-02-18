@@ -758,3 +758,160 @@ export const invitesAPI = {
   getStats: () =>
     api.get<ApiResponse<InviteStats>>('/invites/stats'),
 };
+
+// ============================================
+// Gamification API
+// ============================================
+
+export interface TierInfo {
+  tier: number;
+  name: string;
+  currentXp: number;
+  nextTierXp: number | null;
+  progress: number;
+}
+
+export interface UserPointsResponse {
+  totalXp: number;
+  tier: TierInfo;
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckIn: string | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  accountId: string;
+  username: string | null;
+  avatar: string | null;
+  publicKey: string;
+  totalXp: number;
+  tier: number;
+  tierName: string;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  totalCount: number;
+}
+
+export interface MyRankResponse {
+  rank: number | null;
+  entries: LeaderboardEntry[];
+  points: UserPointsResponse;
+}
+
+export interface QuestResponse {
+  id: string;
+  type: string;
+  title: string;
+  description: string | null;
+  xpReward: number;
+  metadata: Record<string, any> | null;
+  startsAt: string;
+  endsAt: string | null;
+  isActive: boolean;
+  completionCount: number;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
+export interface CheckInStatus {
+  canClaim: boolean;
+  unclaimedXp: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckIn: string | null;
+}
+
+export interface CheckInResult {
+  claimedXp: number;
+  checkInBonus: number;
+  streakBonus: number;
+  currentStreak: number;
+  totalClaimed: number;
+}
+
+export interface XpEventEntry {
+  id: string;
+  action: string;
+  xpAmount: number;
+  metadata: Record<string, any> | null;
+  date: string;
+  createdAt: string;
+}
+
+export interface XpHistoryResponse {
+  events: XpEventEntry[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+export interface AchievementEntry {
+  id: string;
+  type: string;
+  metadata: Record<string, any> | null;
+  earnedAt: string;
+}
+
+export interface XConnectionStatus {
+  connected: boolean;
+  xUsername: string | null;
+  connectedAt: string | null;
+}
+
+export const gamificationAPI = {
+  // Get user's XP, tier, streak
+  getPoints: () =>
+    api.get<ApiResponse<UserPointsResponse>>('/gamification/points'),
+
+  // Get leaderboard
+  getLeaderboard: (params?: { limit?: number; offset?: number }) =>
+    api.get<ApiResponse<LeaderboardResponse>>('/gamification/leaderboard', {
+      params,
+    }),
+
+  // Get current user's rank and nearby users
+  getMyRank: () =>
+    api.get<ApiResponse<MyRankResponse>>('/gamification/leaderboard/me'),
+
+  // Get active quests with completion status
+  getQuests: () =>
+    api.get<ApiResponse<QuestResponse[]>>('/gamification/quests'),
+
+  // Get quest details
+  getQuestById: (questId: string) =>
+    api.get<ApiResponse<QuestResponse>>(`/gamification/quests/${questId}`),
+
+  // Daily check-in
+  checkIn: () =>
+    api.post<ApiResponse<CheckInResult>>('/gamification/checkin'),
+
+  // Get check-in status
+  getCheckInStatus: () =>
+    api.get<ApiResponse<CheckInStatus>>('/gamification/checkin/status'),
+
+  // Get XP history
+  getHistory: (params?: {
+    limit?: number;
+    cursor?: string;
+    action?: string;
+  }) =>
+    api.get<ApiResponse<XpHistoryResponse>>('/gamification/history', {
+      params,
+    }),
+
+  // Get user achievements
+  getAchievements: () =>
+    api.get<ApiResponse<AchievementEntry[]>>('/gamification/achievements'),
+
+  // X account connection
+  getXConnectUrl: () =>
+    api.get<ApiResponse<{ url: string }>>('/gamification/x/connect'),
+
+  getXStatus: () =>
+    api.get<ApiResponse<XConnectionStatus>>('/gamification/x/status'),
+
+  disconnectX: () =>
+    api.delete<ApiResponse<{ success: boolean }>>('/gamification/x/disconnect'),
+};

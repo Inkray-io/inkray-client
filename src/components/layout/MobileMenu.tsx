@@ -300,6 +300,28 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
                   </button>
                 </Link>
               </SheetClose>
+
+              <SheetClose asChild>
+                <Link href={ROUTES.LEADERBOARD}>
+                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl">🏆</div>
+                      <span className="font-medium text-black">Leaderboard</span>
+                    </div>
+                  </button>
+                </Link>
+              </SheetClose>
+
+              <SheetClose asChild>
+                <Link href={ROUTES.QUESTS}>
+                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl">🚀</div>
+                      <span className="font-medium text-black">Quests</span>
+                    </div>
+                  </button>
+                </Link>
+              </SheetClose>
             </div>
 
             {/* Topics */}

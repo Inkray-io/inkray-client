@@ -26,6 +26,10 @@ export const ROUTES = {
   FEED_CATEGORY_POPULAR: (categorySlug: string) => `/feed?type=popular&category=${categorySlug}`,
   FEED_CATEGORY_MY: (categorySlug: string) => `/feed?type=my&category=${categorySlug}`,
   
+  // Gamification
+  LEADERBOARD: '/leaderboard',
+  QUESTS: '/quests',
+
   // Profile
   PROFILE: '/profile',
   INVITES: '/invites',
