@@ -160,7 +160,7 @@ export default function LeaderboardPage() {
 
   return (
     <AppLayout currentPage="leaderboard">
-      <div className="max-w-3xl py-6 sm:py-8">
+      <div className="max-w-3xl pt-2 pb-6 sm:pb-8">
         {/* Header */}
         <motion.div
           className="mb-6 sm:mb-8"
