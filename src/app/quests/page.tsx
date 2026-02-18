@@ -10,7 +10,6 @@ import { useXConnection, useConnectX, useDisconnectX } from '@/hooks/useXConnect
 import { useQuests } from '@/hooks/useQuests';
 import { useUserPoints } from '@/hooks/useUserPoints';
 import { TierBadge } from '@/components/gamification/TierBadge';
-import { XpDisplay } from '@/components/gamification/XpDisplay';
 import { StreakCounter } from '@/components/gamification/StreakCounter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -44,68 +43,32 @@ function getQuestIcon(type: string) {
   }
 }
 
-function getQuestTypeLabel(type: string) {
-  switch (type) {
-    case 'x_like':
-      return 'Like on X';
-    case 'x_retweet':
-      return 'Repost on X';
-    case 'x_follow':
-      return 'Follow on X';
-    default:
-      return 'Task';
-  }
-}
-
 function QuestCard({ quest }: { quest: QuestResponse }) {
   const isXQuest = quest.type.startsWith('x_');
   const postUrl = quest.metadata?.postUrl;
 
   return (
-    <div
-      className={`relative border rounded-xl p-4 transition-all ${
-        quest.isCompleted
-          ? 'bg-green-50/50 border-green-200/40'
-          : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-      }`}
-    >
+    <div className="relative border rounded-xl p-4 transition-all bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm">
       <div className="flex items-start gap-3">
         {/* Quest icon */}
         <div
-          className={`size-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            quest.isCompleted
-              ? 'bg-green-100 text-green-600'
-              : isXQuest
-              ? 'bg-black text-white'
-              : 'bg-primary/10 text-primary'
+          className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+            isXQuest ? 'bg-black text-white' : 'bg-primary/10 text-primary'
           }`}
         >
-          {quest.isCompleted ? (
-            <Check className="size-5" />
-          ) : (
-            getQuestIcon(quest.type)
-          )}
+          {getQuestIcon(quest.type)}
         </div>
 
         {/* Quest info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span
-              className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                isXQuest
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-primary/10 text-primary'
-              }`}
-            >
-              {getQuestTypeLabel(quest.type)}
-            </span>
-          </div>
-          <h3
-            className={`font-semibold text-sm ${
-              quest.isCompleted ? 'text-green-800 line-through' : 'text-foreground'
-            }`}
-          >
+          <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
             {quest.title}
+            {isXQuest && (
+              <>
+                <span className="text-gray-300">·</span>
+                <FaXTwitter className="size-3 text-muted-foreground shrink-0" />
+              </>
+            )}
           </h3>
           {quest.description && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
@@ -114,7 +77,7 @@ function QuestCard({ quest }: { quest: QuestResponse }) {
           )}
 
           {/* Action link for X quests */}
-          {isXQuest && postUrl && !quest.isCompleted && (
+          {isXQuest && postUrl && (
             <a
               href={postUrl}
               target="_blank"
@@ -129,28 +92,34 @@ function QuestCard({ quest }: { quest: QuestResponse }) {
         </div>
 
         {/* XP reward */}
-        <div
-          className={`flex-shrink-0 text-right ${
-            quest.isCompleted ? 'opacity-60' : ''
-          }`}
-        >
-          <div
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold ${
-              quest.isCompleted
-                ? 'bg-green-100 text-green-700'
-                : 'bg-amber-50 text-amber-700'
-            }`}
-          >
+        <div className="shrink-0">
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold bg-amber-50 text-amber-700">
             <Zap className="size-3.5" />
             {quest.xpReward}
           </div>
-          {quest.isCompleted && quest.completedAt && (
-            <p className="text-[10px] text-green-600 mt-1">
-              {new Date(quest.completedAt).toLocaleDateString()}
-            </p>
-          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CompletedQuestRow({ quest }: { quest: QuestResponse }) {
+  const isXQuest = quest.type.startsWith('x_');
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 sm:px-4 py-2">
+      <Check className="size-3.5 text-green-500 shrink-0" />
+      <p className="text-sm text-muted-foreground truncate">{quest.title}</p>
+      {isXQuest && (
+        <>
+          <span className="text-gray-300 shrink-0">·</span>
+          <FaXTwitter className="size-3 text-muted-foreground shrink-0" />
+        </>
+      )}
+      <div className="flex-1" />
+      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+        +{quest.xpReward} XP
+      </span>
     </div>
   );
 }
@@ -167,9 +136,8 @@ function CheckInSection() {
       setJustClaimed(true);
       toast({
         title: 'Points claimed!',
-        description: `You earned ${result.totalClaimed} XP${
-          result.streakBonus > 0 ? ` (includes ${result.streakBonus} streak bonus!)` : ''
-        }`,
+        description: `You earned ${result.totalClaimed} XP${result.streakBonus > 0 ? ` (includes ${result.streakBonus} streak bonus!)` : ''
+          }`,
       });
       setTimeout(() => setJustClaimed(false), 3000);
     } catch {
@@ -201,7 +169,7 @@ function CheckInSection() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Flame className="size-5 text-orange-500" fill="currentColor" />
-            <h3 className="font-semibold text-foreground">Daily Check-In</h3>
+            <h3 className="font-semibold text-foreground">Daily XP Claim</h3>
           </div>
           <StreakCounter
             currentStreak={status.currentStreak}
@@ -257,17 +225,39 @@ function CheckInSection() {
               )}
             </AnimatePresence>
           </>
-        ) : (
-          <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-            <Check className="size-6 text-green-500 mx-auto mb-2" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Already claimed today
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Come back tomorrow to claim your next reward
-            </p>
-          </div>
-        )}
+        ) : (() => {
+          const claimedToday = status.lastCheckIn &&
+            new Date(status.lastCheckIn).toDateString() === new Date().toDateString();
+          return (
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
+              {claimedToday ? (
+                <>
+                  <Check className="size-6 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Already claimed today
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Come back tomorrow to claim your next reward
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Flame className="size-6 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No activity yesterday
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Earn XP today by engaging with content, then claim it tomorrow
+                  </p>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
+        <p className="text-[11px] text-muted-foreground mt-4">
+          Claim daily to earn +5 bonus XP. Build a streak for milestone rewards: 7 days = +20 XP, 30 days = +100 XP.
+        </p>
       </div>
     </div>
   );
@@ -294,9 +284,10 @@ function XConnectionSection() {
 
   if (isLoading) {
     return (
-      <div className="bg-card border rounded-2xl p-5 space-y-3">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-10 w-full rounded-xl" />
+      <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3">
+        <Skeleton className="h-4 w-24" />
+        <div className="flex-1" />
+        <Skeleton className="h-7 w-20 rounded-lg" />
       </div>
     );
   }
@@ -304,58 +295,42 @@ function XConnectionSection() {
   if (!xStatus) return null;
 
   return (
-    <div className="bg-card border rounded-2xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <FaXTwitter className="size-4" />
-        <h3 className="font-semibold text-foreground">X Account</h3>
-      </div>
-
-      {xStatus.connected ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-full bg-green-100 flex items-center justify-center">
-              <Check className="size-4 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">
-                @{xStatus.xUsername}
-              </p>
-              <p className="text-xs text-muted-foreground">Connected</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDisconnect}
-            disabled={disconnectX.isPending}
-            className="text-muted-foreground hover:text-red-600 gap-1.5"
-          >
-            <Unlink className="size-3.5" />
-            Disconnect
-          </Button>
+    <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FaXTwitter className="size-5" />
+          <h3 className="font-semibold text-foreground">Account</h3>
         </div>
-      ) : (
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 text-white">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-full bg-white/10 flex items-center justify-center">
-              <FaXTwitter className="size-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-sm">Connect your X account</p>
-              <p className="text-xs text-gray-400">
-                Required to complete X quests and earn bonus XP
-              </p>
-            </div>
+        {xStatus.connected ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+              @{xStatus.xUsername}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDisconnect}
+              disabled={disconnectX.isPending}
+              className="text-muted-foreground hover:text-red-600 gap-1 h-7 px-2 text-xs"
+            >
+              <Unlink className="size-3" />
+              Disconnect
+            </Button>
           </div>
+        ) : (
           <Button
             onClick={connect}
-            className="w-full bg-white text-black hover:bg-gray-100 gap-2 font-semibold"
+            size="sm"
+            className="bg-gray-900 text-white hover:bg-gray-800 gap-1.5 h-7 px-3 text-xs font-semibold"
           >
-            <LinkIcon className="size-4" />
-            Connect X Account
+            <LinkIcon className="size-3" />
+            Connect
           </Button>
-        </div>
-      )}
+        )}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Connect your X account to verify and complete social quests (likes, reposts, follows).
+      </p>
     </div>
   );
 }
@@ -365,23 +340,41 @@ function XpSummarySection() {
 
   if (isLoading) {
     return (
-      <div className="bg-card border rounded-2xl p-5 space-y-3">
-        <Skeleton className="h-5 w-28" />
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-3 w-full rounded-full" />
+      <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3">
+        <Skeleton className="h-4 w-24" />
+        <div className="flex-1" />
+        <Skeleton className="h-4 w-16" />
       </div>
     );
   }
 
   if (!points) return null;
 
+  const progress = points.tier.nextTierXp ? points.tier.progress : 100;
+
   return (
-    <div className="bg-card border rounded-2xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Zap className="size-4 text-amber-500" />
+    <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 space-y-3.5">
+      <div className="flex items-center gap-2">
+        <Zap className="size-5 text-amber-500" />
         <h3 className="font-semibold text-foreground">Your Progress</h3>
       </div>
-      <XpDisplay totalXp={points.totalXp} tier={points.tier} />
+      <div className="flex items-center gap-3">
+        <TierBadge tier={points.tier.tier} tierName={points.tier.name} size="sm" />
+        <div className="flex-1 min-w-0">
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-amber-400"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+        <span className="text-sm font-semibold tabular-nums shrink-0">
+          {points.totalXp.toLocaleString()}
+          <span className="text-xs text-muted-foreground ml-0.5">XP</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -539,7 +532,7 @@ export default function QuestsPage() {
                 </h2>
               </div>
 
-              <div className="space-y-2">
+              <div className="bg-card border rounded-xl overflow-hidden divide-y divide-gray-100">
                 {completedQuests.map((quest, i) => (
                   <motion.div
                     key={quest.id}
@@ -547,7 +540,7 @@ export default function QuestsPage() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.35 + i * 0.03 }}
                   >
-                    <QuestCard quest={quest} />
+                    <CompletedQuestRow quest={quest} />
                   </motion.div>
                 ))}
               </div>
