@@ -1,35 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { gamificationAPI, CheckInStatus, CheckInResult } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { gamificationAPI } from '@/lib/api';
+import type { StreakStatus } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useCheckInStatus() {
+export function useStreakStatus() {
   const { isAuthenticated } = useAuth();
 
-  return useQuery<CheckInStatus>({
-    queryKey: ['gamification', 'checkInStatus'],
+  return useQuery<StreakStatus>({
+    queryKey: ['gamification', 'streakStatus'],
     queryFn: async () => {
-      const response = await gamificationAPI.getCheckInStatus();
+      const response = await gamificationAPI.getStreakStatus();
       return response.data.data;
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,
-  });
-}
-
-export function useCheckIn() {
-  const queryClient = useQueryClient();
-
-  return useMutation<CheckInResult>({
-    mutationFn: async () => {
-      const response = await gamificationAPI.checkIn();
-      return response.data.data;
-    },
-    onSuccess: () => {
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['gamification', 'checkInStatus'] });
-      queryClient.invalidateQueries({ queryKey: ['gamification', 'points'] });
-      queryClient.invalidateQueries({ queryKey: ['gamification', 'myRank'] });
-      queryClient.invalidateQueries({ queryKey: ['gamification', 'leaderboard'] });
-    },
   });
 }

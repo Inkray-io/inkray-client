@@ -832,6 +832,40 @@ export interface CheckInResult {
   totalClaimed: number;
 }
 
+// --- Daily Streak System ---
+
+export interface StreakTierInfo {
+  name: string;
+  minDays: number;
+  maxDays: number | null;
+  dailyBonus: number;
+}
+
+export interface StreakMilestoneInfo {
+  days: number;
+  bonusXp: number;
+  label: string;
+  reached: boolean;
+}
+
+export interface StreakDayInfo {
+  date: string;
+  active: boolean;
+  bonusAwarded: number;
+}
+
+export interface StreakStatus {
+  currentStreak: number;
+  longestStreak: number;
+  currentTier: StreakTierInfo;
+  nextTier: StreakTierInfo | null;
+  daysUntilNextTier: number | null;
+  dailyBonusXp: number;
+  todayActive: boolean;
+  recentDays: StreakDayInfo[];
+  milestones: StreakMilestoneInfo[];
+}
+
 export interface XpEventEntry {
   id: string;
   action: string;
@@ -883,11 +917,15 @@ export const gamificationAPI = {
   getQuestById: (questId: string) =>
     api.get<ApiResponse<QuestResponse>>(`/gamification/quests/${questId}`),
 
-  // Daily check-in
+  // Daily streak status
+  getStreakStatus: () =>
+    api.get<ApiResponse<StreakStatus>>('/gamification/streak'),
+
+  // @deprecated — use getStreakStatus
   checkIn: () =>
     api.post<ApiResponse<CheckInResult>>('/gamification/checkin'),
 
-  // Get check-in status
+  // @deprecated — use getStreakStatus
   getCheckInStatus: () =>
     api.get<ApiResponse<CheckInStatus>>('/gamification/checkin/status'),
 

@@ -1,20 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useCheckInStatus, useCheckIn } from '@/hooks/useCheckIn';
+import { useStreakStatus } from '@/hooks/useCheckIn';
 import { useXConnection, useConnectX, useDisconnectX } from '@/hooks/useXConnection';
 import { useQuests } from '@/hooks/useQuests';
 import { useUserPoints } from '@/hooks/useUserPoints';
 import { TierBadge } from '@/components/gamification/TierBadge';
-import { StreakCounter } from '@/components/gamification/StreakCounter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CONFIG } from '@/lib/config';
 import {
   Flame,
   Sparkles,
@@ -22,12 +19,13 @@ import {
   ExternalLink,
   LinkIcon,
   Unlink,
-  Gift,
   Target,
   Zap,
   Loader2,
   Heart,
   Repeat2,
+  Crown,
+  Trophy,
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import type { QuestResponse } from '@/lib/api';
@@ -124,140 +122,166 @@ function CompletedQuestRow({ quest }: { quest: QuestResponse }) {
   );
 }
 
-function CheckInSection() {
-  const { data: status, isLoading } = useCheckInStatus();
-  const checkIn = useCheckIn();
-  const { toast } = useToast();
-  const [justClaimed, setJustClaimed] = useState(false);
+function getDayLabel(date: string) {
+  return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(date + 'T12:00:00').getDay()];
+}
 
-  const handleCheckIn = async () => {
-    try {
-      const result = await checkIn.mutateAsync();
-      setJustClaimed(true);
-      toast({
-        title: 'Points claimed!',
-        description: `You earned ${result.totalClaimed} XP${result.streakBonus > 0 ? ` (includes ${result.streakBonus} streak bonus!)` : ''
-          }`,
-      });
-      setTimeout(() => setJustClaimed(false), 3000);
-    } catch {
-      toast({
-        title: 'Check-in failed',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
-    }
-  };
+function DailyStreakSection() {
+  const { data: streak, isLoading } = useStreakStatus();
 
   if (isLoading) {
     return (
-      <div className="bg-card border rounded-2xl p-5 space-y-3">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-4 w-24" />
+      <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <div className="flex gap-1">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="size-8 sm:size-9 rounded-full flex-1" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Skeleton className="h-14 rounded-lg" />
+          <Skeleton className="h-14 rounded-lg" />
+        </div>
       </div>
     );
   }
 
-  if (!status) return null;
+  if (!streak) return null;
+
+  const isActive = streak.currentStreak > 0;
+  const last7 = streak.recentDays.slice(0, 7).reverse();
+  const nextMilestone = streak.milestones.find((m) => !m.reached);
+  const daysToMilestone = nextMilestone
+    ? nextMilestone.days - streak.currentStreak
+    : 0;
 
   return (
-    <div className="bg-card border rounded-2xl p-5 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-400/5 to-transparent pointer-events-none rounded-bl-full" />
-
-      <div className="relative">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Flame className="size-5 text-orange-500" fill="currentColor" />
-            <h3 className="font-semibold text-foreground">Daily XP Claim</h3>
-          </div>
-          <StreakCounter
-            currentStreak={status.currentStreak}
-            longestStreak={status.longestStreak}
-            showLongest
-            size="sm"
+    <div className="bg-card border rounded-xl px-3 sm:px-4 py-3 space-y-3">
+      {/* Hero: Streak count + Daily bonus */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Flame
+            className={`size-5 shrink-0 ${isActive ? 'text-orange-500' : 'text-gray-300'}`}
+            fill={isActive ? 'currentColor' : 'none'}
           />
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className={`text-xl font-bold tabular-nums leading-none ${
+                isActive ? 'text-orange-600' : 'text-gray-400'
+              }`}
+            >
+              {streak.currentStreak}
+            </span>
+            <span className="text-sm text-muted-foreground leading-none">
+              day{streak.currentStreak !== 1 ? 's' : ''} streak
+            </span>
+          </div>
         </div>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none">
+            Daily Bonus
+          </div>
+          <div className="text-sm font-bold text-orange-600 tabular-nums leading-snug">
+            +{streak.dailyBonusXp} XP
+          </div>
+        </div>
+      </div>
 
-        {status.canClaim ? (
-          <>
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/40 rounded-xl p-4 mb-4">
-              <p className="text-sm text-amber-800 mb-1">
-                Yesterday you earned
-              </p>
-              <p className="text-2xl font-bold text-amber-700 tabular-nums">
-                {status.unclaimedXp} XP
-              </p>
-              <p className="text-xs text-amber-600 mt-1">
-                Claim to add it to your total + get a check-in bonus
-              </p>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {justClaimed ? (
-                <motion.div
-                  key="success"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="flex items-center justify-center gap-2 py-3 bg-green-100 text-green-700 rounded-xl font-semibold"
-                >
-                  <Sparkles className="size-5" />
-                  Claimed!
-                </motion.div>
-              ) : (
-                <motion.div key="button" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <Button
-                    onClick={handleCheckIn}
-                    disabled={checkIn.isPending}
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-400/20 h-12 text-base font-semibold"
-                  >
-                    {checkIn.isPending ? (
-                      <Loader2 className="size-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Gift className="size-5 mr-2" />
-                        Claim Points
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
-        ) : (() => {
-          const claimedToday = status.lastCheckIn &&
-            new Date(status.lastCheckIn).toDateString() === new Date().toDateString();
+      {/* 7-day activity dots with XP */}
+      <div className="flex items-center gap-1">
+        {last7.map((day, i) => {
+          const isToday = i === last7.length - 1;
           return (
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-              {claimedToday ? (
-                <>
-                  <Check className="size-6 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Already claimed today
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Come back tomorrow to claim your next reward
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Flame className="size-6 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-muted-foreground">
-                    No activity yesterday
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Earn XP today by engaging with content, then claim it tomorrow
-                  </p>
-                </>
-              )}
+            <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+              <div
+                className={`size-8 sm:size-9 rounded-full transition-all flex items-center justify-center ${
+                  day.active
+                    ? isToday
+                      ? 'bg-orange-400 ring-2 ring-orange-200/70'
+                      : 'bg-orange-400'
+                    : isToday
+                      ? 'bg-gray-100 ring-2 ring-gray-200'
+                      : 'bg-gray-100'
+                }`}
+              >
+                {day.active && (
+                  <span className="text-[10px] font-bold text-white leading-none">
+                    +{day.bonusAwarded || streak.currentTier.dailyBonus}
+                  </span>
+                )}
+              </div>
+              <span
+                className={`text-[9px] leading-none ${
+                  isToday ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                {isToday ? 'Today' : getDayLabel(day.date)}
+              </span>
             </div>
           );
-        })()}
+        })}
+      </div>
 
-        <p className="text-[11px] text-muted-foreground mt-4">
-          Claim daily to earn +5 bonus XP. Build a streak for milestone rewards: 7 days = +20 XP, 30 days = +100 XP.
-        </p>
+      {/* Info grid: Next Tier + Next Milestone */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* Next Tier */}
+        {streak.nextTier ? (
+          <div className="bg-orange-50/70 rounded-lg px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-1">
+              Next Tier
+            </div>
+            <div className="text-xs font-semibold text-foreground leading-tight">
+              {streak.nextTier.name}
+            </div>
+            <div className="text-[11px] text-orange-600 leading-snug mt-0.5">
+              +{streak.nextTier.dailyBonus} XP/day · {streak.daysUntilNextTier}d left
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50/70 rounded-lg px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-1">
+              Current Tier
+            </div>
+            <div className="text-xs font-semibold text-foreground leading-tight flex items-center gap-1">
+              <Crown className="size-3 text-amber-500" />
+              {streak.currentTier.name}
+            </div>
+            <div className="text-[11px] text-amber-600 leading-snug mt-0.5">
+              Max tier reached
+            </div>
+          </div>
+        )}
+
+        {/* Next Milestone */}
+        {nextMilestone ? (
+          <div className="bg-amber-50/70 rounded-lg px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-1">
+              Next Milestone
+            </div>
+            <div className="text-xs font-semibold text-foreground leading-tight">
+              {nextMilestone.label}
+            </div>
+            <div className="text-[11px] text-amber-600 leading-snug mt-0.5">
+              +{nextMilestone.bonusXp} XP one-time · {daysToMilestone}d left
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50/70 rounded-lg px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-1">
+              Milestones
+            </div>
+            <div className="text-xs font-semibold text-foreground leading-tight flex items-center gap-1">
+              <Trophy className="size-3 text-amber-500" />
+              All complete
+            </div>
+            <div className="text-[11px] text-amber-600 leading-snug mt-0.5">
+              Every milestone claimed
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -435,13 +459,13 @@ export default function QuestsPage() {
             <XpSummarySection />
           </motion.div>
 
-          {/* Daily Check-In */}
+          {/* Daily Streak */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <CheckInSection />
+            <DailyStreakSection />
           </motion.div>
 
           {/* X Connection */}
