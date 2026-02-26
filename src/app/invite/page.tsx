@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,18 @@ import { FaXTwitter } from "react-icons/fa6";
 import { HiUserGroup } from "react-icons/hi2";
 
 export default function InvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <InvitePageContent />
+    </Suspense>
+  );
+}
+
+function InvitePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
@@ -38,11 +50,12 @@ export default function InvitePage() {
     const checkInviteSystem = async () => {
       try {
         const response = await invitesAPI.getSystemStatus();
-        const data = response.data.data || response.data;
-        setInviteSystemEnabled(data.enabled);
+        const raw = response.data.data || response.data;
+        const enabled = 'enabled' in raw ? raw.enabled : false;
+        setInviteSystemEnabled(enabled);
 
         // If invite system is disabled, redirect to auth
-        if (!data.enabled) {
+        if (!enabled) {
           router.push("/auth");
         }
       } catch (error) {
@@ -88,7 +101,8 @@ export default function InvitePage() {
 
     try {
       const response = await invitesAPI.validateCode(inviteCode);
-      const data = response.data.data || response.data;
+      const raw = response.data.data || response.data;
+      const data = raw as { valid: boolean; message?: string; error?: string };
 
       if (data.valid) {
         setValidationResult({ valid: true });

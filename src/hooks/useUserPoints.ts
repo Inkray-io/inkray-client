@@ -9,7 +9,7 @@ export function useUserPoints() {
     queryKey: ['gamification', 'points'],
     queryFn: async () => {
       const response = await gamificationAPI.getPoints();
-      return response.data.data;
+      return response.data.data as UserPointsResponse;
     },
     enabled: isAuthenticated,
     staleTime: 30 * 1000, // 30 seconds

@@ -14,7 +14,7 @@ export function useLeaderboard(params?: {
     queryKey: ['gamification', 'leaderboard', params],
     queryFn: async () => {
       const response = await gamificationAPI.getLeaderboard(params);
-      return response.data.data;
+      return response.data.data as LeaderboardResponse;
     },
     staleTime: 60 * 1000, // 1 minute
   });
@@ -27,7 +27,7 @@ export function useMyRank() {
     queryKey: ['gamification', 'myRank'],
     queryFn: async () => {
       const response = await gamificationAPI.getMyRank();
-      return response.data.data;
+      return response.data.data as MyRankResponse;
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,

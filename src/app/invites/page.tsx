@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { invitesAPI, InviteCodesResponse, InviteStats } from "@/lib/api";
+import { invitesAPI, InviteCodesResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 import {
@@ -45,7 +45,7 @@ export default function InvitesPage() {
 
       try {
         const response = await invitesAPI.getMyCodes();
-        const responseData = response.data.data || response.data;
+        const responseData = (response.data.data || response.data) as InviteCodesResponse;
         setData(responseData);
       } catch (error) {
         console.error("Failed to fetch invite codes:", error);

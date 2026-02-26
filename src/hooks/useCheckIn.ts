@@ -10,7 +10,7 @@ export function useStreakStatus() {
     queryKey: ['gamification', 'streakStatus'],
     queryFn: async () => {
       const response = await gamificationAPI.getStreakStatus();
-      return response.data.data;
+      return response.data.data as StreakStatus;
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,

@@ -9,7 +9,7 @@ export function useQuests() {
     queryKey: ['gamification', 'quests'],
     queryFn: async () => {
       const response = await gamificationAPI.getQuests();
-      return response.data.data;
+      return response.data.data as QuestResponse[];
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,

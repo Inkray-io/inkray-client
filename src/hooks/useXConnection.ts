@@ -9,7 +9,7 @@ export function useXConnection() {
     queryKey: ['gamification', 'xConnection'],
     queryFn: async () => {
       const response = await gamificationAPI.getXStatus();
-      return response.data.data;
+      return response.data.data as XConnectionStatus;
     },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -20,7 +20,7 @@ export function useConnectX() {
   const mutation = useMutation({
     mutationFn: async () => {
       const response = await gamificationAPI.getXConnectUrl();
-      return response.data.data.url;
+      return response.data.data!.url;
     },
     onSuccess: (url: string) => {
       window.location.href = url;

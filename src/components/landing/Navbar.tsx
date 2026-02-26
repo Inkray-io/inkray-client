@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { FaXTwitter } from "react-icons/fa6"
@@ -47,9 +48,9 @@ export function Navbar() {
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
           {/* Logo */}
-          <a href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <img src="/logo.svg" alt="Inkray" className="h-8" />
-          </a>
+          </Link>
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-center gap-8">

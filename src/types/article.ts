@@ -68,6 +68,8 @@ export interface Article {
   totalTips: number;
   /** Total like count for this article */
   totalLikes: number;
+  /** Total comment count for this article */
+  totalComments?: number;
   /** Whether the current user has liked this article (only set when authenticated) */
   isLiked?: boolean;
   /** Total bookmark count for this article */

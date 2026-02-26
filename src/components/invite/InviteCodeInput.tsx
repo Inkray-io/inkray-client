@@ -35,11 +35,10 @@ export function InviteCodeInput({
 
   // Trigger shake animation on error
   useEffect(() => {
-    if (error) {
-      setIsShaking(true);
-      const timer = setTimeout(() => setIsShaking(false), 500);
-      return () => clearTimeout(timer);
-    }
+    if (!error) return;
+    setIsShaking(true);
+    const timer = setTimeout(() => setIsShaking(false), 500);
+    return () => clearTimeout(timer);
   }, [error]);
 
   // Handle completion callback
