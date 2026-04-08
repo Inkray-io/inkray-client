@@ -32,11 +32,8 @@ export function RegisterEnokiWallets() {
       return
     }
 
-    // Type assertion needed due to version mismatch between @mysten/enoki's bundled
-    // @mysten/sui (1.45.2) and the project's version. They are compatible at runtime.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { unregister } = registerEnokiWallets({
-      client: client as any,
+      client,
       network: network as EnokiNetwork,
       apiKey: enokiApiKey,
       providers: {

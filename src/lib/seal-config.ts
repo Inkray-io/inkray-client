@@ -16,69 +16,85 @@ export type SealNetwork = 'testnet' | 'mainnet' | 'devnet' | 'localnet';
 export interface SealServerConfig {
   objectId: string;
   weight: number;
+  aggregatorUrl?: string;
 }
 
 /**
  * Key server configurations for different networks
- * These should be updated with actual production key server IDs
+ * Using decentralized committee key servers (MPC with distributed key generation).
+ * Each entry uses a single committee object ID + aggregator URL instead of multiple independent servers.
  */
-const KEY_SERVER_CONFIGS: Record<SealNetwork, string[]> = {
-  testnet: [
-    '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',
-    '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8',
-  ],
-  mainnet: [
-    '0x0000000000000000000000000000000000000000000000000000000000000004',
-    '0x0000000000000000000000000000000000000000000000000000000000000005',
-    '0x0000000000000000000000000000000000000000000000000000000000000006',
-  ],
-  devnet: [
-    '0x0000000000000000000000000000000000000000000000000000000000000007',
-    '0x0000000000000000000000000000000000000000000000000000000000000008',
-    '0x0000000000000000000000000000000000000000000000000000000000000009',
-  ],
-  localnet: [
-    '0x000000000000000000000000000000000000000000000000000000000000000a',
-    '0x000000000000000000000000000000000000000000000000000000000000000b',
-    '0x000000000000000000000000000000000000000000000000000000000000000c',
-  ]
+interface NetworkKeyServerConfig {
+  objectId: string;
+  aggregatorUrl: string;
+}
+
+const KEY_SERVER_CONFIGS: Record<SealNetwork, NetworkKeyServerConfig> = {
+  testnet: {
+    objectId: '0xb012378c9f3799fb5b1a7083da74a4069e3c3f1c93de0b27212a5799ce1e1e98',
+    aggregatorUrl: 'https://seal-aggregator-testnet.mystenlabs.com',
+  },
+  mainnet: {
+    objectId: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    aggregatorUrl: '',
+  },
+  devnet: {
+    objectId: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    aggregatorUrl: '',
+  },
+  localnet: {
+    objectId: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    aggregatorUrl: '',
+  },
 };
 
 /**
- * Get key server IDs for the specified network
+ * Get the key server config for the specified network
  * Supports environment variable override via NEXT_PUBLIC_SEAL_KEY_SERVER_IDS
  */
-export function getKeyServerIds(network?: SealNetwork): string[] {
+export function getNetworkKeyServerConfig(network?: SealNetwork): NetworkKeyServerConfig {
   const targetNetwork = network || CONFIG.NETWORK as SealNetwork;
-  const servers = KEY_SERVER_CONFIGS[targetNetwork] || KEY_SERVER_CONFIGS.testnet;
+  const config = KEY_SERVER_CONFIGS[targetNetwork] || KEY_SERVER_CONFIGS.testnet;
 
-  // Check if configured from environment
+  // Check if configured from environment (object ID and aggregator URL)
   if (CONFIG.SEAL_KEY_SERVER_IDS) {
-    const envServers = CONFIG.SEAL_KEY_SERVER_IDS.split(',').map(id => id.trim());
-    if (envServers.length > 0 && envServers[0] !== '') {
-      log.debug('Using key servers from environment', {
-        serverCount: envServers.length
+    const envObjectId = CONFIG.SEAL_KEY_SERVER_IDS.trim();
+    if (envObjectId) {
+      log.debug('Using key server from environment', {
+        objectId: envObjectId,
       }, 'SealConfig');
-      return envServers;
+      return {
+        objectId: envObjectId,
+        aggregatorUrl: config.aggregatorUrl,
+      };
     }
   }
 
-  log.debug('Using default key servers', {
+  log.debug('Using default committee key server', {
     network: targetNetwork,
-    serverCount: servers.length
+    objectId: config.objectId,
   }, 'SealConfig');
-  return servers;
+  return config;
+}
+
+/**
+ * Get key server IDs for the specified network (convenience wrapper)
+ */
+export function getKeyServerIds(network?: SealNetwork): string[] {
+  return [getNetworkKeyServerConfig(network).objectId];
 }
 
 /**
  * Get key server configurations with weights for SealClient
+ * Includes aggregatorUrl for committee mode servers
  */
 export function getKeyServerConfigs(network?: SealNetwork): SealServerConfig[] {
-  const serverIds = getKeyServerIds(network);
-  return serverIds.map((id) => ({
-    objectId: id,
+  const config = getNetworkKeyServerConfig(network);
+  return [{
+    objectId: config.objectId,
     weight: 1,
-  }));
+    aggregatorUrl: config.aggregatorUrl || undefined,
+  }];
 }
 
 /**
@@ -107,12 +123,19 @@ export function validateSealConfiguration(): { isValid: boolean; error?: string 
     };
   }
 
-  // Check key servers
-  const servers = getKeyServerIds();
-  if (servers.length === 0) {
+  // Check key server
+  const config = getNetworkKeyServerConfig();
+  if (!config.objectId || config.objectId === '0x0000000000000000000000000000000000000000000000000000000000000000') {
     return {
       isValid: false,
-      error: `No key servers configured for network: ${CONFIG.NETWORK}`
+      error: `No committee key server configured for network: ${CONFIG.NETWORK}`
+    };
+  }
+
+  if (!config.aggregatorUrl) {
+    return {
+      isValid: false,
+      error: `No aggregator URL configured for network: ${CONFIG.NETWORK}`
     };
   }
 
@@ -124,13 +147,13 @@ export function validateSealConfiguration(): { isValid: boolean; error?: string 
  */
 export function getSealConfigStatus() {
   const validation = validateSealConfiguration();
-  const servers = getKeyServerIds();
+  const config = getNetworkKeyServerConfig();
 
   return {
     network: CONFIG.NETWORK,
     packageId: CONFIG.PACKAGE_ID,
-    keyServerCount: servers.length,
-    keyServers: servers,
+    keyServerObjectId: config.objectId,
+    aggregatorUrl: config.aggregatorUrl,
     isValid: validation.isValid,
     error: validation.error,
     hasEnvironmentOverride: !!CONFIG.SEAL_KEY_SERVER_IDS,
@@ -138,9 +161,11 @@ export function getSealConfigStatus() {
 }
 
 /**
- * Default encryption threshold (number of key servers required)
+ * Default encryption threshold (number of key servers required from client perspective).
+ * With a single decentralized committee server, threshold is 1 — the committee handles
+ * its internal 3-of-5 threshold via the aggregator.
  */
-export const DEFAULT_ENCRYPTION_THRESHOLD = 2;
+export const DEFAULT_ENCRYPTION_THRESHOLD = 1;
 
 /**
  * Default session key TTL in minutes (1 month)
