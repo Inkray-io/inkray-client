@@ -92,6 +92,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="dns-prefetch" href="https://cdn.prod.website-files.com" />
+        <script async src="https://plausible.io/js/pa-_FmfRXx4JvCO0JzL1dwQW.js" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
