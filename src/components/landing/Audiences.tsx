@@ -16,20 +16,20 @@ import {
 } from "react-icons/hi2"
 
 const CREATOR_FEATURES = [
-  { icon: HiPencilSquare, text: "Markdown editor with AI summaries" },
-  { icon: HiShieldCheck, text: "On-chain content vault — you own it" },
-  { icon: HiCurrencyDollar, text: "Subscription monetization" },
-  { icon: HiChartBar, text: "Audience analytics & CRM" },
-  { icon: HiSparkles, text: "NFT minting for articles" },
-  { icon: HiClock, text: "Scheduled publishing" },
+  { icon: HiPencilSquare, text: "Rich markdown editor with AI summaries" },
+  { icon: HiShieldCheck, text: "Personal content Vault — you own every article" },
+  { icon: HiCurrencyDollar, text: "Paid subscriptions and encrypted premium content" },
+  { icon: HiChartBar, text: "Reader analytics and subscriber management" },
+  { icon: HiSparkles, text: "One-click collectible minting" },
+  { icon: HiClock, text: "Scheduled and draft publishing" },
 ]
 
 const READER_FEATURES = [
-  { icon: HiRss, text: "Curated feeds — fresh, popular, personalized" },
-  { icon: HiHeart, text: "Support creators directly with tips" },
-  { icon: HiSparkles, text: "Collect articles as NFTs" },
-  { icon: HiBookmark, text: "Bookmark & save for later" },
-  { icon: HiChatBubbleLeftRight, text: "Comments & community" },
+  { icon: HiRss, text: "Curated feeds — fresh, trending, and personalized" },
+  { icon: HiHeart, text: "Tip creators directly — 100% goes to them" },
+  { icon: HiSparkles, text: "Collect favorite articles as digital collectibles" },
+  { icon: HiBookmark, text: "Bookmark articles for later" },
+  { icon: HiChatBubbleLeftRight, text: "Threaded comments and community discussion" },
   { icon: HiNoSymbol, text: "No ads, no algorithmic manipulation" },
 ]
 
@@ -78,7 +78,7 @@ export function Audiences() {
             Who It&apos;s For
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Built for creators and readers alike
+            A Better Deal for Creators and Readers
           </h2>
         </motion.div>
 
@@ -104,10 +104,10 @@ export function Audiences() {
                 For Creators
               </p>
               <h3 className="text-lg font-bold text-gray-900 mb-1.5">
-                Built for writers who want to own their work
+                For Writers Who Want Real Ownership
               </h3>
               <p className="text-gray-500 text-sm">
-                Everything you need to publish, monetize, and grow — without giving up control.
+                Publish, monetize, and grow your audience — without handing control to a platform that can change the rules.
               </p>
             </div>
             <FeatureList items={CREATOR_FEATURES} />
@@ -134,10 +134,10 @@ export function Audiences() {
                 For Readers
               </p>
               <h3 className="text-lg font-bold text-gray-900 mb-1.5">
-                Discover voices that matter
+                For Readers Who Want Better Content
               </h3>
               <p className="text-gray-500 text-sm">
-                Find great content, support the creators you love, and be part of a community that values quality.
+                Discover independent writers, support them directly, and read content chosen by humans — not by an algorithm.
               </p>
             </div>
             <FeatureList items={READER_FEATURES} />

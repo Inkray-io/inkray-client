@@ -25,11 +25,10 @@ export function CtaSection() {
           className="space-y-6"
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Your words deserve to last.
+            Your Words Deserve to Last
           </h2>
           <p className="text-[#7A8BA6] text-lg max-w-lg mx-auto">
-            Join creators who publish on their own terms. No middlemen, no
-            gatekeepers — just your voice and your audience.
+            Join a growing community of writers who publish on their own terms. Every article you write is permanently yours — owned by you, accessible to your readers, and free from platform risk.
           </p>
 
           <div className="flex flex-wrap justify-center items-center gap-5 pt-2">

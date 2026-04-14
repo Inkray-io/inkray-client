@@ -20,7 +20,7 @@ export function PoweredBy() {
           <div className="flex items-center gap-10">
             {/* Sui */}
             <div className="flex items-center gap-2.5">
-              <img src="/sui_icon.svg" alt="Sui" className="h-7" />
+              <img src="/sui_icon.svg" alt="Sui" className="h-7" width={28} height={28} />
               <span className="text-base font-semibold text-gray-600">
                 Sui
               </span>
@@ -30,7 +30,7 @@ export function PoweredBy() {
 
             {/* Walrus */}
             <div className="flex items-center gap-2.5">
-              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-7" />
+              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-7" width={120} height={28} />
               <span className="text-base font-semibold text-gray-600">
                 Walrus
               </span>

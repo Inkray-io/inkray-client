@@ -6,23 +6,29 @@ const TECH_CARDS = [
   {
     logo: "/sui_icon.svg",
     logoClassName: "h-9",
+    logoWidth: 36,
+    logoHeight: 36,
     name: "Sui Blockchain",
     description:
-      "High-performance Layer 1 blockchain. Your publications and ownership records are secured by Sui's object-centric architecture and parallel transaction execution.",
+      "Sui is a high-performance Layer 1 blockchain with an object-centric data model and parallel transaction execution. Every article, subscription, and collectible on Inkray is a Sui object with verifiable on-chain provenance.",
   },
   {
     logo: "/hero_section/Walrus_Monogram_White.svg",
     logoClassName: "h-8",
+    logoWidth: 32,
+    logoHeight: 32,
     name: "Walrus Storage",
     description:
-      "Decentralized data storage for the long haul. Your articles are distributed across a global network — no single point of failure, no disappearing content.",
+      "Walrus is a decentralized data platform that distributes content across 100+ storage nodes in 19 countries using RedStuff erasure coding. Articles remain available and verifiable even if individual nodes go offline.",
   },
   {
     logo: "https://cdn.prod.website-files.com/687615731a76518b8c27cf39/68761ce22a49c0f7365165e8_Group%202147263312%20(1).svg",
     logoClassName: "h-9",
+    logoWidth: 36,
+    logoHeight: 36,
     name: "Seal Encryption",
     description:
-      "End-to-end encryption for premium content. Only authorized subscribers can decrypt and read your gated articles. Privacy without compromise.",
+      "Seal provides decentralized encryption through identity-based keys and access policies defined in smart contracts. Premium content on Inkray is encrypted so only paying subscribers can read it — with no central key server.",
   },
 ]
 
@@ -63,13 +69,13 @@ export function Technology() {
               backgroundClip: "text",
             }}
           >
-            Technology
+            Under the Hood
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Powered by the best of Web3
+            Powered by the Best Infrastructure in Web3
           </h2>
           <p className="text-[#7A8BA6] max-w-2xl mx-auto text-lg">
-            Inkray is built on proven, cutting-edge blockchain infrastructure
+            We chose three proven protocols so you don&apos;t have to think about the tech — it just works.
           </p>
         </motion.div>
 
@@ -93,6 +99,8 @@ export function Technology() {
                   src={card.logo}
                   alt={card.name}
                   className={card.logoClassName}
+                  width={card.logoWidth}
+                  height={card.logoHeight}
                 />
               </div>
 

@@ -9,21 +9,21 @@ const STEPS = [
     icon: HiWallet,
     title: "Connect",
     description:
-      "Link your Sui wallet and create your publication in seconds. No sign-ups, no passwords — your wallet is your identity.",
+      "Link your wallet to create your publication in seconds. No sign-ups, no passwords — one click and you're ready to write.",
   },
   {
     number: "02",
     icon: HiPencilSquare,
-    title: "Publish",
+    title: "Write & Publish",
     description:
-      "Write your article in our editor. Hit publish and it's stored on-chain and on Walrus — permanently and verifiably.",
+      "Compose in our editor, add AI summaries, and publish. Your article is stored permanently — it can't be taken down or lost.",
   },
   {
     number: "03",
     icon: HiRocketLaunch,
     title: "Own & Earn",
     description:
-      "Your content is yours. Monetize with subscriptions, tips, and NFTs. Grow your audience directly — no algorithms in the way.",
+      "Every article you publish is yours to keep. Monetize with subscriptions, tips, and collectibles. Build your audience on your own terms.",
   },
 ]
 
@@ -68,7 +68,7 @@ export function HowItWorks() {
             How It Works
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            From idea to ownership in three steps
+            Start Publishing in Three Steps
           </h2>
         </motion.div>
 

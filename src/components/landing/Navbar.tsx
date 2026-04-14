@@ -49,7 +49,7 @@ export function Navbar() {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <img src="/logo.svg" alt="Inkray" className="h-8" />
+            <img src="/logo.svg" alt="Inkray" className="h-8" width={100} height={32} />
           </Link>
 
           {/* Desktop nav links */}

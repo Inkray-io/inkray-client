@@ -17,6 +17,13 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   serverExternalPackages: [ '@mysten/walrus', '@mysten/walrus-wasm' ],
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
+      { protocol: 'https', hostname: '*.inkray.xyz' },
+      { protocol: 'https', hostname: '*.walrus.space' },
+    ],
+  },
 };
 
 export default withSerwist(nextConfig);

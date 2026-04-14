@@ -18,19 +18,26 @@ import { ChatModal } from '@/components/chat'
 import { ChatProvider } from '@/components/chat/ChatProvider'
 
 export const metadata: Metadata = {
-  title: 'Inkray – True Digital Ownership for Creators',
+  title: 'Inkray — The Publishing Platform Where You Own Your Content',
   description:
-    'Inkray combines the simplicity of modern blogging with the power of blockchain ownership. Publish effortlessly, own permanently.',
+    'Inkray is a publishing platform where creators truly own their work. Write in a modern editor, publish permanently, and earn from subscriptions, tips, and collectibles — with no platform risk and no middlemen.',
   keywords: [
     'Inkray',
-    'Web3 blogging',
-    'decentralized publishing',
+    'publishing platform',
+    'blogging platform',
+    'content ownership',
     'creator economy',
     'digital ownership',
+    'Web3 publishing',
+    'decentralized blogging',
     'Sui blockchain',
     'Walrus storage',
+    'Seal encryption',
     'SuiNS',
-    'NFT content',
+    'NFT articles',
+    'on-chain publishing',
+    'creator monetization',
+    'own your content',
   ],
   authors: [{ name: 'Inkray Team', url: 'https://inkray.xyz' }],
   creator: 'Inkray',
@@ -40,29 +47,32 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 5,
   },
+  alternates: {
+    canonical: 'https://inkray.xyz',
+  },
   openGraph: {
     type: 'website',
     url: 'https://inkray.xyz',
-    title: 'Inkray – True Digital Ownership for Creators',
+    title: 'Inkray — The Publishing Platform Where You Own Your Content',
     description:
-      'Inkray combines the simplicity of modern blogging with the power of blockchain ownership. Publish effortlessly, own permanently.',
+      'Inkray is a publishing platform where creators truly own their work. Write in a modern editor, publish permanently, and earn from subscriptions, tips, and collectibles — with no platform risk and no middlemen.',
     siteName: 'Inkray',
     images: [
       {
-        url: 'https://inkray.xyz/og-image.jpeg', // replace with your OG image
+        url: 'https://inkray.xyz/og-image.jpeg',
         width: 1600,
         height: 900,
-        alt: 'Inkray – True Digital Ownership for Creators',
+        alt: 'Inkray — The Publishing Platform Where You Own Your Content',
       },
     ],
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Inkray – True Digital Ownership for Creators',
+    title: 'Inkray — The Publishing Platform Where You Own Your Content',
     description:
-      'Publish effortlessly, own permanently. Inkray brings together modern blogging simplicity and blockchain-powered ownership.',
-    site: '@inkray_io', // replace with your handle if available
+      'A publishing platform where your content can\'t be taken down, your audience is yours, and you earn directly. No middlemen, no algorithms.',
+    site: '@inkray_io',
     creator: '@inkray_io',
     images: ['https://inkray.xyz/og-image.jpeg'],
   },
@@ -80,6 +90,37 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="dns-prefetch" href="https://cdn.prod.website-files.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'Inkray',
+                url: 'https://inkray.xyz',
+                logo: 'https://inkray.xyz/logo-icon-512.png',
+                sameAs: ['https://x.com/inkray_io'],
+                description:
+                  'Inkray is a publishing platform where creators truly own their work. Write in a modern editor, publish permanently, and earn from subscriptions, tips, and collectibles.',
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'Inkray',
+                url: 'https://inkray.xyz',
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: 'https://inkray.xyz/feed?q={search_term_string}',
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+            ]),
+          }}
+        />
+      </head>
       <body className={`font-sans ${inter.variable}`}>
         <CacheProvider>
           <WalletProviders>

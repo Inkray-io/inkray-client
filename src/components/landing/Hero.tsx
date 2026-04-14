@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
@@ -92,14 +93,14 @@ export function Hero() {
 
           {/* Headline */}
           <h1 className="text-5xl lg:text-6xl font-semibold text-black leading-[1.1]">
-            Write freely.{" "}
-            <span className="text-primary">Own forever.</span>
+            Write it. Own it.{" "}
+            <span className="text-primary">Forever.</span>
           </h1>
 
           {/* Subtext */}
           <p className="text-gray-500 text-lg leading-relaxed max-w-lg">
-            The publishing platform where your words live on the blockchain.
-            No gatekeepers, no takedowns — just your voice, permanently yours.
+            A publishing platform where your articles are permanently yours.
+            No gatekeepers, no takedowns, no algorithms deciding who sees your work — just you and your readers.
           </p>
 
           {/* CTAs */}
@@ -123,7 +124,7 @@ export function Hero() {
           <div className="flex items-center gap-3 pt-2">
             <span className="text-sm text-gray-500">Supported by</span>
             <a href={ROUTES.EXTERNAL.WALRUS} target="_blank" rel="noopener noreferrer">
-              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-8" />
+              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-8" width={140} height={32} />
             </a>
           </div>
         </motion.div>
@@ -158,10 +159,13 @@ export function Hero() {
                   >
                     <div className="flex items-center gap-3 mb-3">
                       {card.avatar ? (
-                        <img
+                        <Image
                           src={card.avatar}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full object-cover"
                           alt={card.name}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-10 h-10 bg-[#d9d9d9] rounded-full" />
@@ -194,10 +198,13 @@ export function Hero() {
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <img
+                        <Image
                           src={card.image}
+                          width={600}
+                          height={300}
                           alt={card.title}
                           className="w-full rounded-lg"
+                          loading="lazy"
                         />
                       </motion.div>
                     )}

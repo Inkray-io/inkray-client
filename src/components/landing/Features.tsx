@@ -15,9 +15,9 @@ import {
 const HERO = {
   id: "publish",
   icon: HiPencilSquare,
-  title: "Effortless Publishing",
+  title: "Publish in Seconds",
   description:
-    "Write in a beautiful markdown editor with AI-powered summaries. Publish to the blockchain in one click.",
+    "Write in a clean markdown editor with AI-powered summaries. Hit publish and your article goes live — permanently stored and always accessible.",
   tag: "Core feature",
 }
 
@@ -27,8 +27,8 @@ const SUPPORTING = [
     icon: HiShieldCheck,
     title: "True Content Ownership",
     description:
-      "Your content lives in your on-chain Vault. You hold the keys — not the platform.",
-    tag: "On-chain",
+      "Your articles live in your personal Vault. You hold the keys — not us. Your content can't be removed, modified, or held hostage.",
+    tag: "Ownership",
     accent: "#0a7a3e",
     accentAlpha12: "rgba(10,122,62,0.12)",
     accentAlpha6: "rgba(10,122,62,0.06)",
@@ -37,10 +37,10 @@ const SUPPORTING = [
   {
     id: "storage",
     icon: HiCircleStack,
-    title: "Permanent Storage",
+    title: "Content That Lasts",
     description:
-      "Articles stored on Walrus decentralized storage. No broken links, no disappearing posts.",
-    tag: "Walrus",
+      "Every article is distributed across a global storage network. No broken links, no disappearing posts — your work stays online for good.",
+    tag: "Storage",
     accent: "#7c3aed",
     accentAlpha12: "rgba(124,58,237,0.12)",
     accentAlpha6: "rgba(124,58,237,0.06)",
@@ -49,9 +49,9 @@ const SUPPORTING = [
   {
     id: "monetize",
     icon: HiCurrencyDollar,
-    title: "Subscriptions & Tips",
+    title: "Earn From Your Writing",
     description:
-      "Monetize with paid subscriptions, reader tips, and gated content. Direct to your wallet.",
+      "Set up paid subscriptions, accept reader tips, and gate premium content. Earnings go directly to you — no revenue splits, no payout delays.",
     tag: "Earn",
     accent: "#b45309",
     accentAlpha12: "rgba(180,83,9,0.12)",
@@ -61,10 +61,10 @@ const SUPPORTING = [
   {
     id: "nft",
     icon: HiSparkles,
-    title: "NFT Collectibles",
+    title: "Collectible Articles",
     description:
-      "Let readers mint your articles as NFTs. Create digital collectibles from your best work.",
-    tag: "Mint",
+      "Let readers collect your best pieces as digital collectibles. A new way for your audience to support and own a piece of your work.",
+    tag: "Collect",
     accent: "#be185d",
     accentAlpha12: "rgba(190,24,93,0.12)",
     accentAlpha6: "rgba(190,24,93,0.06)",
@@ -73,10 +73,10 @@ const SUPPORTING = [
   {
     id: "community",
     icon: HiUserGroup,
-    title: "Community & Discovery",
+    title: "Grow Without Algorithms",
     description:
-      "Build your audience with follows, comments, and personalized feeds. Get discovered.",
-    tag: "Social",
+      "Build your readership with follows, comments, and curated feeds. Readers find you through quality — not engagement tricks.",
+    tag: "Community",
     accent: "#0369a1",
     accentAlpha12: "rgba(3,105,161,0.12)",
     accentAlpha6: "rgba(3,105,161,0.06)",
@@ -318,10 +318,10 @@ export function Features() {
               backgroundClip: "text",
             }}
           >
-            Platform Features
+            Features
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Everything you need to publish and own your content
+            Everything a Modern Publishing Platform Should Be
           </h2>
         </motion.div>
 

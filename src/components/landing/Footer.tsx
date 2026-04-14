@@ -21,10 +21,11 @@ export function Footer() {
               src="/logo.svg"
               alt="Inkray"
               className="h-7 brightness-0 invert"
+              width={88}
+              height={28}
             />
             <p className="text-[#4A5A72] text-sm leading-relaxed max-w-xs">
-              True digital ownership for creators. Publish effortlessly, own
-              permanently.
+              A publishing platform where creators own their content. Write, publish, and earn — permanently.
             </p>
             <div className="flex items-center gap-3">
               <a
@@ -64,7 +65,7 @@ export function Footer() {
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <img src="/sui_icon.svg" alt="Sui" className="h-4" />
+                <img src="/sui_icon.svg" alt="Sui" className="h-4" width={16} height={16} />
                 <span className="text-sm text-[#4A5A72]">Sui Blockchain</span>
               </div>
               <div className="flex items-center gap-2">
@@ -72,6 +73,8 @@ export function Footer() {
                   src="/hero_section/Walrus_Monogram_White.svg"
                   alt="Walrus"
                   className="h-4"
+                  width={16}
+                  height={16}
                 />
                 <span className="text-sm text-[#4A5A72]">Walrus Storage</span>
               </div>
@@ -85,7 +88,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Inkray. All rights reserved.
           </span>
           <span className="text-xs text-[#4A5A72]">
-            Built with care by the Inkray team
+            Made with care by the Inkray team
           </span>
         </div>
       </div>
