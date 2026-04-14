@@ -100,30 +100,168 @@ const itemVariants = {
   },
 }
 
-// ─── Decorative editor SVG (hero card) ───────────────────────────────────────
+// ─── Animated beam path (hero card) ──────────────────────────────────────────
+//
+// Three nodes: Write → AI → Published, connected by an SVG path.
+// A gradient beam travels along the path, illuminating each node on arrival.
+// 4.5s cycle, clean and looping.
 
-function EditorLines() {
-  return (
-    <svg
-      aria-hidden
-      className="absolute bottom-0 right-0 w-48 h-32 pointer-events-none select-none opacity-80"
-      viewBox="0 0 192 128"
-      fill="none"
-    >
-      {/* Simulated text lines */}
-      <rect x="0" y="10"  width="96" height="3.5" rx="1.75" fill="rgba(0,94,252,0.12)" />
-      <rect x="0" y="22"  width="72" height="3.5" rx="1.75" fill="rgba(0,94,252,0.08)" />
-      <rect x="0" y="34"  width="112" height="3.5" rx="1.75" fill="rgba(0,94,252,0.10)" />
-      <rect x="0" y="46"  width="56" height="3.5" rx="1.75" fill="rgba(0,94,252,0.07)" />
-      <rect x="0" y="58"  width="88" height="3.5" rx="1.75" fill="rgba(0,94,252,0.09)" />
-      <rect x="0" y="70"  width="64" height="3.5" rx="1.75" fill="rgba(0,94,252,0.06)" />
-      <rect x="0" y="82"  width="104" height="3.5" rx="1.75" fill="rgba(0,94,252,0.08)" />
-      <rect x="0" y="94"  width="48" height="3.5" rx="1.75" fill="rgba(0,94,252,0.05)" />
-      {/* AI badge chip */}
-      <rect x="110" y="8"  width="72" height="18" rx="9"  fill="rgba(0,94,252,0.13)" />
-      <rect x="118" y="14" width="8"  height="6"  rx="1.5" fill="rgba(0,94,252,0.30)" />
-      <rect x="130" y="15" width="44" height="4"  rx="2"  fill="rgba(0,94,252,0.22)" />
+const BEAM_D = 4.5
+
+// Node positions as percentages of the container width
+const NODES = [
+  { x: 15, icon: "pen",     label: "Write" },
+  { x: 50, icon: "sparkle", label: "Enhance" },
+  { x: 85, icon: "check",   label: "Published" },
+]
+
+function NodeIcon({ type, size = 14 }: { type: string; size?: number }) {
+  if (type === "pen") return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
     </svg>
+  )
+  if (type === "sparkle") return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+      <path d="M18 15l.75 2.25L21 18l-2.25.75L18 21l-.75-2.25L15 18l2.25-.75z" opacity="0.6" />
+    </svg>
+  )
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
+function EditorAnimation() {
+  return (
+    <div
+      aria-hidden
+      className="absolute right-6 top-0 bottom-0 pointer-events-none select-none"
+      style={{ width: "55%" }}
+    >
+      {/* SVG layer — path + animated beam stroke */}
+      <svg className="absolute inset-0 w-full h-full overflow-visible" fill="none">
+        {/* Static track line */}
+        <line
+          x1="15%"  y1="42%"
+          x2="85%" y2="42%"
+          stroke="rgba(0,94,252,0.07)"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        {/* Animated beam — a short dash segment that travels along the line */}
+        <motion.line
+          x1="15%"  y1="42%"
+          x2="85%" y2="42%"
+          stroke="url(#beamStroke)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray="18% 82%"
+          animate={{ strokeDashoffset: ["18%", "18%", "-82%", "-82%"] }}
+          transition={{
+            duration: BEAM_D,
+            times: [0, 0.06, 0.88, 1],
+            repeat: Infinity,
+            ease: [0.35, 0.1, 0.25, 1],
+          }}
+        />
+        <defs>
+          <linearGradient id="beamStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#005EFC" stopOpacity="0.6" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* Nodes — positioned with flexbox, spaced evenly */}
+      <div className="absolute inset-0 flex items-center justify-between px-[8%]">
+        {NODES.map((node, i) => (
+          <div key={node.icon} className="flex flex-col items-center gap-1.5">
+            {/* Glow ring + icon */}
+            <motion.div
+              className="relative flex items-center justify-center"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.6)",
+                border: "1.5px solid rgba(0,94,252,0.12)",
+                color: "rgba(0,94,252,0.35)",
+              }}
+              animate={{
+                boxShadow: [
+                  "0 0 0 0 rgba(0,94,252,0)",
+                  "0 0 0 0 rgba(0,94,252,0)",
+                  `0 0 16px 4px rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.18)`,
+                  `0 0 16px 4px rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.18)`,
+                  "0 0 0 0 rgba(0,94,252,0)",
+                ],
+                borderColor: [
+                  "rgba(0,94,252,0.12)",
+                  "rgba(0,94,252,0.12)",
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.35)`,
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.35)`,
+                  "rgba(0,94,252,0.12)",
+                ],
+                color: [
+                  "rgba(0,94,252,0.3)",
+                  "rgba(0,94,252,0.3)",
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.7)`,
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.7)`,
+                  "rgba(0,94,252,0.3)",
+                ],
+                scale: [1, 1, 1.1, 1.1, 1],
+              }}
+              transition={{
+                duration: BEAM_D,
+                times: [
+                  0,
+                  0.05 + i * 0.35 * 0.95,
+                  0.1 + i * 0.35 * 0.95,
+                  0.2 + i * 0.35 * 0.95,
+                  Math.min(0.35 + i * 0.35 * 0.95, 0.99),
+                ],
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            >
+              <NodeIcon type={node.icon} />
+            </motion.div>
+
+            {/* Label */}
+            <motion.span
+              className="text-[8px] font-semibold tracking-wide uppercase"
+              style={{ color: "rgba(0,94,252,0.3)" }}
+              animate={{
+                color: [
+                  "rgba(0,94,252,0.25)",
+                  "rgba(0,94,252,0.25)",
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.6)`,
+                  `rgba(${i === 2 ? "10,122,62" : "0,94,252"},0.6)`,
+                  "rgba(0,94,252,0.25)",
+                ],
+              }}
+              transition={{
+                duration: BEAM_D,
+                times: [
+                  0,
+                  0.05 + i * 0.35 * 0.95,
+                  0.1 + i * 0.35 * 0.95,
+                  0.2 + i * 0.35 * 0.95,
+                  Math.min(0.35 + i * 0.35 * 0.95, 0.99),
+                ],
+                repeat: Infinity,
+              }}
+            >
+              {node.label}
+            </motion.span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -159,7 +297,7 @@ function HeroCard() {
 
       {/* Top visual band */}
       <div
-        className="relative h-[108px] overflow-hidden"
+        className="relative h-[100px] overflow-hidden"
         style={{
           background:
             "linear-gradient(135deg, #eef4ff 0%, #dce9ff 45%, #e8f2ff 75%, #f0f7ff 100%)",
@@ -195,19 +333,8 @@ function HeroCard() {
             <Icon className="w-[26px] h-[26px] text-white" />
           </div>
         </div>
-        {/* Tag pill */}
-        <span
-          className="absolute right-5 top-5 text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full"
-          style={{
-            background: "rgba(0,94,252,0.10)",
-            color: "#005EFC",
-            border: "1px solid rgba(0,94,252,0.18)",
-          }}
-        >
-          {HERO.tag}
-        </span>
-        {/* Editor decoration */}
-        <EditorLines />
+        {/* Animated editor visual */}
+        <EditorAnimation />
       </div>
 
       {/* Content */}
