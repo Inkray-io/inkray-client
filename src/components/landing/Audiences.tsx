@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
+import { ROUTES } from "@/constants/routes"
 import {
   HiPencilSquare,
   HiShieldCheck,
@@ -111,6 +113,13 @@ export function Audiences() {
               </p>
             </div>
             <FeatureList items={CREATOR_FEATURES} />
+            <Link
+              href={ROUTES.FOR_WRITERS}
+              className="inline-flex items-center gap-1 mt-5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Learn more
+              <span className="text-xs">→</span>
+            </Link>
           </motion.div>
 
           {/* For Readers */}
@@ -141,6 +150,13 @@ export function Audiences() {
               </p>
             </div>
             <FeatureList items={READER_FEATURES} />
+            <Link
+              href={ROUTES.FOR_READERS}
+              className="inline-flex items-center gap-1 mt-5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Learn more
+              <span className="text-xs">→</span>
+            </Link>
           </motion.div>
         </div>
       </div>

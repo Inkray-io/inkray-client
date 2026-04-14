@@ -40,6 +40,13 @@ export const ROUTES = {
   PUBLICATION_WITH_ID: (id: string) => `/publication?id=${id}`,
   PUBLICATION_SETTINGS: (id: string, tab?: string) => `/publication/settings?id=${id}${tab ? `&tab=${tab}` : ''}`,
   
+  // SEO landing pages
+  FOR_WRITERS: '/for-writers',
+  FOR_READERS: '/for-readers',
+  SUBSTACK_ALTERNATIVE: '/substack-alternative',
+  CONTENT_OWNERSHIP: '/content-ownership',
+  MONETIZE_WRITING: '/monetize-writing',
+
   // External routes (if needed in future)
   EXTERNAL: {
     TWITTER: 'https://x.com/inkray_io',

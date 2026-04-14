@@ -14,7 +14,7 @@ export function Footer() {
   return (
     <footer className="bg-[#080F1A] border-t border-white/[0.06] px-6 py-16">
       <div className="max-w-6xl mx-auto">
-        <div className="grid sm:grid-cols-3 gap-10 sm:gap-8 mb-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-8 mb-12">
           {/* Brand */}
           <div className="space-y-4">
             <img
@@ -55,6 +55,20 @@ export function Footer() {
                   </a>
                 </li>
               ))}
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">
+              Resources
+            </h4>
+            <ul className="space-y-3">
+              <li><a href={ROUTES.FOR_WRITERS} className="text-sm text-[#4A5A72] hover:text-white transition-colors">For Writers</a></li>
+              <li><a href={ROUTES.FOR_READERS} className="text-sm text-[#4A5A72] hover:text-white transition-colors">For Readers</a></li>
+              <li><a href={ROUTES.SUBSTACK_ALTERNATIVE} className="text-sm text-[#4A5A72] hover:text-white transition-colors">Substack Alternative</a></li>
+              <li><a href={ROUTES.CONTENT_OWNERSHIP} className="text-sm text-[#4A5A72] hover:text-white transition-colors">Content Ownership</a></li>
+              <li><a href={ROUTES.MONETIZE_WRITING} className="text-sm text-[#4A5A72] hover:text-white transition-colors">Monetize Writing</a></li>
             </ul>
           </div>
 
