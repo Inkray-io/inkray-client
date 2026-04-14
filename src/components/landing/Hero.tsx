@@ -123,7 +123,7 @@ export function Hero() {
           <div className="flex items-center gap-3 pt-2">
             <span className="text-sm text-gray-500">Supported by</span>
             <a href={ROUTES.EXTERNAL.WALRUS} target="_blank" rel="noopener noreferrer">
-              <img src="/hero_section/walrus.svg" alt="Walrus" className="h-8" />
+              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-8" />
             </a>
           </div>
         </motion.div>

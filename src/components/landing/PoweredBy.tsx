@@ -30,7 +30,7 @@ export function PoweredBy() {
 
             {/* Walrus */}
             <div className="flex items-center gap-2.5">
-              <img src="/hero_section/walrus.svg" alt="Walrus" className="h-7" />
+              <img src="/hero_section/Walrus_Logotype_Black.svg" alt="Walrus" className="h-7" />
               <span className="text-base font-semibold text-gray-600">
                 Walrus
               </span>

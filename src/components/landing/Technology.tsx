@@ -1,24 +1,25 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { HiLockClosed } from "react-icons/hi2"
 
 const TECH_CARDS = [
   {
     logo: "/sui_icon.svg",
+    logoClassName: "h-9",
     name: "Sui Blockchain",
     description:
       "High-performance Layer 1 blockchain. Your publications and ownership records are secured by Sui's object-centric architecture and parallel transaction execution.",
   },
   {
-    logo: "/hero_section/walrus.svg",
+    logo: "/hero_section/Walrus_Monogram_White.svg",
+    logoClassName: "h-8",
     name: "Walrus Storage",
     description:
       "Decentralized data storage for the long haul. Your articles are distributed across a global network — no single point of failure, no disappearing content.",
   },
   {
-    logo: null,
-    icon: HiLockClosed,
+    logo: "https://cdn.prod.website-files.com/687615731a76518b8c27cf39/68761ce22a49c0f7365165e8_Group%202147263312%20(1).svg",
+    logoClassName: "h-9",
     name: "Seal Encryption",
     description:
       "End-to-end encryption for premium content. Only authorized subscribers can decrypt and read your gated articles. Privacy without compromise.",
@@ -86,19 +87,13 @@ export function Technology() {
               className="bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-7 hover:bg-white/[0.07] transition-colors duration-300"
               variants={cardVariants}
             >
-              {/* Logo or icon */}
+              {/* Logo */}
               <div className="mb-6">
-                {card.logo ? (
-                  <img
-                    src={card.logo}
-                    alt={card.name}
-                    className="h-10 brightness-0 invert opacity-80"
-                  />
-                ) : card.icon ? (
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <card.icon className="w-5 h-5 text-primary" />
-                  </div>
-                ) : null}
+                <img
+                  src={card.logo}
+                  alt={card.name}
+                  className={card.logoClassName}
+                />
               </div>
 
               <h3 className="text-lg font-semibold text-white mb-3">
