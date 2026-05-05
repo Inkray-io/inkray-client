@@ -226,20 +226,24 @@ export function useNftAirdrop({ publicationId }: UseNftAirdropOptions) {
       }, 'useNftAirdrop');
 
       const tx = new Transaction();
-      const mintConfig = tx.object(INKRAY_CONFIG.NFT_MINT_CONFIG_ID);
 
-      // Split all zero-payment coins at once (one per recipient)
-      const coins = tx.splitCoins(tx.gas, state.recipients.map(() => 0));
+      // Stable per-tx object references reused across the loop
+      const globalConfig = tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID);
+      const article = tx.object(state.selectedArticle.id);
+      const publication = tx.object(publicationId);
+      const mintRegistry = tx.object(INKRAY_CONFIG.NFT_MINT_REGISTRY_ID);
 
       // Mint and transfer NFT for each recipient
+      // Mint is free; the contract dedups (recipient, article) via MintRegistry.
       for (let i = 0; i < state.recipients.length; i++) {
         const [nft] = tx.moveCall({
           target: `${INKRAY_CONFIG.PACKAGE_ID}::nft::mint`,
           arguments: [
+            globalConfig,
             tx.pure.address(state.recipients[i]),
-            tx.pure.id(state.selectedArticle.id),
-            mintConfig,
-            coins[i],
+            article,
+            publication,
+            mintRegistry,
           ],
         });
         tx.transferObjects([nft], tx.pure.address(state.recipients[i]));
@@ -272,7 +276,7 @@ export function useNftAirdrop({ publicationId }: UseNftAirdropOptions) {
         error: errorMessage,
       }));
     }
-  }, [currentAccount, state.selectedArticle, state.recipients, signAndExecuteTransaction]);
+  }, [currentAccount, state.selectedArticle, state.recipients, publicationId, signAndExecuteTransaction]);
 
   // Reset state
   const reset = useCallback(() => {

@@ -62,25 +62,23 @@ export function SubscriptionButton({
 
       // Build subscription transaction
       const tx = new Transaction();
-      
+
       // Reference publication object
       const publication = tx.object(publicationId);
-      
-      // Create payment coin
+
+      // Create payment coin (overpayment is refunded to the subscriber by the contract)
       const [coin] = tx.splitCoins(tx.gas, [subscriptionInfo.subscriptionPrice]);
-      
-      // Call subscribe_to_publication function and capture the returned subscription object
-      const subscription = tx.moveCall({
+
+      // The new contract transfers the subscription object internally; no return value to bind.
+      tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::publication_subscription::subscribe_to_publication`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           publication,  // &mut Publication
           coin,         // Coin<SUI> - payment amount
           tx.object(SUI_CLOCK_OBJECT_ID), // &Clock - for timestamp
         ],
       });
-
-      // Transfer the subscription object to the user's wallet
-      tx.transferObjects([subscription], tx.pure.address(account.address));
 
       // Execute transaction
       const result = await signAndExecuteTransaction({
@@ -92,7 +90,7 @@ export function SubscriptionButton({
       // Close dialog and call success callback
       setDialogOpen(false);
       onSubscriptionSuccess?.();
-      
+
     } catch (error) {
       setSubscriptionError(error instanceof Error ? error.message : "Failed to subscribe. Please try again.");
     } finally {
@@ -115,25 +113,23 @@ export function SubscriptionButton({
       
       // Build subscription transaction (same as new subscription for now)
       const tx = new Transaction();
-      
+
       // Reference publication object
       const publication = tx.object(publicationId);
-      
-      // Create payment coin
+
+      // Create payment coin (overpayment is refunded to the subscriber by the contract)
       const [coin] = tx.splitCoins(tx.gas, [subscriptionInfo.subscriptionPrice]);
-      
-      // Call subscribe_to_publication function and capture the returned subscription object
-      const subscription = tx.moveCall({
+
+      // The new contract transfers the subscription object internally; no return value to bind.
+      tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::publication_subscription::subscribe_to_publication`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           publication,  // &mut Publication
           coin,         // Coin<SUI> - payment amount
           tx.object(SUI_CLOCK_OBJECT_ID), // &Clock - for timestamp
         ],
       });
-
-      // Transfer the subscription object to the user's wallet
-      tx.transferObjects([subscription], tx.pure.address(account.address));
 
       // Execute transaction
       const result = await signAndExecuteTransaction({

@@ -13,10 +13,11 @@ import { log } from "@/lib/utils/Logger";
 interface MintButtonProps {
   articleId: string;
   articleTitle: string;
+  publicationId: string;
   onMintSuccess?: () => void;
 }
 
-export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
+export function MintButton({ articleId, publicationId, onMintSuccess }: MintButtonProps) {
   const { isConnected, account } = useWalletConnection();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const [isMinting, setIsMinting] = useState(false);
@@ -35,20 +36,15 @@ export function MintButton({ articleId, onMintSuccess }: MintButtonProps) {
       // Build NFT mint transaction
       const tx = new Transaction();
 
-      // Get MintConfig shared object ID from configuration
-      const mintConfig = tx.object(INKRAY_CONFIG.NFT_MINT_CONFIG_ID);
-
-      // Create zero payment coin since minting is free
-      const [coin] = tx.splitCoins(tx.gas, [0]);
-
-      // Call NFT mint function
+      // Call NFT mint function (mint is free; contract dedups via MintRegistry)
       const [nft] = tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::nft::mint`,
         arguments: [
-          tx.pure.address(account.address), // recipient
-          tx.pure.id(articleId),                          // article reference
-          mintConfig,                       // mint config
-          coin,                            // payment (zero SUI)
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
+          tx.pure.address(account.address),          // recipient
+          tx.object(articleId),                      // &Article
+          tx.object(publicationId),                  // &Publication
+          tx.object(INKRAY_CONFIG.NFT_MINT_REGISTRY_ID), // &mut MintRegistry
         ],
       });
 

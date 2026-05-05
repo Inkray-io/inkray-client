@@ -58,6 +58,7 @@ export function PublicationTipButton({
       tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::platform_economics::tip_publication`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           publication,  // &mut Publication - publication with embedded treasury
           coin,         // Coin<SUI> - payment amount
         ],

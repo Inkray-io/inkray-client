@@ -98,6 +98,7 @@ export const useSubscriptionWithdrawal = ({
       const [withdrawnCoin] = tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::withdraw_subscription_balance`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           tx.object(ownerCapId),      // PublicationOwnerCap
           tx.object(publicationId),   // &mut Publication
           tx.pure.u64(amountInMist),  // amount in MIST

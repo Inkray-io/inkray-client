@@ -11,12 +11,14 @@ interface NftMintingSectionProps {
   articleId: string;
   articleTitle: string;
   authorAddress: string;
+  publicationId: string;
 }
 
-export function NftMintingSection({ 
-  articleId, 
-  articleTitle, 
-  authorAddress: _authorAddress 
+export function NftMintingSection({
+  articleId,
+  articleTitle,
+  authorAddress: _authorAddress,
+  publicationId,
 }: NftMintingSectionProps) {
   const [mintCount, setMintCount] = useState<number>(0);
   const [loadingCount, setLoadingCount] = useState(true);
@@ -65,9 +67,10 @@ export function NftMintingSection({
           </div>
 
           {/* Mint Button */}
-          <MintButton 
+          <MintButton
             articleId={articleId}
             articleTitle={articleTitle}
+            publicationId={publicationId}
             onMintSuccess={handleMintSuccess}
           />
 

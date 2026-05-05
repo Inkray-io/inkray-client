@@ -80,6 +80,7 @@ export const useTipWithdrawal = ({
       const [withdrawnCoin] = tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::platform_economics::withdraw_all_tips`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           tx.object(ownerCapId),      // PublicationOwnerCap
           tx.object(publicationId),   // &mut Publication
         ],

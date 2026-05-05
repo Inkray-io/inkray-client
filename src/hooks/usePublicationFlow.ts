@@ -162,7 +162,10 @@ export const usePublicationFlow = () => {
         const tx = new Transaction();
         const [ownerCap] = tx.moveCall({
           target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::create`,
-          arguments: [tx.pure.string(publicationName)],
+          arguments: [
+            tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID),
+            tx.pure.string(publicationName),
+          ],
         });
 
         // Transfer the owner capability to the caller
@@ -276,6 +279,7 @@ export const usePublicationFlow = () => {
         tx.moveCall({
           target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::add_contributor`,
           arguments: [
+            tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID),
             tx.object(ownerCapId),
             tx.object(publicationId),
             tx.pure.address(contributorAddress),

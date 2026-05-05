@@ -38,6 +38,13 @@ export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionPro
       return;
     }
 
+    if (!process.env.NEXT_PUBLIC_GLOBAL_CONFIG_ID) {
+      const error = 'Global Config ID not configured';
+      log.error('Article deletion failed: Global Config ID not configured', {}, 'useArticleDeletion');
+      onError?.(error, articleId);
+      return;
+    }
+
     try {
       setIsDeleting(articleId);
       log.debug('Starting article deletion', { articleId, publicationId, vaultId }, 'useArticleDeletion');
@@ -79,6 +86,7 @@ export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionPro
       txb.moveCall({
         target: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::articles::delete_article`,
         arguments: [
+          txb.object(process.env.NEXT_PUBLIC_GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           txb.object(ownerCap.data!.objectId), // PublicationOwnerCap
           txb.object(publicationId), // Publication object
           txb.object(vaultId), // PublicationVault object

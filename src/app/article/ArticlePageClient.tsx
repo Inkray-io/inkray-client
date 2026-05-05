@@ -772,11 +772,12 @@ function ArticlePageContent() {
 
 
               {/* NFT Minting Section */}
-              {article.articleId && (
+              {article.articleId && article.publicationId && (
                 <NftMintingSection
                   articleId={article.articleId}
                   articleTitle={article.title || 'Untitled Article'}
                   authorAddress={article.author}
+                  publicationId={article.publicationId}
                 />
               )}
 

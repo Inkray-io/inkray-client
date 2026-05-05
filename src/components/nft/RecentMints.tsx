@@ -11,7 +11,6 @@ interface MintTransaction {
   id: string;
   nftId: string;
   to: string;
-  pricePaid: string;
   transactionHash: string;
   mintedAt: string;
 }

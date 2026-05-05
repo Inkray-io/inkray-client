@@ -139,6 +139,7 @@ export function PublicationEditModal({
         tx.moveCall({
           target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::update_name`,
           arguments: [
+            tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID),
             tx.object(ownerCapId),
             tx.object(publication.id),
             tx.pure.string(name.trim()),

@@ -8,6 +8,11 @@ import { log } from '@/lib/utils/Logger';
 // Constants for price conversion
 export const MIST_PER_SUI = 1_000_000_000; // 1 SUI = 10^9 MIST
 
+// Contract-enforced minimum subscription price (audit M-04 / E_PRICE_TOO_LOW = 105)
+// Must be 0 (disabled) or >= 0.01 SUI
+export const MIN_SUBSCRIPTION_PRICE_SUI = 0.01;
+export const MIN_SUBSCRIPTION_PRICE_MIST = 10_000_000;
+
 // Convert SUI to MIST for smart contract
 export const suiToMist = (suiAmount: number): number => {
   return Math.floor(suiAmount * MIST_PER_SUI);
@@ -74,6 +79,13 @@ export const useSubscriptionSettings = ({
       throw new Error('Subscription price cannot be negative');
     }
 
+    // Contract aborts with E_PRICE_TOO_LOW (105) for non-zero prices below MIN_SUBSCRIPTION_PRICE_MIST
+    if (priceInSui > 0 && priceInSui < MIN_SUBSCRIPTION_PRICE_SUI) {
+      throw new Error(
+        `Subscription price must be 0 (disable) or at least ${MIN_SUBSCRIPTION_PRICE_SUI} SUI`,
+      );
+    }
+
     setState(prev => ({
       ...prev,
       isSaving: true,
@@ -98,6 +110,7 @@ export const useSubscriptionSettings = ({
       tx.moveCall({
         target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::set_subscription_price`,
         arguments: [
+          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
           tx.object(ownerCapId),      // PublicationOwnerCap
           tx.object(publicationId),   // Publication object
           tx.pure.u64(priceInMist),   // Price in MIST

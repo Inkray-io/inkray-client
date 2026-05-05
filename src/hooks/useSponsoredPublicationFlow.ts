@@ -90,7 +90,10 @@ export const useSponsoredPublicationFlow = () => {
         const tx = new Transaction();
         const [ownerCap] = tx.moveCall({
           target: `${INKRAY_CONFIG.PACKAGE_ID}::publication::create`,
-          arguments: [tx.pure.string(publicationName)],
+          arguments: [
+            tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID),
+            tx.pure.string(publicationName),
+          ],
         });
         tx.transferObjects([ownerCap], currentAccount.address);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUserPublications } from "@/hooks/useUserPublications";
 import { usePublication } from "@/hooks/usePublication";
-import { useSubscriptionSettings } from "@/hooks/useSubscriptionSettings";
+import { useSubscriptionSettings, MIN_SUBSCRIPTION_PRICE_SUI } from "@/hooks/useSubscriptionSettings";
 import { useSubscriptionBalance } from "@/hooks/useSubscriptionBalance";
 import { useSubscriptionWithdrawal } from "@/hooks/useSubscriptionWithdrawal";
 import { Button } from "@/components/ui/button";
@@ -115,6 +115,10 @@ export function SubscriptionSettings({ publicationId }: SubscriptionSettingsProp
 
     if (price <= 0) {
       return "Price must be greater than 0";
+    }
+
+    if (price < MIN_SUBSCRIPTION_PRICE_SUI) {
+      return `Price must be at least ${MIN_SUBSCRIPTION_PRICE_SUI} SUI`;
     }
 
     if (price > 1000) {

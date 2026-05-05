@@ -338,7 +338,8 @@ export class SealService {
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_publication_owner`,
       arguments: [
-        tx.pure.vector('u8', contentIdBytes),
+        tx.pure.vector('u8', contentIdBytes), // id (Seal protocol requires id first)
+        tx.object(CONFIG.GLOBAL_CONFIG_ID),    // GlobalConfig (version-gating)
         tx.object(ownerCapId),
         tx.object(publicationId),
       ]
@@ -354,7 +355,8 @@ export class SealService {
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_publication_subscription`,
       arguments: [
-        tx.pure.vector('u8', contentIdBytes),
+        tx.pure.vector('u8', contentIdBytes), // id (Seal protocol requires id first)
+        tx.object(CONFIG.GLOBAL_CONFIG_ID),    // GlobalConfig (version-gating)
         tx.object(subscriptionId),
         tx.object(publicationId),
         tx.object('0x6'), // Clock object
@@ -372,7 +374,8 @@ export class SealService {
     tx.moveCall({
       target: `${CONFIG.PACKAGE_ID}::policy::seal_approve_free`,
       arguments: [
-        tx.pure.vector('u8', contentIdBytes),
+        tx.pure.vector('u8', contentIdBytes), // id (Seal protocol requires id first)
+        tx.object(CONFIG.GLOBAL_CONFIG_ID),    // GlobalConfig (version-gating)
         tx.object(publicationId),
       ]
     });
