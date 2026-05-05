@@ -1,8 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { SealClient } from '@mysten/seal';
 import { generateArticleContentId, generateMediaContentId } from './seal-identity';
-import { toBase64, fromBase64 } from '@mysten/bcs';
+import { toBase64, fromBase64 } from '@mysten/sui/utils';
 import { getKeyServerConfigs, DEFAULT_ENCRYPTION_THRESHOLD, type SealNetwork } from './seal-config';
 import { CONFIG } from './config';
 import { log } from './utils/Logger';
@@ -12,7 +12,7 @@ import { log } from './utils/Logger';
 
 // Types for Seal client configuration
 export interface SealClientConfig {
-  suiClient: SuiClient;
+  suiClient: SuiJsonRpcClient;
   account?: WalletAccount | null;
   network: SealNetwork;
   packageId: string;
@@ -205,7 +205,7 @@ let sealClientInstance: InkraySealClient | null = null;
 /**
  * Create a configured Seal client instance
  */
-export const createSealClient = (suiClient: SuiClient, account?: WalletAccount | null): InkraySealClient => {
+export const createSealClient = (suiClient: SuiJsonRpcClient, account?: WalletAccount | null): InkraySealClient => {
   return new InkraySealClient({
     suiClient,
     account,
@@ -218,7 +218,7 @@ export const createSealClient = (suiClient: SuiClient, account?: WalletAccount |
  * Get or create the global Seal client instance
  * Updates account when called with different account
  */
-export function getSealClient(suiClient?: SuiClient, account?: WalletAccount | null): InkraySealClient {
+export function getSealClient(suiClient?: SuiJsonRpcClient, account?: WalletAccount | null): InkraySealClient {
   // If parameters are provided, always create/update the instance
   if (suiClient && account !== undefined) {
     sealClientInstance = createSealClient(suiClient, account);

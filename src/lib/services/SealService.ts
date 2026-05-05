@@ -1,8 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { Transaction } from '@mysten/sui/transactions';
 import { SealClient, SessionKey, EncryptedObject } from '@mysten/seal';
-import { fromHex, toBase64 } from '@mysten/bcs';
+import { fromHex, toBase64 } from '@mysten/sui/utils';
 import { generateArticleContentId, generateMediaContentId, contentIdToHex } from '../seal-identity';
 import { CONFIG } from '../config';
 import { getCachedSessionKey, setCachedSessionKey } from '../cache-manager';
@@ -62,10 +62,10 @@ export interface EncryptionStatus {
 }
 
 export class SealService {
-  private suiClient: SuiClient;
+  private suiClient: SuiJsonRpcClient;
   private currentAccount: WalletAccount;
 
-  constructor(suiClient: SuiClient, currentAccount: WalletAccount) {
+  constructor(suiClient: SuiJsonRpcClient, currentAccount: WalletAccount) {
     this.suiClient = suiClient;
     this.currentAccount = currentAccount;
   }
@@ -692,7 +692,7 @@ export class SealService {
 /**
  * Factory function to create SealService instance
  */
-export function createSealService(suiClient: SuiClient, currentAccount: WalletAccount): SealService {
+export function createSealService(suiClient: SuiJsonRpcClient, currentAccount: WalletAccount): SealService {
   return new SealService(suiClient, currentAccount);
 }
 
@@ -703,7 +703,7 @@ export function createSealService(suiClient: SuiClient, currentAccount: WalletAc
  * decryption doesn't require wallet interaction. The decryptFreeContent method
  * uses a locally-generated keypair instead of the wallet.
  */
-export function createFreeSealService(suiClient: SuiClient): SealService {
+export function createFreeSealService(suiClient: SuiJsonRpcClient): SealService {
   // Create a placeholder account - not used for free decryption
   const placeholderAccount: WalletAccount = {
     address: '0x0000000000000000000000000000000000000000000000000000000000000000',

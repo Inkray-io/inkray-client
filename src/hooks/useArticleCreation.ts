@@ -9,7 +9,7 @@ import {
   type CachedPublicationData
 } from '@/lib/cache-manager';
 import { CONFIG as INKRAY_CONFIG } from '@/lib/config';
-import { toBase64 } from '@mysten/bcs';
+import { toBase64 } from '@mysten/sui/utils';
 import { log } from '@/lib/utils/Logger';
 import { parseCreationError } from '@/lib/utils/errorHandling';
 import {

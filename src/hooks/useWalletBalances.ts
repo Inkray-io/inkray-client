@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSuiClient } from '@mysten/dapp-kit';
-import { CoinBalance, CoinMetadata } from '@mysten/sui/client';
+import type { CoinBalance, CoinMetadata } from '@mysten/sui/jsonRpc';
 import { log } from '@/lib/utils/Logger';
 
 export interface TokenBalance {

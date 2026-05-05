@@ -1,18 +1,18 @@
-import { SuiClient } from '@mysten/sui/client';
+import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { CONFIG } from './config';
 import { log } from './utils/Logger';
 
 // Types for client configurations
 export interface SealClientConfig {
-  suiClient: SuiClient;
+  suiClient: SuiJsonRpcClient;
   account?: WalletAccount | null;
   network: 'testnet' | 'mainnet' | 'devnet' | 'localnet';
   packageId: string;
 }
 
 export interface WalrusClientConfig {
-  suiClient: SuiClient;
+  suiClient: SuiJsonRpcClient;
   account?: WalletAccount | null;
   aggregatorUrl: string;
   publisherUrl: string;
