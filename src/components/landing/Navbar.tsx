@@ -8,6 +8,7 @@ import { FaXTwitter } from "react-icons/fa6"
 import { HiBars3, HiXMark } from "react-icons/hi2"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { ROUTES } from "@/constants/routes"
+import { LANDING_CTA_ENABLED } from "@/constants/featureFlags"
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -76,8 +77,10 @@ export function Navbar() {
               <FaXTwitter className="w-4 h-4" />
             </a>
             <button
-              className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_4px_12px_rgba(0,94,252,0.15)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.25)] hover:-translate-y-px active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,94,252,0.4)] transition-all duration-200 cursor-pointer"
+              className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_4px_12px_rgba(0,94,252,0.15)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.25)] hover:-translate-y-px active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,94,252,0.4)] transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0! disabled:shadow-none!"
               onClick={() => router.push(ROUTES.FEED)}
+              disabled={!LANDING_CTA_ENABLED}
+              title={!LANDING_CTA_ENABLED ? "Available at launch" : undefined}
             >
               {isConnected ? "Open App" : "Start Writing"}
             </button>
@@ -126,11 +129,13 @@ export function Navbar() {
                 transition={{ delay: NAV_LINKS.length * 0.08 }}
               >
                 <button
-                  className="px-8 py-3 rounded-xl text-lg font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.2)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_8px_28px_rgba(0,94,252,0.3)] hover:-translate-y-px active:translate-y-0 transition-all duration-200 cursor-pointer"
+                  className="px-8 py-3 rounded-xl text-lg font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.2)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_8px_28px_rgba(0,94,252,0.3)] hover:-translate-y-px active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0! disabled:shadow-none!"
                   onClick={() => {
                     setMobileOpen(false)
                     router.push(ROUTES.FEED)
                   }}
+                  disabled={!LANDING_CTA_ENABLED}
+                  title={!LANDING_CTA_ENABLED ? "Available at launch" : undefined}
                 >
                   {isConnected ? "Open App" : "Start Writing"}
                 </button>
