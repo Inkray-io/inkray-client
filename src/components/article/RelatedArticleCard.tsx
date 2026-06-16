@@ -5,7 +5,6 @@ import { FileText } from "lucide-react"
 import { FeedArticle } from "@/types/article"
 import { ROUTES } from "@/constants/routes"
 import { CONFIG } from "@/lib/config"
-import { createCdnUrl } from "@/lib/utils/mediaUrlTransform"
 
 interface RelatedArticleCardProps {
   article: FeedArticle
@@ -16,10 +15,6 @@ function getCoverImageUrl(article: FeedArticle): string | undefined {
 
   if (article.coverImageId) {
     return `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`
-  }
-
-  if (article.quiltBlobId) {
-    return createCdnUrl(article.quiltBlobId, 'media0')
   }
 
   return undefined

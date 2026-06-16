@@ -490,7 +490,7 @@ export const useArticle = (articleSlug: string | null) => {
         const result: ArticleContentResponse = response.data;
 
         // Transform media URLs for display (S3-backed images + legacy CDN)
-        const transformedContent = transformArticleMediaUrls(result.content, article.articleId, article.quiltBlobId);
+        const transformedContent = transformArticleMediaUrls(result.content, article.articleId);
 
         return transformedContent;
       }
@@ -571,7 +571,7 @@ export const useArticle = (articleSlug: string | null) => {
             const rawContent = contentData?.content || contentData;
 
             if (rawContent && typeof rawContent === 'string') {
-              const transformedContent = transformArticleMediaUrls(rawContent, article.articleId, article.quiltBlobId);
+              const transformedContent = transformArticleMediaUrls(rawContent, article.articleId);
               setState(prev => ({ ...prev, content: transformedContent }));
               log.debug('Server-side decryption succeeded', { articleId: article.articleId }, 'useArticle');
               return; // Content loaded, done
@@ -897,7 +897,7 @@ export const useArticle = (articleSlug: string | null) => {
         }
 
         // Transform media URLs for display (S3-backed images + legacy CDN)
-        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId, article.quiltBlobId);
+        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId);
 
         // Decryption successful. Post message to service worker to cache the article.
         const CACHE_ARTICLE_TYPE = 'CACHE_ARTICLE';
@@ -1154,7 +1154,7 @@ export const useArticle = (articleSlug: string | null) => {
 
 
         // Transform media URLs for display (S3-backed images + legacy CDN)
-        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId, article.quiltBlobId);
+        const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId);
 
         return transformedContent;
       } else {
@@ -1163,7 +1163,7 @@ export const useArticle = (articleSlug: string | null) => {
         const result: ArticleContentResponse = response.data;
 
         // Transform media URLs for display (S3-backed images + legacy CDN)
-        const transformedContent = transformArticleMediaUrls(result.content, article.articleId, article.quiltBlobId);
+        const transformedContent = transformArticleMediaUrls(result.content, article.articleId);
 
         return transformedContent;
       }

@@ -311,22 +311,10 @@ export const api = {
       }>;
     }>(`/articles/content/${quiltBlobId}`),
 
-    getRawContent: async (quiltBlobId: string) => {
-      // Import CDN function to avoid circular imports
-      const { getRawContentFromCdn } = await import('@/lib/utils/mediaUrlTransform');
-      
-      try {
-        // Try CDN first
-        const data = await getRawContentFromCdn(quiltBlobId);
-        return { data };
-      } catch (cdnError) {
-        // Fallback to API if CDN fails
-        console.warn('CDN failed, falling back to API:', cdnError);
-        return apiClient.axios.get<ArrayBuffer>(`/articles/raw/${quiltBlobId}`, {
-          responseType: 'arraybuffer'
-        });
-      }
-    },
+    getRawContent: (quiltBlobId: string) =>
+      apiClient.axios.get<ArrayBuffer>(`/articles/raw/${quiltBlobId}`, {
+        responseType: 'arraybuffer'
+      }),
   },
 
   // Categories endpoints

@@ -3,7 +3,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { UserArticle } from '@/hooks/useUserArticles';
-import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 import { HiDocumentText, HiArrowRight } from 'react-icons/hi2';
 import { Loader2 } from 'lucide-react';
 import { FeedPost } from '@/components/feed/FeedPost';
@@ -82,14 +81,8 @@ export function ProfileArticles({
             );
             // Determine cover image URL based on storage type
             let coverImage: string | undefined;
-            if (article.hasCover) {
-              if (article.coverImageId) {
-                // S3-backed article: use backend proxy URL
-                coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
-              } else if (article.quiltId) {
-                // Legacy Walrus-backed article: use CDN URL
-                coverImage = createCdnUrl(article.quiltId, 'media0');
-              }
+            if (article.hasCover && article.coverImageId) {
+              coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
             }
 
             return (

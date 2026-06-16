@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
-import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 import { useArticleDeletion } from '@/hooks/useArticleDeletion';
 import { addressesEqual } from '@/utils/address';
 import { CONFIG } from '@/lib/config';
@@ -217,14 +216,8 @@ const PublicationPageContent: React.FC = () => {
                 // Format article data for FeedPost component
                 // Determine cover image URL based on storage type
                 let coverImage: string | undefined;
-                if (article.hasCover) {
-                  if (article.coverImageId) {
-                    // S3-backed article: use backend proxy URL
-                    coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
-                  } else if (article.quiltBlobId) {
-                    // Legacy Walrus-backed article: use CDN URL
-                    coverImage = createCdnUrl(article.quiltBlobId, 'media0');
-                  }
+                if (article.hasCover && article.coverImageId) {
+                  coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
                 }
 
                 const formattedArticle = {

@@ -3,7 +3,6 @@ import { feedAPI, bookmarksAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
 import { createUserAvatarConfig } from '@/lib/utils/avatar';
-import { createCdnUrl } from '@/lib/utils/mediaUrlTransform';
 import { CONFIG } from '@/lib/config';
 
 /**
@@ -217,16 +216,10 @@ export const useFeedArticles = (
     }, 'md');
     const hasCover = Boolean(article.hasCover);
 
-    // Determine cover image URL based on storage type
+    // Determine cover image URL (S3-backed via backend proxy)
     let coverImage: string | undefined;
-    if (hasCover) {
-      if (article.coverImageId) {
-        // S3-backed article: use backend proxy URL
-        coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
-      } else if (article.quiltBlobId) {
-        // Legacy Walrus-backed article: use CDN URL
-        coverImage = createCdnUrl(article.quiltBlobId, 'media0');
-      }
+    if (hasCover && article.coverImageId) {
+      coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
     }
 
     return {
