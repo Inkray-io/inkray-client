@@ -645,7 +645,7 @@ function ArticlePageContent() {
                     {(loadingStage !== 'idle' && !content) ? (
                       <ArticleSkeletonLoader />
                     ) : content ? (
-                      <div className="prose prose-base sm:prose-lg max-w-none">
+                      <div className="prose prose-base sm:prose-lg max-w-none wrap-anywhere">
                         <ReactMarkdown
                           components={{
                             // Custom styling for markdown elements
