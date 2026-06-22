@@ -37,6 +37,10 @@ const ConfigSchema = z.object({
   // Seal Configuration
   SEAL_API_URL: z.string().url('NEXT_PUBLIC_SEAL_API_URL must be a valid URL'),
   SEAL_KEY_SERVER_IDS: z.string().optional(),
+  // Mainnet committee aggregator API credentials (obtained via Enoki). Optional.
+  // WARNING: NEXT_PUBLIC_* values are embedded in the browser bundle and publicly visible.
+  SEAL_API_KEY: z.string().optional(),
+  SEAL_API_KEY_NAME: z.string().optional(),
 
   // Application Configuration
   API_URL: z.string().url('NEXT_PUBLIC_API_URL must be a valid URL'),
@@ -93,6 +97,8 @@ function loadAndValidateConfig() {
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || defaults.WALRUS_PUBLISHER_URL,
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || defaults.SEAL_API_URL,
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
+      SEAL_API_KEY: process.env.NEXT_PUBLIC_SEAL_API_KEY,
+      SEAL_API_KEY_NAME: process.env.NEXT_PUBLIC_SEAL_API_KEY_NAME,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
       APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://inkray.xyz',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',
@@ -164,6 +170,8 @@ try {
       WALRUS_PUBLISHER_URL: process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || 'https://publisher-devnet.walrus.space',
       SEAL_API_URL: process.env.NEXT_PUBLIC_SEAL_API_URL || 'https://seal-testnet.mystenlabs.com',
       SEAL_KEY_SERVER_IDS: process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_IDS,
+      SEAL_API_KEY: process.env.NEXT_PUBLIC_SEAL_API_KEY,
+      SEAL_API_KEY_NAME: process.env.NEXT_PUBLIC_SEAL_API_KEY_NAME,
       API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
       APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://inkray.xyz',
       APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Inkray',

@@ -17,6 +17,8 @@ export interface SealServerConfig {
   objectId: string;
   weight: number;
   aggregatorUrl?: string;
+  apiKeyName?: string;
+  apiKey?: string;
 }
 
 /**
@@ -35,8 +37,10 @@ const KEY_SERVER_CONFIGS: Record<SealNetwork, NetworkKeyServerConfig> = {
     aggregatorUrl: 'https://seal-aggregator-testnet.mystenlabs.com',
   },
   mainnet: {
-    objectId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    aggregatorUrl: '',
+    // Mysten-verified decentralized committee (MPC) key server, 5-of-8.
+    // https://seal-docs.wal.app/Pricing#verified-decentralized-key-servers
+    objectId: '0x686098f1439237fff9f36b99c7329683c22979d2005c2465cb891acb012a7595',
+    aggregatorUrl: 'https://seal-aggregator-mainnet.mystenlabs.com',
   },
   devnet: {
     objectId: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -90,10 +94,17 @@ export function getKeyServerIds(network?: SealNetwork): string[] {
  */
 export function getKeyServerConfigs(network?: SealNetwork): SealServerConfig[] {
   const config = getNetworkKeyServerConfig(network);
+  // The mainnet committee aggregator requires API credentials (obtained via Enoki),
+  // sent as an HTTP header `<apiKeyName>: <apiKey>`. NOTE: these are NEXT_PUBLIC_* and
+  // therefore visible in the browser bundle — treat as a public, rate-limited credential;
+  // real access control is enforced by the on-chain seal_approve_* policies.
+  const apiKeyName = CONFIG.SEAL_API_KEY_NAME?.trim() || undefined;
+  const apiKey = CONFIG.SEAL_API_KEY?.trim() || undefined;
   return [{
     objectId: config.objectId,
     weight: 1,
     aggregatorUrl: config.aggregatorUrl || undefined,
+    ...(apiKeyName && apiKey ? { apiKeyName, apiKey } : {}),
   }];
 }
 
