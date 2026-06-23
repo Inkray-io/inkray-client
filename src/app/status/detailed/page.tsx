@@ -92,7 +92,7 @@ function ComponentCard({
           {uptime.d7 != null && <div>7d: {uptime.d7}%</div>}
         </div>
       </div>
-      {c.id === 'wallets' && <WalletTable c={c} />}
+      {c.id.startsWith('wallets') && <WalletTable c={c} />}
     </div>
   );
 }
