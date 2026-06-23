@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useStreakStatus } from '@/hooks/useCheckIn';
 import { useXConnection, useConnectX, useDisconnectX } from '@/hooks/useXConnection';
 import { useQuests } from '@/hooks/useQuests';
+import { useQuestsOverview } from '@/hooks/useQuestsOverview';
 import { useUserPoints } from '@/hooks/useUserPoints';
 import { TierBadge } from '@/components/gamification/TierBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,9 +27,199 @@ import {
   Repeat2,
   Crown,
   Trophy,
+  Lock,
+  Award,
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
-import type { QuestResponse } from '@/lib/api';
+import type {
+  QuestResponse,
+  RecurringQuestItem,
+  AchievementQuestItem,
+} from '@/lib/api';
+
+const RECURRING_CATEGORY_LABELS: Record<RecurringQuestItem['category'], string> = {
+  create: 'Create',
+  engage: 'Engage',
+  audience: 'From your audience',
+  bonus: 'Bonus rewards',
+};
+
+function RecurringQuestRow({ item }: { item: RecurringQuestItem }) {
+  const capped = item.dailyCap !== null;
+  const done = item.doneToday ?? 0;
+  const pct =
+    capped && item.dailyCap ? Math.min(100, (done / item.dailyCap) * 100) : 0;
+
+  return (
+    <div className="relative border rounded-xl p-4 bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
+      <div className="flex items-start gap-3">
+        <div className="size-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+          <Zap className="size-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm text-foreground">{item.title}</h3>
+          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+          {capped ? (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1.5 flex-1 max-w-35 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${item.capReached ? 'bg-green-400' : 'bg-amber-400'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                {item.capReached ? 'Done today' : `${done}/${item.dailyCap} today`}
+              </span>
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-muted-foreground">
+              <Repeat2 className="size-3" /> Repeatable
+            </span>
+          )}
+        </div>
+        <div className="shrink-0">
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold bg-amber-50 text-amber-700">
+            <Zap className="size-3.5" />+{item.xp}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AchievementRow({ item }: { item: AchievementQuestItem }) {
+  return (
+    <div
+      className={`relative border rounded-xl p-4 transition-all ${
+        item.earned
+          ? 'bg-green-50/40 border-green-100'
+          : 'bg-white border-gray-100'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+            item.earned ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+          }`}
+        >
+          {item.earned ? <Check className="size-4" /> : <Lock className="size-4" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+            {item.title}
+            {item.earned && (
+              <span className="text-[10px] font-medium text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">
+                Earned
+              </span>
+            )}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+        </div>
+        <div className="shrink-0">
+          <div
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold ${
+              item.earned ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+            }`}
+          >
+            <Zap className="size-3.5" />+{item.xp}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecurringQuestsSection() {
+  const { data, isLoading } = useQuestsOverview();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-card border rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Skeleton className="size-10 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-56" />
+              </div>
+              <Skeleton className="h-7 w-12 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const recurring = data?.recurring ?? [];
+  if (recurring.length === 0) return null;
+
+  const categories: RecurringQuestItem['category'][] = [
+    'create',
+    'engage',
+    'audience',
+    'bonus',
+  ];
+
+  return (
+    <div className="space-y-5">
+      {categories.map((cat) => {
+        const items = recurring.filter((r) => r.category === cat);
+        if (items.length === 0) return null;
+        return (
+          <div key={cat} className="space-y-2">
+            <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium px-1">
+              {RECURRING_CATEGORY_LABELS[cat]}
+            </h3>
+            <div className="space-y-2.5">
+              {items.map((item) => (
+                <RecurringQuestRow key={item.key} item={item} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AchievementsSection() {
+  const { data, isLoading } = useQuestsOverview();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  const achievements = data?.achievements ?? [];
+  if (achievements.length === 0) return null;
+
+  const earnedCount = achievements.filter((a) => a.earned).length;
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <Award className="size-4 text-violet-500" />
+        <h2 className="font-semibold text-foreground">
+          Achievements
+          <span className="text-muted-foreground font-normal ml-1">
+            ({earnedCount}/{achievements.length})
+          </span>
+        </h2>
+      </div>
+      <div className="space-y-2.5">
+        {achievements.map((item) => (
+          <AchievementRow key={item.key} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function getQuestIcon(type: string) {
   switch (type) {
@@ -537,6 +728,28 @@ export default function QuestsPage() {
                 </p>
               </div>
             )}
+          </motion.div>
+
+          {/* Recurring Quests (built-in repeatable XP actions) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Repeat2 className="size-4 text-primary" />
+              <h2 className="font-semibold text-foreground">Recurring Quests</h2>
+            </div>
+            <RecurringQuestsSection />
+          </motion.div>
+
+          {/* Achievements (one-time) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <AchievementsSection />
           </motion.div>
 
           {/* Completed Quests */}

@@ -804,6 +804,33 @@ export interface QuestResponse {
   completedAt: string | null;
 }
 
+export interface RecurringQuestItem {
+  key: string;
+  action: string;
+  title: string;
+  description: string;
+  xp: number;
+  dailyCap: number | null;
+  category: 'create' | 'engage' | 'audience' | 'bonus';
+  doneToday: number | null;
+  capReached: boolean;
+}
+
+export interface AchievementQuestItem {
+  key: string;
+  achievementType: string;
+  title: string;
+  description: string;
+  xp: number;
+  earned: boolean;
+  earnedAt: string | null;
+}
+
+export interface QuestsOverviewResponse {
+  recurring: RecurringQuestItem[];
+  achievements: AchievementQuestItem[];
+}
+
 export interface CheckInStatus {
   canClaim: boolean;
   unclaimedXp: number;
@@ -900,6 +927,12 @@ export const gamificationAPI = {
   // Get active quests with completion status
   getQuests: () =>
     api.get<ApiResponse<QuestResponse[]>>('/gamification/quests'),
+
+  // Get built-in quest catalog (recurring + achievements) with per-user status
+  getQuestsOverview: () =>
+    api.get<ApiResponse<QuestsOverviewResponse>>(
+      '/gamification/quests/overview',
+    ),
 
   // Get quest details
   getQuestById: (questId: string) =>
