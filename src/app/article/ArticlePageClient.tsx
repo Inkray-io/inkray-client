@@ -21,6 +21,7 @@ import {
 import { Avatar } from "@/components/ui/Avatar";
 import { createPublicationAvatarConfig, createUserAvatarConfig } from "@/lib/utils/avatar";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ArticleSkeletonLoader } from "@/components/ui/ArticleSkeletonLoader";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { NftMintingSection } from "@/components/nft";
@@ -647,6 +648,7 @@ function ArticlePageContent() {
                     ) : content ? (
                       <div className="prose prose-base sm:prose-lg max-w-none wrap-anywhere">
                         <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
                           components={{
                             // Custom styling for markdown elements
                             h1: ({ children }) => <h1 className="text-xl sm:text-2xl font-semibold mb-4 text-black">{children}</h1>,
@@ -665,6 +667,23 @@ function ArticlePageContent() {
                                 {children}
                               </pre>
                             ),
+                            // GFM tables (via remark-gfm)
+                            table: ({ children }) => (
+                              <div className="overflow-x-auto mb-4">
+                                <table className="w-full text-sm sm:text-base border-collapse">{children}</table>
+                              </div>
+                            ),
+                            thead: ({ children }) => <thead className="border-b border-gray-300">{children}</thead>,
+                            th: ({ children }) => <th className="text-left font-semibold text-black px-3 py-2 align-top">{children}</th>,
+                            td: ({ children }) => <td className="text-gray-700 px-3 py-2 align-top border-t border-gray-100">{children}</td>,
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-4 border-gray-200 pl-4 italic text-gray-600 mb-4">{children}</blockquote>
+                            ),
+                            a: ({ href, children }) => (
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">{children}</a>
+                            ),
+                            ul: ({ children }) => <ul className="list-disc pl-6 mb-4 text-gray-700 space-y-1">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 text-gray-700 space-y-1">{children}</ol>,
                           }}
                         >
                           {content}

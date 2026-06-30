@@ -7,6 +7,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import { ArticleSkeleton } from "@/components/article/ArticleSkeleton";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatDistanceToNow } from "date-fns";
 
 
@@ -117,6 +118,7 @@ function OfflineArticleComponent() {
                     <div className="border-t border-gray-100 pt-6">
                       <div className="prose prose-base sm:prose-lg max-w-none">
                         <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
                             components={{
                               // Custom styling for markdown elements
                               h1: ({ children }) => <h1
