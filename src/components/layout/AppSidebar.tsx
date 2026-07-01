@@ -7,6 +7,7 @@ import { useCategories } from "@/hooks/useCategories"
 import { getCategoryIcon } from "@/constants/categoryIcons"
 import { SidebarToggle } from "./SidebarToggle"
 import { ExpandableTooltip } from "./ExpandableTooltip"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   HiFire,
@@ -137,10 +138,10 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                 <button
                   onClick={() => router.push(item.href)}
                   className={cn(
-                    "flex items-center gap-2 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors text-sm",
+                    "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors text-sm",
                     item.active
                       ? "bg-primary/10 text-primary"
-                      : "hover:bg-gray-50 text-black",
+                      : "hover:bg-gray-50 text-foreground",
                     isCompact && "justify-center px-2"
                   )}
                 >
@@ -158,13 +159,20 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
         {/* Categories */}
         {!isCompact && (
           <div className="space-y-0.5">
-            <div className="px-2.5 py-1.5">
-              <h3 className="font-medium text-black text-sm">Categories</h3>
-            </div>
+            <h3 className="px-2.5 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Categories
+            </h3>
 
             <div className="space-y-0.5">
               {categoriesLoading ? (
-                <div className="px-2.5 py-1.5 text-sm text-gray-500">Loading categories...</div>
+                <div className="space-y-0.5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center gap-2.5 px-2.5 py-1.5">
+                      <Skeleton className="size-4 rounded" />
+                      <Skeleton className="h-3.5 flex-1" />
+                    </div>
+                  ))}
+                </div>
               ) : (
                 categories.map((category) => {
                   const { icon: CategoryIcon, color } = getCategoryIcon(category.slug)
@@ -176,10 +184,10 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                         "w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
                         currentCategory === category.slug
                           ? "bg-primary/10 text-primary"
-                          : "hover:bg-gray-50 text-black"
+                          : "hover:bg-gray-50 text-foreground"
                       )}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <CategoryIcon className={cn("size-4 shrink-0", currentCategory === category.slug ? "text-primary" : color)} />
                         <span className="font-medium text-sm">{category.name}</span>
                       </div>
@@ -234,9 +242,9 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
         {/* Inkray.io */}
         {!isCompact && (
           <div className="space-y-0.5">
-            <div className="px-2.5 py-1.5">
-              <h3 className="font-medium text-black text-sm">Inkray.xyz</h3>
-            </div>
+            <h3 className="px-2.5 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              Inkray.xyz
+            </h3>
 
             <div className="space-y-0.5">
               {inkrayLinks.map((link) => (
@@ -244,9 +252,9 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                   key={link.id}
                   className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <link.icon className="size-4 text-gray-500" />
-                    <span className="font-medium text-black text-sm">{link.label}</span>
+                  <div className="flex items-center gap-2.5">
+                    <link.icon className="size-4 text-gray-500 shrink-0" />
+                    <span className="font-medium text-foreground text-sm">{link.label}</span>
                   </div>
                 </button>
               ))}
