@@ -1,25 +1,21 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ROUTES } from '@/constants/routes';
 import { useLeaderboard, useMyRank } from '@/hooks/useLeaderboard';
 import { TierBadge } from '@/components/gamification/TierBadge';
+import { RankIndicator } from '@/components/gamification/RankIndicator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Crown, Medal, Award, Users } from 'lucide-react';
+import { Trophy, Award, Users } from 'lucide-react';
 import { useSuiNSBatch } from '@/hooks/useSuiNSBatch';
 import type { LeaderboardEntry } from '@/lib/api';
 
 function truncateAddress(address: string) {
   if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function getRankIcon(rank: number) {
-  if (rank === 1) return <Crown className="size-4 text-yellow-500" />;
-  if (rank === 2) return <Medal className="size-4 text-gray-400" />;
-  if (rank === 3) return <Medal className="size-4 text-amber-700" />;
-  return null;
 }
 
 function LeaderboardRowSkeleton() {
@@ -44,36 +40,40 @@ function LeaderboardRow({
   isCurrentUser: boolean;
   suiNSName?: string | null;
 }) {
-  const rankIcon = getRankIcon(entry.rank);
+  const router = useRouter();
   const isTopThree = entry.rank <= 3;
   const displayName = entry.username || suiNSName || truncateAddress(entry.publicKey);
+  const goToProfile = () => router.push(ROUTES.PROFILE_WITH_ID(entry.publicKey));
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.03 * Math.min(index, 20), duration: 0.25 }}
-      className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 transition-colors ${
+      onClick={goToProfile}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          goToProfile();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
         isCurrentUser
-          ? 'bg-primary/5'
+          ? 'bg-primary/5 hover:bg-primary/10'
           : isTopThree
           ? entry.rank === 1
-            ? 'bg-amber-50/60'
+            ? 'bg-amber-50/60 hover:bg-amber-50'
             : entry.rank === 2
-            ? 'bg-gray-50/60'
-            : 'bg-orange-50/40'
+            ? 'bg-gray-50/60 hover:bg-gray-100/60'
+            : 'bg-orange-50/40 hover:bg-orange-50'
           : 'hover:bg-gray-50/50'
       }`}
     >
       {/* Rank */}
-      <div className="w-7 shrink-0 text-center">
-        {rankIcon ? (
-          rankIcon
-        ) : (
-          <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-            {entry.rank}
-          </span>
-        )}
+      <div className="w-7 shrink-0 flex justify-center">
+        <RankIndicator rank={entry.rank} />
       </div>
 
       {/* Name + tier */}

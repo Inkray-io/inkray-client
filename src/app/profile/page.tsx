@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { TopWriters } from '@/components/widgets/TopWriters';
+import { LeaderboardWidget } from '@/components/widgets/LeaderboardWidget';
+import { QuestsWidget } from '@/components/widgets/QuestsWidget';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -168,6 +170,8 @@ const ProfilePageContent: React.FC = () => {
   const rightSidebar = (
     <div className="space-y-5">
       <TopWriters />
+      <LeaderboardWidget />
+      <QuestsWidget />
     </div>
   );
 

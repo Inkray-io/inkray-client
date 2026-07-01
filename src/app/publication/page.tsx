@@ -15,6 +15,8 @@ import { FeedPost } from '@/components/feed/FeedPost';
 import { FeedPostSkeleton } from '@/components/feed/FeedPostSkeleton';
 import { PublicationPageSkeleton } from '@/components/publication/PublicationPageSkeleton';
 import { TopWriters } from '@/components/widgets/TopWriters';
+import { LeaderboardWidget } from '@/components/widgets/LeaderboardWidget';
+import { QuestsWidget } from '@/components/widgets/QuestsWidget';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -134,6 +136,8 @@ const PublicationPageContent: React.FC = () => {
   const rightSidebar = (
     <div className="space-y-5">
       <TopWriters />
+      <LeaderboardWidget />
+      <QuestsWidget />
     </div>
   );
 

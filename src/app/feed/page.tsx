@@ -5,6 +5,8 @@ import { AppLayout, RightSidebar } from "@/components/layout"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { TopWriters } from "@/components/widgets/TopWriters"
+import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget"
+import { QuestsWidget } from "@/components/widgets/QuestsWidget"
 import { Button } from "@/components/ui/button"
 import { useFeedArticles } from "@/hooks/useFeedArticles"
 import { useCategories } from "@/hooks/useCategories"
@@ -134,6 +136,8 @@ function FeedPageContent() {
       rightSidebar={
         <RightSidebar>
           <TopWriters />
+          <LeaderboardWidget />
+          <QuestsWidget />
           {/* TODO: Temporary disable this until we implemented it */}
           {/* <PopularComments /> */}
         </RightSidebar>

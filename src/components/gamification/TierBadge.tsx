@@ -5,8 +5,10 @@ import { cn } from '@/lib/utils';
 interface TierBadgeProps {
   tier: number;
   tierName: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   showLabel?: boolean;
+  /** 'gradient' = bold gradient badge (default); 'soft' = quiet tinted glyph for dense lists */
+  tone?: 'gradient' | 'soft';
 }
 
 const tierConfig: Record<
@@ -52,9 +54,20 @@ const tierConfig: Record<
 };
 
 const sizeClasses = {
+  xs: { badge: 'size-5 text-[11px]', label: 'text-[11px]', gap: 'gap-1' },
   sm: { badge: 'size-6 text-xs', label: 'text-xs', gap: 'gap-1' },
   md: { badge: 'size-8 text-sm', label: 'text-sm', gap: 'gap-1.5' },
   lg: { badge: 'size-10 text-base', label: 'text-base', gap: 'gap-2' },
+};
+
+/** Quiet tinted backgrounds per tier for the `soft` tone (no gradient/shadow). */
+const softBg: Record<number, string> = {
+  1: 'bg-gray-100',
+  2: 'bg-orange-100',
+  3: 'bg-red-100',
+  4: 'bg-purple-100',
+  5: 'bg-blue-100',
+  6: 'bg-amber-100',
 };
 
 export function TierBadge({
@@ -62,6 +75,7 @@ export function TierBadge({
   tierName,
   size = 'md',
   showLabel = true,
+  tone = 'gradient',
 }: TierBadgeProps) {
   const config = tierConfig[tier] || tierConfig[1];
   const sizes = sizeClasses[size];
@@ -70,13 +84,18 @@ export function TierBadge({
     <div className={cn('flex items-center', sizes.gap)}>
       <div
         className={cn(
-          'rounded-full bg-gradient-to-br flex items-center justify-center shadow-md flex-shrink-0',
-          config.gradient,
-          config.glow,
+          'rounded-full flex items-center justify-center shrink-0',
+          tone === 'soft'
+            ? softBg[tier] || softBg[1]
+            : cn('bg-linear-to-br shadow-md', config.gradient, config.glow),
           sizes.badge
         )}
       >
-        <span className="drop-shadow-sm leading-none">{config.icon}</span>
+        <span
+          className={cn('leading-none', tone === 'gradient' && 'drop-shadow-sm')}
+        >
+          {config.icon}
+        </span>
       </div>
       {showLabel && (
         <span className={cn('font-semibold', config.textColor, sizes.label)}>

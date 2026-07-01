@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { TopWriters } from "@/components/widgets/TopWriters";
+import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget";
+import { QuestsWidget } from "@/components/widgets/QuestsWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Loader2, RefreshCw, Pencil, Trash2, FileText, Clock, ImageIcon, Plus, CalendarClock, AlertTriangle } from "lucide-react";
 import React, { useState, Suspense } from "react";
@@ -265,6 +267,8 @@ function DraftsPageContent() {
         rightSidebar={
           <RightSidebar>
             <TopWriters />
+            <LeaderboardWidget />
+            <QuestsWidget />
           </RightSidebar>
         }
       >
