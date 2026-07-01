@@ -15,10 +15,13 @@ export function BackButton({ fallbackHref, label = "Back", className }: BackButt
   const router = useRouter()
 
   const handleClick = () => {
-    if (fallbackHref) {
-      router.push(fallbackHref)
-    } else {
+    // Prefer real "back" when there's history to go back to; otherwise (e.g. the
+    // page was opened directly in a new tab, so router.back() would no-op) fall
+    // back to the provided href, or home.
+    if (typeof window !== "undefined" && window.history.length > 1) {
       router.back()
+    } else {
+      router.push(fallbackHref ?? "/")
     }
   }
 

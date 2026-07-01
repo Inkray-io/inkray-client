@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog"
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden"
@@ -31,6 +31,20 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
       router.push(ROUTES.PUBLICATION_WITH_ID(id))
     }
   }, [router, onOpenChange])
+
+  // Debounce Algolia queries so holding Backspace (or fast typing) doesn't fire a
+  // query + full results re-render on every keystroke (which froze the UI).
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const queryHook = useCallback(
+    (query: string, search: (value: string) => void) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => search(query), 300)
+    },
+    [],
+  )
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   if (!isAlgoliaConfigured() || !searchClient) {
     return (
@@ -75,7 +89,6 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
             <DialogTitle>Search articles and publications</DialogTitle>
           </VisuallyHidden.Root>
           <InstantSearchNext
-            key={currentIndex}
             searchClient={searchClient}
             indexName={currentIndex}
             future={{ preserveSharedStateOnUnmount: true }}
@@ -88,6 +101,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
                 <HiMagnifyingGlass className="size-5 text-muted-foreground shrink-0" />
                 <SearchBox
                   placeholder="Search articles and publications..."
+                  queryHook={queryHook}
                   classNames={{
                     root: "flex-1",
                     form: "relative",
@@ -167,6 +181,16 @@ interface SearchResultsProps {
 function SearchResults({ tab, onResultClick }: SearchResultsProps) {
   const { status, results } = useInstantSearch()
 
+  // Stable hit component so the results list isn't torn down/rebuilt on every
+  // render (each item mounts AddressDisplay → a SuiNS network call).
+  const hitComponent = useCallback(
+    ({ hit }: { hit: ArticleHit | PublicationHit }) =>
+      tab === "articles"
+        ? <ArticleHitComponent hit={hit as unknown as ArticleHit} onClick={onResultClick} />
+        : <PublicationHitComponent hit={hit as unknown as PublicationHit} onClick={onResultClick} />,
+    [tab, onResultClick],
+  )
+
   if (status === "loading" || status === "stalled") {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -205,11 +229,7 @@ function SearchResults({ tab, onResultClick }: SearchResultsProps) {
 
   return (
     <Hits
-      hitComponent={({ hit }) => (
-        tab === "articles"
-          ? <ArticleHitComponent hit={hit as unknown as ArticleHit} onClick={onResultClick} />
-          : <PublicationHitComponent hit={hit as unknown as PublicationHit} onClick={onResultClick} />
-      )}
+      hitComponent={hitComponent}
       classNames={{
         root: "divide-y divide-border/50",
         list: "divide-y divide-border/50",
