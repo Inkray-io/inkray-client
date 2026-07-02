@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Identicon } from './Identicon';
 
 export interface AvatarProps {
   /** Image source URL */
@@ -18,6 +19,8 @@ export interface AvatarProps {
   fallbackText?: string;
   /** Gradient colors for fallback background (Tailwind classes) */
   gradientColors?: string;
+  /** Deterministic seed (address / id) for the pixel identicon fallback */
+  seed?: string;
   /** Callback when image fails to load */
   onError?: () => void;
 }
@@ -40,6 +43,7 @@ export function Avatar({
   className,
   fallbackText,
   gradientColors = 'from-blue-400 to-purple-500',
+  seed,
   onError,
 }: AvatarProps) {
   const [hasError, setHasError] = useState(false);
@@ -101,7 +105,7 @@ export function Avatar({
 
   // Gradient border element (only for gradientBorder variant)
   const gradientBorderElement = gradientBorder && (
-    <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
+    <div className="absolute inset-0.5 rounded-full bg-linear-to-br from-blue-400 to-purple-500" />
   );
 
   // Inner container for gradient border variant
@@ -121,12 +125,15 @@ export function Avatar({
     />
   );
 
-  // Fallback element (initials or SVG)
+  // Fallback element: deterministic identicon (preferred) → initials → SVG
   const fallbackElement = (hasError || !src) && (
     <>
-      {fallbackText ? (
+      {seed ? (
+        // Deterministic pixel identicon from the address / id
+        <Identicon seed={seed} />
+      ) : fallbackText ? (
         // Text-based fallback (initials)
-        <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${gradientColors} text-white font-semibold text-sm`}>
+        <div className={`w-full h-full flex items-center justify-center bg-linear-to-br ${gradientColors} text-white font-semibold text-sm`}>
           {fallbackText}
         </div>
       ) : (

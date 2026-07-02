@@ -21,6 +21,7 @@ interface Publication {
     fallbackText: string;
     gradientColors: string;
     size: 'md';
+    seed?: string;
   };
 }
 

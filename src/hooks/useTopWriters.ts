@@ -25,6 +25,7 @@ interface Writer {
     fallbackText: string;
     gradientColors: string;
     size: AvatarSize;
+    seed?: string;
   };
 }
 

@@ -30,6 +30,7 @@ export interface DiscoveryPublication {
     fallbackText: string;
     gradientColors: string;
     size: AvatarSize;
+    seed?: string;
   };
 }
 

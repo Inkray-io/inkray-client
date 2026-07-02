@@ -17,6 +17,19 @@ export const AVATAR_SIZES = {
 export type AvatarSize = keyof typeof AVATAR_SIZES;
 
 /**
+ * Shape returned by the avatar config builders and spread into <Avatar />.
+ */
+export interface AvatarConfig {
+  src: string | null;
+  alt: string;
+  fallbackText: string;
+  gradientColors: string;
+  size: AvatarSize;
+  /** Deterministic seed (address / id) for the pixel identicon fallback. */
+  seed: string;
+}
+
+/**
  * Gradient color combinations for deterministic avatar fallbacks
  */
 const GRADIENT_COMBINATIONS = [
@@ -126,13 +139,9 @@ export function createAvatarConfig(options: {
   customAvatar?: string | null;
   size?: AvatarSize;
   type?: 'user' | 'publication' | 'generic';
-}): {
-  src: string | null;
-  alt: string;
-  fallbackText: string;
-  gradientColors: string;
-  size: AvatarSize;
-} {
+  /** Explicit identicon seed; defaults to `identifier`. */
+  seed?: string;
+}): AvatarConfig {
   const { identifier, name, customAvatar, size = 'md', type = 'generic' } = options;
   
   // Check if the provided name is actually an address
@@ -167,6 +176,7 @@ export function createAvatarConfig(options: {
     fallbackText,
     gradientColors,
     size,
+    seed: options.seed ?? identifier,
   };
 }
 
@@ -180,19 +190,14 @@ export function createAvatarConfig(options: {
 export function createPublicationAvatarConfig(
   publication: { id: string; name: string; avatar?: string | null },
   size: AvatarSize = 'md'
-): {
-  src: string | null;
-  alt: string;
-  fallbackText: string;
-  gradientColors: string;
-  size: AvatarSize;
-} {
+): AvatarConfig {
   return createAvatarConfig({
     identifier: publication.id,
     name: publication.name,
     customAvatar: publication.avatar,
     type: 'publication',
     size,
+    seed: publication.id,
   });
 }
 
@@ -206,22 +211,18 @@ export function createPublicationAvatarConfig(
 export function createUserAvatarConfig(
   user: { id?: string; publicKey?: string; name?: string; avatar?: string | null },
   size: AvatarSize = 'md'
-): {
-  src: string | null;
-  alt: string;
-  fallbackText: string;
-  gradientColors: string;
-  size: AvatarSize;
-} {
+): AvatarConfig {
   // Use user ID if available, otherwise use publicKey as identifier
   const identifier = user.id || user.publicKey || 'unknown';
-  
+
   return createAvatarConfig({
     identifier,
     name: user.name,
     customAvatar: user.avatar,
     type: 'user',
     size,
+    // Prefer the wallet address for the identicon so it's stable per person.
+    seed: user.publicKey || user.id || 'unknown',
   });
 }
 
