@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { publicationsAPI } from '@/lib/api';
 import { createPublicationAvatarConfig, AvatarSize } from '@/lib/utils/avatar';
 
+export interface PublicationSocials {
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  telegram?: string;
+  website?: string;
+}
+
 export interface DiscoveryPublication {
   id: string;
   name: string;
@@ -13,6 +21,9 @@ export interface DiscoveryPublication {
   followerCount: number;
   articleCount: number;
   isVerified: boolean;
+  subscriptionPrice: string;
+  socialAccounts: PublicationSocials | null;
+  createdAt: string;
   avatarConfig: {
     src: string | null;
     alt: string;
@@ -58,9 +69,15 @@ export function usePublications(initialLimit: number = 20): UsePublicationsRetur
     followerCount: number;
     articleCount: number;
     isVerified: boolean;
+    subscriptionPrice?: string;
+    socialAccounts?: PublicationSocials | null;
+    createdAt?: string;
   }>): DiscoveryPublication[] => {
     return apiData.map((pub) => ({
       ...pub,
+      subscriptionPrice: pub.subscriptionPrice ?? '0',
+      socialAccounts: pub.socialAccounts ?? null,
+      createdAt: pub.createdAt ?? '',
       avatarConfig: createPublicationAvatarConfig(
         { id: pub.id, name: pub.name, avatar: pub.avatar },
         'md'
