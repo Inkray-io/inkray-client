@@ -1,7 +1,7 @@
 /**
  * Utility functions for transforming media URLs in article content
  *
- * Media is served from S3 through the backend proxy. This module rewrites the
+ * Media is served through the backend media proxy. This module rewrites the
  * draft/article image URLs embedded in markdown to the correct backend image
  * endpoints for display.
  */
@@ -11,8 +11,9 @@ import { CONFIG } from '@/lib/config';
 /**
  * Transform draft image URLs in markdown to article image URLs
  *
- * When articles are published, images are copied from draft folder to article folder in S3.
- * This function transforms URLs in the markdown from draft format to article format.
+ * When articles are published, images move from the draft namespace to the article
+ * namespace on the backend. This function transforms URLs in the markdown from
+ * draft format to article format.
  *
  * Draft URL format: {API_URL}/articles/draft/{draftId}/media/{imageId}
  * Article URL format: {API_URL}/articles/images/article/{articleId}/media/{imageId}
@@ -84,10 +85,10 @@ export function transformBackendDraftMediaUrlForUrl(url: string, draftId: string
 /**
  * Transform media URLs in article content for display
  *
- * Transforms draft URLs to article URLs for S3-backed images.
+ * Transforms draft URLs to article URLs for backend-hosted images.
  *
  * @param content - The markdown content
- * @param articleId - The article ID for S3-backed images
+ * @param articleId - The article ID for backend-hosted images
  * @returns Transformed content with proper image URLs
  */
 export function transformArticleMediaUrls(
@@ -98,7 +99,7 @@ export function transformArticleMediaUrls(
     return content;
   }
 
-  // Transform any draft URLs to article URLs (S3-backed images)
+  // Transform any draft URLs to article URLs (backend-hosted images)
   let transformed = transformDraftUrlsToArticleUrls(content, articleId);
 
   // Remove <br /> tags (markdown doesn't render HTML)

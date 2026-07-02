@@ -489,7 +489,7 @@ export const useArticle = (articleSlug: string | null) => {
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const result: ArticleContentResponse = response.data;
 
-        // Transform media URLs for display (S3-backed images + legacy CDN)
+        // Transform media URLs for display (backend-hosted + legacy images)
         const transformedContent = transformArticleMediaUrls(result.content, article.articleId);
 
         return transformedContent;
@@ -896,7 +896,7 @@ export const useArticle = (articleSlug: string | null) => {
           decryptedContent = await stableDecryptContent(decryptionParams);
         }
 
-        // Transform media URLs for display (S3-backed images + legacy CDN)
+        // Transform media URLs for display (backend-hosted + legacy images)
         const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId);
 
         // Decryption successful. Post message to service worker to cache the article.
@@ -1153,7 +1153,7 @@ export const useArticle = (articleSlug: string | null) => {
         const decryptedContent = await stableDecryptContent(manualDecryptionParams);
 
 
-        // Transform media URLs for display (S3-backed images + legacy CDN)
+        // Transform media URLs for display (backend-hosted + legacy images)
         const transformedContent = transformArticleMediaUrls(decryptedContent, article.articleId);
 
         return transformedContent;
@@ -1162,7 +1162,7 @@ export const useArticle = (articleSlug: string | null) => {
         const response = await articlesAPI.getContent(article.quiltBlobId);
         const result: ArticleContentResponse = response.data;
 
-        // Transform media URLs for display (S3-backed images + legacy CDN)
+        // Transform media URLs for display (backend-hosted + legacy images)
         const transformedContent = transformArticleMediaUrls(result.content, article.articleId);
 
         return transformedContent;

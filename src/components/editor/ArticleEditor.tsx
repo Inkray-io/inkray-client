@@ -154,8 +154,8 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
 
             // If consumer supplied a computeDraftImageURL callback, allow it
             // to return a draft/preview URL for non-temp images. This keeps
-            // preview logic extensible (for example, mapping to a CDN preview
-            // or a short-lived signed URL).
+            // preview logic extensible (for example, mapping to a backend
+            // preview or a short-lived access URL).
             try {
               const draft = computeDraftImageURLRef.current?.(originalURL)
               if (draft) {

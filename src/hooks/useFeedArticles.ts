@@ -216,7 +216,7 @@ export const useFeedArticles = (
     }, 'md');
     const hasCover = Boolean(article.hasCover);
 
-    // Determine cover image URL (S3-backed via backend proxy)
+    // Determine cover image URL (served via the backend media proxy)
     let coverImage: string | undefined;
     if (hasCover && article.coverImageId) {
       coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
