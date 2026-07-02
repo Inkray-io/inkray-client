@@ -28,3 +28,11 @@
   box-shadow: none !important;
   background: transparent !important;
 }
+
+/* Empty-state placeholder (Crepe Placeholder feature) — muted, matches app */
+.crepe-minimal .crepe-placeholder::before,
+.crepe-minimal [data-placeholder]::before {
+  color: #9ca3af !important; /* text-gray-400 */
+  font-weight: 400 !important;
+  font-style: normal !important;
+}

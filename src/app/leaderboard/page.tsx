@@ -9,7 +9,7 @@ import { useLeaderboard, useMyRank } from '@/hooks/useLeaderboard';
 import { TierBadge } from '@/components/gamification/TierBadge';
 import { RankIndicator } from '@/components/gamification/RankIndicator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Award, Users } from 'lucide-react';
+import { Trophy, Award, Users, Clock } from 'lucide-react';
 import { useSuiNSBatch } from '@/hooks/useSuiNSBatch';
 import type { LeaderboardEntry } from '@/lib/api';
 
@@ -193,6 +193,12 @@ export default function LeaderboardPage() {
             ) : null}
           </motion.div>
         )}
+
+        {/* Freshness note — leaderboard isn't real-time */}
+        <p className="mb-4 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Clock className="size-3 shrink-0" />
+          Rankings update periodically — recent activity may take a few minutes to appear.
+        </p>
 
         {/* Leaderboard Stats */}
         {leaderboard && (

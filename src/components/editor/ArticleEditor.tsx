@@ -95,8 +95,13 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
         [Crepe.Feature.ImageBlock]: true,
         [Crepe.Feature.BlockEdit]: true,
         [Crepe.Feature.Cursor]: true,
+        [Crepe.Feature.Placeholder]: true,
       },
       featureConfigs: {
+        [Crepe.Feature.Placeholder]: {
+          text: placeholder,
+          mode: 'doc',
+        },
         [Crepe.Feature.ImageBlock]: {
           onUpload: async (file: File) => {
             log.debug('Processing image', { fileName: file.name }, 'ArticleEditor')
@@ -170,7 +175,7 @@ export const ArticleEditor = forwardRef<ArticleEditorRef, ArticleEditorProps>(({
             // original URL will show the actual image if nothing else applies.
             return originalURL
           },
-          blockCaptionPlaceholderText: placeholder || 'Add image caption...',
+          blockCaptionPlaceholderText: 'Add a caption…',
         },
       },
     })
