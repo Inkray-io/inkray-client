@@ -36,6 +36,13 @@ interface UseTopWritersReturn {
   refetch: () => Promise<void>;
 }
 
+/** Compact follower count, e.g. 950, 1.2k, 3m. */
+function formatFollowerCount(count: number): string {
+  if (count < 1000) return `${count}`;
+  if (count < 1_000_000) return `${+(count / 1000).toFixed(1)}k`;
+  return `${+(count / 1_000_000).toFixed(1)}m`;
+}
+
 /**
  * Hook for fetching and managing top writers data
  * 
@@ -63,7 +70,7 @@ export function useTopWriters(): UseTopWritersReturn {
         rank: index + 1,
         id: publication.id,
         name: publication.name,
-        subscribers: `${publication.followerCount} follower${publication.followerCount !== 1 ? 's' : ''}`,
+        subscribers: formatFollowerCount(publication.followerCount),
         avatar: avatarConfig.src || '', // Use configured avatar for backward compatibility
         isVerified: publication.isVerified,
         avatarConfig, // Include full avatar config

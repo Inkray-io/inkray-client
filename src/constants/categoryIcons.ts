@@ -1,7 +1,7 @@
 import { IconType } from 'react-icons'
 import {
   HiBanknotes,
-  HiPuzzlePiece,
+  HiCube,
   HiCpuChip,
   HiAcademicCap,
   HiChartBar,
@@ -14,32 +14,31 @@ import {
 
 export interface CategoryIconConfig {
   icon: IconType
-  /** Tailwind text color class for the icon */
-  color: string
 }
 
 /**
- * Maps category slugs to their icon and color.
+ * Maps category slugs to their icon. Icons render in a single muted tone
+ * (see AppSidebar / MobileMenu) so the list stays calm and consistent with
+ * the rest of the sidebar — color is reserved for the active state only.
  * Slugs match the backend seed: defi, nft-gaming, technology, tutorials,
  * analysis, news, opinion, development, sui-ecosystem, other.
  */
 export const CATEGORY_ICONS: Record<string, CategoryIconConfig> = {
-  'defi': { icon: HiBanknotes, color: 'text-emerald-500' },
-  'nft-gaming': { icon: HiPuzzlePiece, color: 'text-purple-500' },
-  'technology': { icon: HiCpuChip, color: 'text-sky-500' },
-  'tutorials': { icon: HiAcademicCap, color: 'text-blue-500' },
-  'analysis': { icon: HiChartBar, color: 'text-amber-500' },
-  'news': { icon: HiNewspaper, color: 'text-slate-500' },
-  'opinion': { icon: HiChatBubbleLeftRight, color: 'text-rose-500' },
-  'development': { icon: HiCodeBracket, color: 'text-indigo-500' },
-  'sui-ecosystem': { icon: HiGlobeAlt, color: 'text-cyan-500' },
-  'other': { icon: HiSquares2X2, color: 'text-gray-400' },
+  'defi': { icon: HiBanknotes },
+  'nft-gaming': { icon: HiCube },
+  'technology': { icon: HiCpuChip },
+  'tutorials': { icon: HiAcademicCap },
+  'analysis': { icon: HiChartBar },
+  'news': { icon: HiNewspaper },
+  'opinion': { icon: HiChatBubbleLeftRight },
+  'development': { icon: HiCodeBracket },
+  'sui-ecosystem': { icon: HiGlobeAlt },
+  'other': { icon: HiSquares2X2 },
 }
 
-/** Fallback icon/color when a category slug isn't in the map */
+/** Fallback icon when a category slug isn't in the map */
 export const DEFAULT_CATEGORY_ICON: CategoryIconConfig = {
   icon: HiSquares2X2,
-  color: 'text-gray-400',
 }
 
 export function getCategoryIcon(slug: string): CategoryIconConfig {

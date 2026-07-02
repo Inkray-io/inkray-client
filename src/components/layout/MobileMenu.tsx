@@ -341,7 +341,7 @@ export function MobileMenu({ children }: MobileMenuProps) {
               </div>
             ) : (
               categories.map((category) => {
-                const { icon: CategoryIcon, color } = getCategoryIcon(
+                const { icon: CategoryIcon } = getCategoryIcon(
                   category.slug,
                 )
                 const active = activeCategory === category.slug
@@ -359,7 +359,7 @@ export function MobileMenu({ children }: MobileMenuProps) {
                       <CategoryIcon
                         className={cn(
                           "size-4 shrink-0",
-                          active ? "text-primary" : color,
+                          active ? "text-primary" : "text-gray-400",
                         )}
                       />
                       <span className="font-medium">{category.name}</span>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useTopWriters } from '@/hooks/useTopWriters';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
@@ -107,7 +107,11 @@ export function TopWriters({ publications: propsPublications }: TopPublicationsP
               </span>
               {publication.isVerified && <VerifiedBadge size="sm" />}
             </div>
-            <span className="text-gray-500 text-[11px] tabular-nums shrink-0">
+            <span
+              className="flex items-center gap-1 text-gray-500 text-[11px] tabular-nums shrink-0"
+              title={`${publication.subscribers} followers`}
+            >
+              <Users className="size-3 shrink-0" aria-hidden="true" />
               {publication.subscribers}
             </span>
           </button>

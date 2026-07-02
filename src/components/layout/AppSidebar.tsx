@@ -175,20 +175,21 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                 </div>
               ) : (
                 categories.map((category) => {
-                  const { icon: CategoryIcon, color } = getCategoryIcon(category.slug)
+                  const { icon: CategoryIcon } = getCategoryIcon(category.slug)
+                  const isActive = currentCategory === category.slug
                   return (
                     <button
                       key={category.id}
                       onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
                       className={cn(
-                        "w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
-                        currentCategory === category.slug
+                        "group w-full px-2.5 py-1.5 rounded-lg text-left transition-colors",
+                        isActive
                           ? "bg-primary/10 text-primary"
                           : "hover:bg-gray-50 text-foreground"
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <CategoryIcon className={cn("size-4 shrink-0", currentCategory === category.slug ? "text-primary" : color)} />
+                        <CategoryIcon className={cn("size-4 shrink-0 transition-colors", isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
                         <span className="font-medium text-sm">{category.name}</span>
                       </div>
                     </button>
@@ -204,24 +205,25 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
         {isCompact && (
           <div className="space-y-0.5">
             {!categoriesLoading && categories.slice(0, 3).map((category) => {
-              const { icon: CategoryIcon, color } = getCategoryIcon(category.slug)
+              const { icon: CategoryIcon } = getCategoryIcon(category.slug)
+              const isActive = currentCategory === category.slug
               return (
                 <ExpandableTooltip
                   key={category.id}
                   label={category.name}
                   isCompact={isCompact}
-                  isActive={currentCategory === category.slug}
+                  isActive={isActive}
                 >
                   <button
                     onClick={() => router.push(ROUTES.FEED_CATEGORY(category.slug))}
                     className={cn(
-                      "w-full px-2 py-1.5 rounded-lg transition-colors flex justify-center",
-                      currentCategory === category.slug
+                      "group w-full px-2 py-1.5 rounded-lg transition-colors flex justify-center",
+                      isActive
                         ? "bg-primary/10"
                         : "hover:bg-gray-50"
                     )}
                   >
-                    <CategoryIcon className={cn("size-4", currentCategory === category.slug ? "text-primary" : color)} />
+                    <CategoryIcon className={cn("size-4 transition-colors", isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600")} />
                   </button>
                 </ExpandableTooltip>
               )
