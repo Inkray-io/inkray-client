@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BackButton } from "@/components/ui/BackButton"
 import { ROUTES } from "@/constants/routes"
+import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { Loader2, Search, Users, FileText, AlertCircle, RefreshCw } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -87,19 +88,18 @@ function PublicationsPageContent() {
 
         {/* Loading State */}
         {isLoading && publications.length === 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100">
-                <div className="flex items-start gap-4">
-                  <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                    <div className="flex gap-4 mt-3">
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <Skeleton className="h-12 w-full rounded-none" />
+                <div className="px-4 pb-3.5">
+                  <Skeleton className="size-12 rounded-full -mt-7 mb-2 ring-4 ring-white" />
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-4 w-full mb-1" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="flex gap-4 mt-2.5">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3 w-20" />
                   </div>
                 </div>
               </div>
@@ -109,55 +109,77 @@ function PublicationsPageContent() {
 
         {/* Publications Grid */}
         {!error && publications.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {publications.map((publication) => (
               <button
                 key={publication.id}
                 onClick={() => router.push(ROUTES.PUBLICATION_WITH_ID(publication.id))}
-                className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all text-left w-full"
+                className="group bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all text-left w-full overflow-hidden"
               >
-                <div className="flex items-start gap-4">
-                  <Avatar {...publication.avatarConfig} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-semibold text-black text-sm truncate">
-                        {publication.name}
-                      </span>
-                      {publication.isVerified && <VerifiedBadge size="sm" />}
-                    </div>
-                    {publication.description && (
-                      <p className="text-gray-500 text-xs line-clamp-2 mb-2">
-                        {publication.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {publication.followerCount} follower{publication.followerCount !== 1 ? 's' : ''}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <FileText className="h-3 w-3" />
-                        {publication.articleCount} article{publication.articleCount !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    {publication.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {publication.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[10px]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {publication.tags.length > 3 && (
-                          <span className="px-2 py-0.5 text-gray-400 text-[10px]">
-                            +{publication.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                {/* Masthead — each publication's own gradient identity */}
+                <div
+                  className={cn(
+                    "h-12 bg-linear-to-br",
+                    publication.avatarConfig.gradientColors,
+                  )}
+                />
+
+                <div className="px-4 pb-3.5">
+                  {/* Emblem overlapping the masthead */}
+                  <div className="-mt-7 mb-2">
+                    <Avatar
+                      {...publication.avatarConfig}
+                      className="ring-4 ring-white shadow-sm"
+                    />
                   </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-black text-base truncate group-hover:text-primary transition-colors">
+                      {publication.name}
+                    </span>
+                    {publication.isVerified && <VerifiedBadge size="sm" />}
+                  </div>
+
+                  <p className="text-gray-500 text-sm line-clamp-2 mt-0.5">
+                    {publication.description || "No description yet."}
+                  </p>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 text-xs text-gray-400 mt-2.5">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="size-3.5" />
+                      <span className="tabular-nums font-medium text-gray-500">
+                        {publication.followerCount}
+                      </span>
+                      follower{publication.followerCount !== 1 ? 's' : ''}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <FileText className="size-3.5" />
+                      <span className="tabular-nums font-medium text-gray-500">
+                        {publication.articleCount}
+                      </span>
+                      article{publication.articleCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  {/* Tags */}
+                  {publication.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {publication.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px] font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {publication.tags.length > 3 && (
+                        <span className="px-2 py-0.5 text-gray-400 text-[11px]">
+                          +{publication.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
