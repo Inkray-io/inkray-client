@@ -1,8 +1,30 @@
 "use client"
 
 import { useState } from "react"
-import { HiClipboard, HiArrowRightOnRectangle, HiPlus, HiCog6Tooth, HiBanknotes, HiArrowTopRightOnSquare, HiCheck, HiUser, HiTicket } from "react-icons/hi2"
-import { Button } from "@/components/ui/button"
+import {
+  HiFire,
+  HiBolt,
+  HiRectangleStack,
+  HiBookmark,
+  HiPencilSquare,
+  HiTrophy,
+  HiRocketLaunch,
+  HiInformationCircle,
+  HiShieldCheck,
+  HiMegaphone,
+  HiUser,
+  HiTicket,
+  HiCog6Tooth,
+  HiPlus,
+  HiNewspaper,
+  HiBanknotes,
+  HiDevicePhoneMobile,
+  HiArrowTopRightOnSquare,
+  HiArrowRightOnRectangle,
+  HiClipboard,
+  HiCheck,
+} from "react-icons/hi2"
+import type { IconType } from "react-icons"
 import { ConnectButton } from "@mysten/dapp-kit"
 import {
   Sheet,
@@ -10,54 +32,148 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose
+  SheetClose,
 } from "@/components/ui/sheet"
+import { Avatar } from "@/components/ui/Avatar"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUserPublications } from "@/hooks/useUserPublications"
+import { useCategories } from "@/hooks/useCategories"
+import { getCategoryIcon } from "@/constants/categoryIcons"
 import { getDisplayName, copyToClipboard } from "@/utils/address"
 import { createUserAvatarConfig } from "@/lib/utils/avatar"
-import { Avatar } from "@/components/ui/Avatar"
 import { ROUTES } from "@/constants/routes"
 import { CONFIG } from "@/lib/config"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { MobileConnectPopup } from "@/components/auth/MobileConnectPopup"
 
 interface MobileMenuProps {
   children: React.ReactNode
   currentPage?: string
 }
 
-export function MobileMenu({ children, currentPage: _currentPage = "feed" }: MobileMenuProps) {
-  const { isConnected, address, suiNSName, suiNSLoading, disconnect } = useWalletConnection()
-  const { account, logout } = useAuth()
-  const { hasPublications, firstPublication, isLoading: publicationsLoading } = useUserPublications()
-  const router = useRouter()
-  const [copying, setCopying] = useState(false)
+/** Shared row grammar — mirrors the desktop AppSidebar / profile menu. */
+const ROW =
+  "flex items-center gap-2.5 px-2.5 py-2 rounded-lg w-full text-left text-sm transition-colors"
 
-  // Note: currentPage can be used for future active state management
-  const topics = [
-    { name: "Protocols", color: "bg-purple-400" },
-    { name: "DeFi", color: "bg-yellow-300" },
-    { name: "AI", color: "bg-green-400" },
-    { name: "Governance", color: "bg-orange-300" },
-    { name: "Investments", color: "bg-pink-500" },
-    { name: "Community", color: "bg-blue-900" },
-    { name: "Markets", color: "bg-purple-500" },
-    { name: "Builders", color: "bg-orange-500" },
-    { name: "Events", color: "bg-red-500" }
+/** Quick-action tile — the desktop profile-menu shortcuts, thumb-sized. */
+const QUICK_TILE =
+  "flex flex-col items-center gap-1.5 rounded-xl bg-white p-3 text-center hover:bg-gray-50 transition-colors"
+const QUICK_TILE_ICON =
+  "flex size-9 items-center justify-center rounded-full bg-primary/10"
+const QUICK_TILE_LABEL = "text-[11px] font-medium text-foreground leading-tight"
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="px-2.5 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+      {children}
+    </h3>
+  )
+}
+
+export function MobileMenu({ children }: MobileMenuProps) {
+  const { isConnected, address, suiNSName, suiNSLoading, disconnect } =
+    useWalletConnection()
+  const { account, logout } = useAuth()
+  const { hasPublications, firstPublication } = useUserPublications()
+  const { categories, isLoading: categoriesLoading } = useCategories()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [copying, setCopying] = useState(false)
+  const [showMobileConnect, setShowMobileConnect] = useState(false)
+
+  const feedType = searchParams.get("type") || "fresh"
+  const activeCategory = searchParams.get("category")
+  const onFeed = pathname === "/feed"
+
+  const navItems: {
+    id: string
+    label: string
+    icon: IconType
+    href: string
+    active: boolean
+  }[] = [
+    {
+      id: "popular",
+      label: "Popular",
+      icon: HiFire,
+      href: ROUTES.FEED_POPULAR,
+      active: onFeed && feedType === "popular" && !activeCategory,
+    },
+    {
+      id: "fresh",
+      label: "Fresh",
+      icon: HiBolt,
+      href: ROUTES.FEED_FRESH,
+      active: onFeed && feedType === "fresh" && !activeCategory,
+    },
+    {
+      id: "my-feed",
+      label: "My feed",
+      icon: HiRectangleStack,
+      href: ROUTES.FEED_MY_FEED,
+      active: onFeed && feedType === "my",
+    },
+    {
+      id: "bookmarks",
+      label: "Bookmarks",
+      icon: HiBookmark,
+      href: ROUTES.FEED_BOOKMARKS,
+      active: onFeed && feedType === "bookmarks",
+    },
+    {
+      id: "drafts",
+      label: "My drafts",
+      icon: HiPencilSquare,
+      href: ROUTES.DRAFTS,
+      active: pathname === ROUTES.DRAFTS,
+    },
+    {
+      id: "leaderboard",
+      label: "Leaderboard",
+      icon: HiTrophy,
+      href: ROUTES.LEADERBOARD,
+      active: pathname === ROUTES.LEADERBOARD,
+    },
+    {
+      id: "quests",
+      label: "Quests",
+      icon: HiRocketLaunch,
+      href: ROUTES.QUESTS,
+      active: pathname === ROUTES.QUESTS,
+    },
   ]
 
-  const { primary, secondary } = getDisplayName(suiNSName, address || '')
+  const inkrayLinks: { id: string; label: string; icon: IconType; href: string }[] =
+    [
+      {
+        id: "about",
+        label: "About the project",
+        icon: HiInformationCircle,
+        href: ROUTES.ABOUT,
+      },
+      { id: "rules", label: "Rules", icon: HiShieldCheck, href: ROUTES.RULES },
+      {
+        id: "advertising",
+        label: "Advertising",
+        icon: HiMegaphone,
+        href: ROUTES.ADVERTISING,
+      },
+    ]
+
+  const { primary, secondary } = getDisplayName(suiNSName, address || "")
 
   const handleCopyAddress = async () => {
     if (!address || copying) return
-
     setCopying(true)
     try {
       await copyToClipboard(address)
-    } catch (error) {
-      // Failed to copy - continue silently
+    } catch {
+      // Failed to copy — continue silently
     } finally {
       setTimeout(() => setCopying(false), 1000)
     }
@@ -66,320 +182,274 @@ export function MobileMenu({ children, currentPage: _currentPage = "feed" }: Mob
   const handleDisconnect = () => {
     logout()
     disconnect()
-    setTimeout(() => {
-      router.push('/')
-    }, 100)
+    setTimeout(() => router.push("/"), 100)
   }
 
   const handleOnRamp = () => {
     if (!address || !CONFIG.ONRAMP_URL) return
-    const onRampUrl = `${CONFIG.ONRAMP_URL}${address}`
-    window.open(onRampUrl, '_blank', 'noopener,noreferrer')
+    window.open(`${CONFIG.ONRAMP_URL}${address}`, "_blank", "noopener,noreferrer")
   }
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px]">
-        <SheetHeader>
-          <SheetTitle className="text-left">Menu</SheetTitle>
+      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetContent
+        side="right"
+        className="w-75 sm:w-85 p-0 gap-0 bg-neutral-50"
+      >
+        <SheetHeader className="px-4 pt-4 pb-3">
+          <SheetTitle className="text-left text-base">Menu</SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col h-full">
-          {/* Wallet/Profile Section */}
-          <div className="px-4 pt-4 pb-4 border-b border-gray-200">
-            {isConnected ? (
-              <div className="space-y-3">
-                {/* Connected User Profile Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2.5">
-                    {account ? (
-                      <Avatar
-                        {...createUserAvatarConfig({
-                          id: account.id,
-                          publicKey: address || account.publicKey,
-                          name: account.username,
-                          avatar: account.avatar,
-                        }, 'md')}
-                      />
-                    ) : (
-                      <Avatar
-                        src={null}
-                        alt="User avatar"
-                        size="md"
-                        fallbackText="??"
-                        gradientColors="from-gray-400 to-gray-500"
-                      />
+        <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-5">
+          {/* Profile / connect */}
+          {isConnected ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 rounded-xl bg-white p-3">
+                {account ? (
+                  <Avatar
+                    {...createUserAvatarConfig(
+                      {
+                        id: account.id,
+                        publicKey: address || account.publicKey,
+                        name: account.username,
+                        avatar: account.avatar,
+                      },
+                      "md",
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-black text-sm truncate">
-                        {suiNSLoading ? 'Loading...' : primary}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-600 truncate font-mono">
-                          {secondary || primary}
-                        </span>
-                        <button
-                          onClick={handleCopyAddress}
-                          disabled={copying}
-                          className="p-0.5 rounded hover:bg-white/50 transition-colors shrink-0"
-                          title={copying ? 'Copied!' : 'Copy address'}
-                        >
-                          {copying ? (
-                            <HiCheck className="size-3 text-green-600" />
-                          ) : (
-                            <HiClipboard className="size-3 text-gray-400 hover:text-gray-600" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                  />
+                ) : (
+                  <Avatar
+                    src={null}
+                    alt="User avatar"
+                    size="md"
+                    fallbackText="??"
+                    gradientColors="from-gray-400 to-gray-500"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground text-sm truncate">
+                    {suiNSLoading ? "Loading…" : primary}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500 truncate font-mono">
+                      {secondary || primary}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      disabled={copying}
+                      className="p-0.5 rounded hover:bg-gray-100 transition-colors shrink-0"
+                      title={copying ? "Copied!" : "Copy address"}
+                    >
+                      {copying ? (
+                        <HiCheck className="size-3 text-green-600" />
+                      ) : (
+                        <HiClipboard className="size-3 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Account Section */}
-                <div>
-                  <div className="pb-1.5">
-                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-                      Account
+              {/* Quick actions — the desktop profile-menu shortcuts */}
+              <div className="grid grid-cols-3 gap-2">
+                <SheetClose asChild>
+                  <Link href={ROUTES.PROFILE} className={QUICK_TILE}>
+                    <span className={QUICK_TILE_ICON}>
+                      <HiUser className="size-5 text-primary" />
                     </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <SheetClose asChild>
-                      <Link href={ROUTES.PROFILE}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start gap-2 text-xs h-9"
-                        >
-                          <HiUser className="size-3.5" />
-                          <span className="truncate">My Profile</span>
-                        </Button>
-                      </Link>
-                    </SheetClose>
-
-                    <SheetClose asChild>
-                      <Link href={ROUTES.INVITES}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start gap-2 text-xs h-9"
-                        >
-                          <HiTicket className="size-3.5" />
-                          <span className="truncate">Your Invites</span>
-                        </Button>
-                      </Link>
-                    </SheetClose>
-
-                    {hasPublications && firstPublication ? (
-                      <SheetClose asChild>
-                        <Link href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start gap-2 text-xs h-9"
-                          >
-                            <HiCog6Tooth className="size-3.5" />
-                            <span className="truncate">Publication</span>
-                          </Button>
-                        </Link>
-                      </SheetClose>
-                    ) : (
-                      <SheetClose asChild>
-                        <Link href="/create-publication">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start gap-2 text-xs h-9"
-                            disabled={publicationsLoading}
-                          >
-                            <HiPlus className="size-3.5" />
-                            <span className="truncate">{publicationsLoading ? 'Loading...' : 'Create Pub'}</span>
-                          </Button>
-                        </Link>
-                      </SheetClose>
-                    )}
-                  </div>
-                </div>
-
-                {/* Wallet Section */}
-                <div>
-                  <div className="pb-1.5">
-                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-                      Wallet
+                    <span className={QUICK_TILE_LABEL}>Profile</span>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    href={
+                      hasPublications && firstPublication
+                        ? ROUTES.PUBLICATION_WITH_ID(firstPublication.publicationId)
+                        : "/create-publication"
+                    }
+                    className={QUICK_TILE}
+                  >
+                    <span className={QUICK_TILE_ICON}>
+                      {hasPublications && firstPublication ? (
+                        <HiNewspaper className="size-5 text-primary" />
+                      ) : (
+                        <HiPlus className="size-5 text-primary" />
+                      )}
                     </span>
-                  </div>
-                  {CONFIG.ONRAMP_URL && (
-                    <SheetClose asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleOnRamp}
-                        className="w-full justify-start gap-2 text-xs h-9"
-                      >
-                        <HiBanknotes className="size-3.5" />
-                        <span className="flex-1 text-left truncate">On-Ramp</span>
-                        <HiArrowTopRightOnSquare className="size-3 text-gray-400" />
-                      </Button>
-                    </SheetClose>
+                    <span className={QUICK_TILE_LABEL}>
+                      {hasPublications && firstPublication
+                        ? "Publication"
+                        : "New pub"}
+                    </span>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link href={ROUTES.INVITES} className={QUICK_TILE}>
+                    <span className={QUICK_TILE_ICON}>
+                      <HiTicket className="size-5 text-primary" />
+                    </span>
+                    <span className={QUICK_TILE_LABEL}>Invites</span>
+                  </Link>
+                </SheetClose>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-white p-4 text-center">
+              <h3 className="font-semibold text-foreground text-sm mb-1">
+                Connect wallet
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Connect to read, write, and earn.
+              </p>
+              <ConnectButton />
+            </div>
+          )}
+
+          {/* Browse — mirrors the desktop left nav */}
+          <nav className="space-y-0.5">
+            {navItems.map((item) => (
+              <SheetClose asChild key={item.id}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    ROW,
+                    item.active
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-gray-100 text-foreground",
                   )}
-                </div>
-
-                {/* Sign Out Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDisconnect}
-                  className="w-full justify-start gap-2 text-xs h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-colors"
                 >
-                  <HiArrowRightOnRectangle className="size-3.5" />
-                  Sign Out
-                </Button>
+                  <item.icon className="size-4 shrink-0" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              </SheetClose>
+            ))}
+          </nav>
+
+          {/* Categories */}
+          <div className="space-y-0.5">
+            <Eyebrow>Categories</Eyebrow>
+            {categoriesLoading ? (
+              <div className="space-y-0.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-2.5 px-2.5 py-2">
+                    <Skeleton className="size-4 rounded" />
+                    <Skeleton className="h-3.5 flex-1" />
+                  </div>
+                ))}
               </div>
             ) : (
-              /* Disconnected State - Show Connect Button - More Compact */
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 text-center">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-black text-sm mb-1">Connect Wallet</h3>
-                <p className="text-xs text-gray-600 mb-3">
-                  Connect to access features
-                </p>
-                <ConnectButton />
-              </div>
+              categories.map((category) => {
+                const { icon: CategoryIcon, color } = getCategoryIcon(
+                  category.slug,
+                )
+                const active = activeCategory === category.slug
+                return (
+                  <SheetClose asChild key={category.id}>
+                    <Link
+                      href={ROUTES.FEED_CATEGORY(category.slug)}
+                      className={cn(
+                        ROW,
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-gray-100 text-foreground",
+                      )}
+                    >
+                      <CategoryIcon
+                        className={cn(
+                          "size-4 shrink-0",
+                          active ? "text-primary" : color,
+                        )}
+                      />
+                      <span className="font-medium">{category.name}</span>
+                    </Link>
+                  </SheetClose>
+                )
+              })
             )}
           </div>
 
-          {/* Navigation */}
-          <div className="flex-1 overflow-y-auto py-5 space-y-5">
-            {/* Main Navigation */}
-            <div className="space-y-1">
+          {/* Publication settings — owner-only, kept out of the quick tiles */}
+          {isConnected && hasPublications && firstPublication && (
+            <div className="space-y-0.5">
+              <Eyebrow>Manage</Eyebrow>
               <SheetClose asChild>
-                <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xl">👑</div>
-                    <span className="font-medium text-black">Popular</span>
-                  </div>
-                </button>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <button className="w-full px-4 py-3 rounded-lg text-left bg-blue-50 hover:bg-blue-100 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">⚡</div>
-                      <span className="font-medium text-black">Fresh</span>
-                    </div>
-                    <div className="size-2 bg-primary rounded-full"></div>
-                  </div>
-                </button>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Link href={ROUTES.FEED_MY_FEED}>
-                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">🖱️</div>
-                      <span className="font-medium text-black">My feed</span>
-                    </div>
-                  </button>
-                </Link>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Link href={ROUTES.FEED_BOOKMARKS}>
-                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">🔖</div>
-                      <span className="font-medium text-black">Bookmarks</span>
-                    </div>
-                  </button>
-                </Link>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Link href={ROUTES.LEADERBOARD}>
-                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">🏆</div>
-                      <span className="font-medium text-black">Leaderboard</span>
-                    </div>
-                  </button>
-                </Link>
-              </SheetClose>
-
-              <SheetClose asChild>
-                <Link href={ROUTES.QUESTS}>
-                  <button className="w-full px-4 py-3 rounded-lg text-left hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-xl">🚀</div>
-                      <span className="font-medium text-black">Quests</span>
-                    </div>
-                  </button>
+                <Link
+                  href={ROUTES.PUBLICATION_SETTINGS(firstPublication.publicationId)}
+                  className={cn(ROW, "hover:bg-gray-100 text-foreground")}
+                >
+                  <HiCog6Tooth className="size-4 shrink-0 text-gray-500" />
+                  <span className="font-medium">Publication settings</span>
                 </Link>
               </SheetClose>
             </div>
+          )}
 
-            {/* Topics */}
-            <div className="space-y-2">
-              <div className="px-4 pb-1">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Topics</h3>
-              </div>
-
-              <div className="space-y-1">
-                {topics.map((topic) => (
-                  <SheetClose key={topic.name} asChild>
-                    <button className="w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className={`size-5 rounded-lg ${topic.color}`} />
-                        <span className="text-sm font-medium text-black">{topic.name}</span>
-                      </div>
-                    </button>
-                  </SheetClose>
-                ))}
-              </div>
+          {/* Wallet */}
+          {isConnected && (
+            <div className="space-y-0.5">
+              <Eyebrow>Wallet</Eyebrow>
+              <button
+                type="button"
+                onClick={() => setShowMobileConnect(true)}
+                className={cn(ROW, "hover:bg-gray-100 text-foreground")}
+              >
+                <HiDevicePhoneMobile className="size-4 shrink-0 text-gray-500" />
+                <span className="font-medium">Mobile connect</span>
+              </button>
+              {CONFIG.ONRAMP_URL && (
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={handleOnRamp}
+                    className={cn(ROW, "hover:bg-gray-100 text-foreground")}
+                  >
+                    <HiBanknotes className="size-4 shrink-0 text-gray-500" />
+                    <span className="font-medium flex-1">On-ramp</span>
+                    <HiArrowTopRightOnSquare className="size-3 text-gray-400" />
+                  </button>
+                </SheetClose>
+              )}
             </div>
+          )}
 
-            {/* Inkray.xyz */}
-            <div className="space-y-2 pb-4">
-              <div className="px-4 pb-1">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inkray.xyz</h3>
-              </div>
-
-              <div className="space-y-1">
-                <SheetClose asChild>
-                  <button className="w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-lg">ℹ️</div>
-                      <span className="text-sm font-medium text-black">About the project</span>
-                    </div>
-                  </button>
-                </SheetClose>
-                <SheetClose asChild>
-                  <button className="w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-lg">📋</div>
-                      <span className="text-sm font-medium text-black">Rules</span>
-                    </div>
-                  </button>
-                </SheetClose>
-                <SheetClose asChild>
-                  <button className="w-full px-4 py-2.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-lg">⭐</div>
-                      <span className="text-sm font-medium text-black">Advertising</span>
-                    </div>
-                  </button>
-                </SheetClose>
-              </div>
-            </div>
+          {/* Inkray.xyz */}
+          <div className="space-y-0.5">
+            <Eyebrow>Inkray.xyz</Eyebrow>
+            {inkrayLinks.map((link) => (
+              <SheetClose asChild key={link.id}>
+                <Link href={link.href} className={cn(ROW, "hover:bg-gray-100 text-foreground")}>
+                  <link.icon className="size-4 shrink-0 text-gray-500" />
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </SheetClose>
+            ))}
           </div>
+
+          {/* Sign out */}
+          {isConnected && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                className={cn(
+                  ROW,
+                  "text-red-600 hover:bg-red-50 hover:text-red-700",
+                )}
+              >
+                <HiArrowRightOnRectangle className="size-4 shrink-0" />
+                <span className="font-medium">Sign out</span>
+              </button>
+            </div>
+          )}
         </div>
       </SheetContent>
+
+      <MobileConnectPopup
+        open={showMobileConnect}
+        onOpenChange={setShowMobileConnect}
+      />
     </Sheet>
   )
 }

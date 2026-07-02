@@ -361,8 +361,8 @@ function ArticlePageContent() {
               <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8">
                 <div className="space-y-6">
                   {/* Article Author - Publication Style */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
                       <Avatar
                         {...(article.followInfo?.publicationAvatar
                           ? createPublicationAvatarConfig(
@@ -400,7 +400,7 @@ function ArticlePageContent() {
                           {article.followInfo?.isVerified && <VerifiedBadge size="sm" />}
                         </div>
                         {/* Author & Meta - Secondary */}
-                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <div className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
                           <span>By</span>
                           {article.author ? (
                             <AddressDisplay
@@ -433,7 +433,7 @@ function ArticlePageContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 sm:gap-3 flex-wrap sm:flex-nowrap sm:shrink-0">
                       {/* Like Button */}
                       {article.articleId && (
                         <LikeButton

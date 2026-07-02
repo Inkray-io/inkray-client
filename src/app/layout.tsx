@@ -14,7 +14,7 @@ import { CacheProvider } from '@/components/providers/CacheProvider'
 import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { OnboardingModal, ProfileCompletionPrompt } from '@/components/onboarding'
-import { ChatModal } from '@/components/chat'
+// import { ChatModal } from '@/components/chat' // chat launcher hidden for now
 import { ChatProvider } from '@/components/chat/ChatProvider'
 
 export const metadata: Metadata = {
@@ -137,7 +137,8 @@ export default function RootLayout({
                   <Toaster />
                   <OnboardingModal />
                   <ProfileCompletionPrompt />
-                  <ChatModal />
+                  {/* Chat launcher hidden for now — re-enable by restoring <ChatModal /> */}
+                  {/* <ChatModal /> */}
                 </ChatProvider>
               </AuthProvider>
             </WalletChangeProvider>

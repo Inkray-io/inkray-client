@@ -3,6 +3,7 @@
 import { ReactNode, Suspense } from "react"
 import { AppHeader } from "./AppHeader"
 import { AppSidebar } from "./AppSidebar"
+import { MobileBottomNav } from "./MobileBottomNav"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -56,6 +57,13 @@ export function AppLayout({
             )}
           </div>
         </div>
+
+        {/* Mobile bottom navigation (hidden on lg+, where the left sidebar shows) */}
+        {isAuthenticated && (
+          <Suspense>
+            <MobileBottomNav />
+          </Suspense>
+        )}
       </div>
   )
 }
