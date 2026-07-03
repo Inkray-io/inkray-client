@@ -89,9 +89,13 @@ export function notificationHref(n: Notification): string | null {
       return ROUTES.DRAFTS;
     // Audience → the person / your publication
     case 'NEW_FOLLOWER':
+      // Fall back to the followed publication when the follower identity
+      // isn't in the payload (legacy rows, or the follower unfollowed)
       return p.follower?.publicKey
         ? ROUTES.PROFILE_WITH_ID(p.follower.publicKey)
-        : null;
+        : p.publication?.id
+          ? ROUTES.PUBLICATION_WITH_ID(p.publication.id)
+          : null;
     case 'NEW_SUBSCRIBER':
       return p.publication?.address
         ? ROUTES.PUBLICATION_WITH_ID(p.publication.address)
