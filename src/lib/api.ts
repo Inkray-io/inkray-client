@@ -504,6 +504,8 @@ export const notificationsAPI = {
   getPaginated: (page: number = 1, limit: number = 20) =>
       api.get('/notifications', { params: { page, limit } }),
   markAllAsRead: () => api.patch('/notifications/all/seen'),
+  // Batch-mark specific notifications as seen (popup visibility tracking)
+  markAsSeen: (ids: string[]) => api.patch('/notifications/seen', { ids }),
 };
 
 export const draftsAPI = {
