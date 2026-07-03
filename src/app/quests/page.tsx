@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -197,26 +199,19 @@ function AchievementsSection() {
   }
 
   const achievements = data?.achievements ?? [];
-  if (achievements.length === 0) return null;
-
-  const earnedCount = achievements.filter((a) => a.earned).length;
+  if (achievements.length === 0) {
+    return (
+      <div className="bg-card border rounded-xl p-8 text-center">
+        <p className="text-sm text-muted-foreground">No achievements available yet.</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <Award className="size-4 text-violet-500" />
-        <h2 className="font-semibold text-foreground">
-          Achievements
-          <span className="text-muted-foreground font-normal ml-1">
-            ({earnedCount}/{achievements.length})
-          </span>
-        </h2>
-      </div>
-      <div className="space-y-2.5">
-        {achievements.map((item) => (
-          <AchievementRow key={item.key} item={item} />
-        ))}
-      </div>
+    <div className="space-y-2.5">
+      {achievements.map((item) => (
+        <AchievementRow key={item.key} item={item} />
+      ))}
     </div>
   );
 }
@@ -594,10 +589,14 @@ function XpSummarySection() {
   );
 }
 
+type QuestTab = 'active' | 'recurring' | 'achievements' | 'completed';
+
 export default function QuestsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { data: quests, isLoading: questsLoading } = useQuests();
+  const { data: overview } = useQuestsOverview();
+  const [tab, setTab] = useState<QuestTab>('active');
 
   // Auth guard
   if (!authLoading && !isAuthenticated) {
@@ -617,6 +616,36 @@ export default function QuestsPage() {
 
   const completedQuests = quests?.filter((q) => q.isCompleted) || [];
   const activeQuests = quests?.filter((q) => !q.isCompleted) || [];
+
+  const achievements = overview?.achievements ?? [];
+  const earnedAchievements = achievements.filter((a) => a.earned).length;
+
+  const tabs: {
+    id: QuestTab;
+    label: string;
+    icon: typeof Target;
+    badge: string | null;
+  }[] = [
+    {
+      id: 'active',
+      label: 'Active',
+      icon: Target,
+      badge: activeQuests.length > 0 ? String(activeQuests.length) : null,
+    },
+    { id: 'recurring', label: 'Recurring', icon: Repeat2, badge: null },
+    {
+      id: 'achievements',
+      label: 'Achievements',
+      icon: Award,
+      badge: achievements.length > 0 ? `${earnedAchievements}/${achievements.length}` : null,
+    },
+    {
+      id: 'completed',
+      label: 'Completed',
+      icon: Check,
+      badge: completedQuests.length > 0 ? String(completedQuests.length) : null,
+    },
+  ];
 
   return (
     <AppLayout currentPage="quests">
@@ -640,8 +669,8 @@ export default function QuestsPage() {
           </div>
         </motion.div>
 
-        <div className="space-y-6">
-          {/* XP Summary */}
+        <div className="space-y-5">
+          {/* Status dashboard — always visible */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -650,7 +679,6 @@ export default function QuestsPage() {
             <XpSummarySection />
           </motion.div>
 
-          {/* Daily Streak */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -659,130 +687,138 @@ export default function QuestsPage() {
             <DailyStreakSection />
           </motion.div>
 
-          {/* X Connection */}
+          {/* Tabs — one list at a time instead of a long scroll */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <XConnectionSection />
-          </motion.div>
-
-          {/* Active Quests */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="size-4 text-primary" />
-              <h2 className="font-semibold text-foreground">
-                Active Quests
-                {activeQuests.length > 0 && (
-                  <span className="text-muted-foreground font-normal ml-1">
-                    ({activeQuests.length})
-                  </span>
-                )}
-              </h2>
+            <div className="flex border-b border-gray-200 overflow-x-auto">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    'relative flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
+                    tab === t.id
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <t.icon
+                    className={cn('size-4', tab === t.id && 'text-primary')}
+                  />
+                  {t.label}
+                  {t.badge && (
+                    <span
+                      className={cn(
+                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                        tab === t.id
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {t.badge}
+                    </span>
+                  )}
+                  {tab === t.id && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
+                  )}
+                </button>
+              ))}
             </div>
 
-            {questsLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-card border rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <Skeleton className="size-10 rounded-xl" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="h-3 w-32" />
-                      </div>
-                      <Skeleton className="h-7 w-14 rounded-lg" />
+            {/* Tab content */}
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="pt-4"
+            >
+              {tab === 'active' && (
+                <div className="space-y-4">
+                  {/* X connection is the prerequisite for X quests — lives with them */}
+                  <XConnectionSection />
+
+                  {questsLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-card border rounded-xl p-4">
+                          <div className="flex items-start gap-3">
+                            <Skeleton className="size-10 rounded-xl" />
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-3 w-16" />
+                              <Skeleton className="h-4 w-48" />
+                              <Skeleton className="h-3 w-32" />
+                            </div>
+                            <Skeleton className="h-7 w-14 rounded-lg" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  ) : activeQuests.length > 0 ? (
+                    <div className="space-y-3">
+                      {activeQuests.map((quest, i) => (
+                        <motion.div
+                          key={quest.id}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.05 + i * 0.05 }}
+                        >
+                          <QuestCard quest={quest} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-card border rounded-xl p-8 text-center">
+                      <div className="size-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                        <Sparkles className="size-7 text-gray-400" />
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        No active quests right now
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Check the Recurring tab for everyday ways to earn XP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tab === 'recurring' && <RecurringQuestsSection />}
+
+              {tab === 'achievements' && <AchievementsSection />}
+
+              {tab === 'completed' &&
+                (completedQuests.length > 0 ? (
+                  <div className="bg-card border rounded-xl overflow-hidden divide-y divide-gray-100">
+                    {completedQuests.map((quest, i) => (
+                      <motion.div
+                        key={quest.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.05 + i * 0.03 }}
+                      >
+                        <CompletedQuestRow quest={quest} />
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-card border rounded-xl p-8 text-center">
+                    <div className="size-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                      <Check className="size-7 text-gray-400" />
+                    </div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Nothing completed yet
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Finish a quest and it lands here
+                    </p>
                   </div>
                 ))}
-              </div>
-            ) : activeQuests.length > 0 ? (
-              <div className="space-y-3">
-                {activeQuests.map((quest, i) => (
-                  <motion.div
-                    key={quest.id}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.25 + i * 0.05 }}
-                  >
-                    <QuestCard quest={quest} />
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-card border rounded-xl p-8 text-center">
-                <div className="size-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="size-7 text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  No active quests right now
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Check back later for new quests
-                </p>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Recurring Quests (built-in repeatable XP actions) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Repeat2 className="size-4 text-primary" />
-              <h2 className="font-semibold text-foreground">Recurring Quests</h2>
-            </div>
-            <RecurringQuestsSection />
-          </motion.div>
-
-          {/* Achievements (one-time) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <AchievementsSection />
-          </motion.div>
-
-          {/* Completed Quests */}
-          {completedQuests.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Check className="size-4 text-green-500" />
-                <h2 className="font-semibold text-foreground">
-                  Completed
-                  <span className="text-muted-foreground font-normal ml-1">
-                    ({completedQuests.length})
-                  </span>
-                </h2>
-              </div>
-
-              <div className="bg-card border rounded-xl overflow-hidden divide-y divide-gray-100">
-                {completedQuests.map((quest, i) => (
-                  <motion.div
-                    key={quest.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 + i * 0.03 }}
-                  >
-                    <CompletedQuestRow quest={quest} />
-                  </motion.div>
-                ))}
-              </div>
             </motion.div>
-          )}
+          </motion.div>
         </div>
       </div>
     </AppLayout>
