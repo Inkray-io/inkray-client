@@ -56,6 +56,17 @@ export default function NotificationsBell() {
     if (!open) refetch();
   };
 
+  // Opening a notification counts as reading it — mark it seen and close
+  const handleNavigate = (n: Notification) => {
+    setOpen(false);
+    if (!n.readAt) {
+      notificationsAPI
+        .markAsSeen([n.id])
+        .then(() => mutateCount())
+        .catch(() => {});
+    }
+  };
+
   const handleMarkAllRead = async () => {
     await notificationsAPI.markAllAsRead();
     setAllSeen(notifications.map((n) => n.id));
@@ -135,6 +146,7 @@ export default function NotificationsBell() {
                       unread={isUnread(n)}
                       observeRow={observeRow}
                       size="sm"
+                      onNavigate={handleNavigate}
                     />
                   ))}
 

@@ -62,6 +62,16 @@ function NotificationsPageContent() {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, notifications.length]);
 
+  // Opening a notification counts as reading it
+  const handleNavigate = (n: Notification) => {
+    if (!n.readAt) {
+      notificationsAPI
+        .markAsSeen([n.id])
+        .then(() => mutateCount())
+        .catch(() => {});
+    }
+  };
+
   const handleMarkAllRead = async () => {
     await notificationsAPI.markAllAsRead();
     setAllSeen(notifications.map((n) => n.id));
@@ -156,6 +166,7 @@ function NotificationsPageContent() {
                     unread={isUnread(n)}
                     observeRow={observeRow}
                     size="md"
+                    onNavigate={handleNavigate}
                   />
                 ))}
               </div>

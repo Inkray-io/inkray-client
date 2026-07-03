@@ -1,6 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { HiChevronRight } from 'react-icons/hi2';
+import { ROUTES } from '@/constants/routes';
 import {
   HiBell,
   HiHeart,
@@ -65,6 +68,49 @@ export const CATEGORY_OF: Record<string, keyof typeof CATEGORY> = {
   TIER_PROMOTED: 'rewards',
 };
 
+/**
+ * Where a notification should take you when clicked. Returns null when the
+ * payload doesn't carry a routable identifier (e.g. legacy rows created
+ * before payloads included slugs/addresses) — those rows render non-clickable.
+ */
+export function notificationHref(n: Notification): string | null {
+  const p = (n.payload ?? {}) as Record<string, any>;
+  switch (n.type) {
+    // Engagement + earnings + published → open the article
+    case 'ARTICLE_LIKED':
+    case 'ARTICLE_COMMENTED':
+    case 'ARTICLE_BOOKMARKED':
+    case 'ARTICLE_TIP':
+    case 'ARTICLE_PUBLISHED':
+      return p.article?.slug ? ROUTES.ARTICLE_WITH_ID(p.article.slug) : null;
+    case 'SCHEDULED_ARTICLE_PUBLISHED':
+      return p.slug ? ROUTES.ARTICLE_WITH_ID(p.slug) : null;
+    case 'SCHEDULED_ARTICLE_FAILED':
+      return ROUTES.DRAFTS;
+    // Audience → the person / your publication
+    case 'NEW_FOLLOWER':
+      return p.follower?.publicKey
+        ? ROUTES.PROFILE_WITH_ID(p.follower.publicKey)
+        : null;
+    case 'NEW_SUBSCRIBER':
+      return p.publication?.address
+        ? ROUTES.PUBLICATION_WITH_ID(p.publication.address)
+        : null;
+    // Invites → the new member, or your codes
+    case 'INVITE_REDEEMED':
+      return p.redeemedBy?.publicKey
+        ? ROUTES.PROFILE_WITH_ID(p.redeemedBy.publicKey)
+        : ROUTES.INVITES;
+    case 'INVITE_CODES_GRANTED':
+      return ROUTES.INVITES;
+    // Rewards → see where you stand
+    case 'TIER_PROMOTED':
+      return ROUTES.LEADERBOARD;
+    default:
+      return null;
+  }
+}
+
 interface NotificationRowProps {
   notification: Notification;
   unread: boolean;
@@ -72,6 +118,8 @@ interface NotificationRowProps {
   observeRow?: (el: HTMLElement | null, notification: Notification) => void;
   /** 'sm' for the bell popup, 'md' for the full page */
   size?: 'sm' | 'md';
+  /** Called when a clickable row is opened (close popup, mark seen, …) */
+  onNavigate?: (n: Notification) => void;
 }
 
 /**
@@ -84,21 +132,16 @@ export function NotificationRow({
   unread,
   observeRow,
   size = 'sm',
+  onNavigate,
 }: NotificationRowProps) {
   const style = TYPE_STYLE[n.type] ?? DEFAULT_STYLE;
   const Icon = style.icon;
   const category = CATEGORY[CATEGORY_OF[n.type] ?? ''];
   const md = size === 'md';
+  const href = notificationHref(n);
 
-  return (
-    <div
-      ref={observeRow ? (el) => observeRow(el, n) : undefined}
-      className={cn(
-        'flex items-start gap-3 transition-colors',
-        md ? 'px-5 py-4' : 'px-4 py-3',
-        unread && 'bg-primary/3',
-      )}
-    >
+  const content = (
+    <>
       <span className="relative mt-0.5 shrink-0">
         <span
           className={cn(
@@ -149,6 +192,43 @@ export function NotificationRow({
           aria-label="Unread"
         />
       )}
+      {href && (
+        <HiChevronRight
+          className={cn(
+            'mt-2 size-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover/notif:opacity-100',
+            !unread && 'ml-auto',
+          )}
+        />
+      )}
+    </>
+  );
+
+  const rowClass = cn(
+    'flex items-start gap-3 transition-colors',
+    md ? 'px-5 py-4' : 'px-4 py-3',
+    unread && 'bg-primary/3',
+    href && 'group/notif cursor-pointer hover:bg-gray-50',
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        ref={observeRow ? (el) => observeRow(el, n) : undefined}
+        onClick={() => onNavigate?.(n)}
+        className={rowClass}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      ref={observeRow ? (el) => observeRow(el, n) : undefined}
+      className={rowClass}
+    >
+      {content}
     </div>
   );
 }
