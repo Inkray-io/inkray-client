@@ -40,6 +40,27 @@ const CELL = 2; // pixel size in viewBox units (integers keep edges crisp)
 const PAD = 3; // margin so the content stays well inside the circular crop
 const SIZE = GRID * CELL + PAD * 2; // 16
 
+/**
+ * The deterministic hue for a seed — the same value the identicon uses
+ * (first draw of its PRNG), exported so other identity surfaces (masthead
+ * banners) can share the exact color family.
+ */
+export function identityHue(seed: string): number {
+  const rand = mulberry32(hashSeed((seed || '').toLowerCase()));
+  return Math.floor(rand() * 360);
+}
+
+/**
+ * Masthead banner gradient for a seed. Same hue family as the identicon but
+ * rich and saturated (L 40–55%), while the identicon body stays pale
+ * (L 94% + white ring) — so avatar-on-banner contrast holds by construction.
+ */
+export function mastheadGradient(seed: string): string {
+  const h = identityHue(seed);
+  const h2 = (h + 40) % 360;
+  return `linear-gradient(135deg, hsl(${h}, 62%, 55%), hsl(${h2}, 64%, 40%))`;
+}
+
 export interface IdenticonProps {
   /** Address or publication id — the deterministic seed. */
   seed: string;

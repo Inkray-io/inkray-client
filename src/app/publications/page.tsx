@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BackButton } from "@/components/ui/BackButton"
 import { ROUTES } from "@/constants/routes"
-import { cn } from "@/lib/utils"
+import { mastheadGradient } from "@/components/ui/Identicon"
 import { useRouter } from "next/navigation"
 import { Loader2, Search, Users, FileText, AlertCircle, RefreshCw, Globe } from "lucide-react"
 import { FaXTwitter, FaGithub, FaDiscord, FaTelegram } from "react-icons/fa6"
@@ -142,12 +142,15 @@ function PublicationsPageContent() {
                   onClick={() => router.push(ROUTES.PUBLICATION_WITH_ID(publication.id))}
                   className="group flex flex-col bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all text-left w-full overflow-hidden"
                 >
-                  {/* Masthead — each publication's own gradient identity */}
+                  {/* Masthead — same deterministic hue family as the
+                      publication's identicon (and its page masthead) */}
                   <div
-                    className={cn(
-                      "relative h-20 bg-linear-to-br",
-                      publication.avatarConfig.gradientColors,
-                    )}
+                    className="relative h-20"
+                    style={{
+                      background: mastheadGradient(
+                        publication.avatarConfig.seed ?? publication.id,
+                      ),
+                    }}
                   >
                     <span className="absolute top-2.5 right-2.5 rounded-full bg-white/85 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-gray-700 shadow-sm">
                       {priceLabel}

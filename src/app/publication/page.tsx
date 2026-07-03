@@ -148,10 +148,10 @@ const PublicationPageContent: React.FC = () => {
       showRightSidebar={true}
     >
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-        {/* Publication Profile Section */}
-        {publication && (
+        {/* Publication Profile Section (masthead skeleton while loading) */}
+        {(publication || publicationLoading) && (
           <PublicationHeader
-            publication={publication}
+            publication={publication as NonNullable<typeof publication>}
             isLoading={publicationLoading}
             isOwner={isOwner}
             onEditClick={() => setIsEditModalOpen(true)}

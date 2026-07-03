@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { addressesEqual } from '@/utils/address';
 import { HiPencil, HiDocumentText, HiUserGroup } from 'react-icons/hi2';
 import { log } from '@/lib/utils/Logger';
-import { cn } from '@/lib/utils';
+import { mastheadGradient } from '@/components/ui/Identicon';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface PublicationHeaderProps {
@@ -34,21 +34,20 @@ function StatItem({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5 text-gray-500 group/stat">
-      <div className="flex items-center justify-center w-5 h-5 rounded-md bg-primary/5 group-hover/stat:bg-primary/10 transition-colors">
-        <Icon className="w-3 h-3 text-primary/80" />
-      </div>
-      <span className="font-semibold text-gray-800 text-sm tabular-nums">{value.toLocaleString()}</span>
-      <span className="text-xs text-gray-400">{label}</span>
-    </div>
+    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+      <Icon className="size-3.5" />
+      <span className="tabular-nums font-semibold text-gray-700 text-sm">
+        {value.toLocaleString()}
+      </span>
+      {label}
+    </span>
   );
 }
 
 /**
- * Publication header component matching user profile layout
- *
- * Features avatar with gradient ring, publication info, description,
- * subscriber count, and action buttons.
+ * Publication masthead — the identity card from /publications discovery,
+ * expanded: the publication's deterministic gradient banner with the emblem
+ * overlapping, name + actions, description, and the muted stats row.
  */
 export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   publication,
@@ -93,16 +92,15 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
 
   if (isLoading) {
     return (
-      <div className="px-5 py-4">
-        <div className="flex items-start gap-4">
-          <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="w-40 h-6" />
-            <Skeleton className="w-full h-10 mt-1" />
-            <div className="flex gap-4 mt-2">
-              <Skeleton className="w-24 h-4" />
-              <Skeleton className="w-20 h-4" />
-            </div>
+      <div>
+        <Skeleton className="h-20 w-full rounded-none" />
+        <div className="px-5 pb-4">
+          <Skeleton className="size-20 rounded-full -mt-10 ring-4 ring-white" />
+          <Skeleton className="w-44 h-6 mt-3" />
+          <Skeleton className="w-full h-10 mt-3" />
+          <div className="flex gap-4 mt-3">
+            <Skeleton className="w-24 h-4" />
+            <Skeleton className="w-20 h-4" />
           </div>
         </div>
       </div>
@@ -111,91 +109,97 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
 
   if (!publication) return null;
 
-  const avatarConfig = createPublicationAvatarConfig(publication, 'xl');
+  // 'lg' base size — overridden to w-20 below (the 'xl' variant carries
+  // responsive sm:w-25 classes that would fight the masthead overlap)
+  const avatarConfig = createPublicationAvatarConfig(publication, 'lg');
 
   return (
-    <div className="px-5 py-4">
-      <div className="flex items-start gap-4">
-        {/* Avatar */}
-        <div className="flex-shrink-0">
-          <Avatar
-            src={avatarConfig.src}
-            alt={avatarConfig.alt}
-            fallbackText={avatarConfig.fallbackText}
-            className="w-16 h-16"
-          />
+    <div>
+      {/* Masthead — same deterministic hue family as the publication's
+          identicon, matching its card on the /publications discovery grid */}
+      <div
+        className="h-20"
+        style={{ background: mastheadGradient(avatarConfig.seed) }}
+      />
+
+      <div className="px-5 pb-4">
+        <div className="flex items-end justify-between gap-3">
+          {/* Emblem overlapping the masthead (z-10 so the banner doesn't paint over it) */}
+          <div className="relative z-10 -mt-10 shrink-0">
+            <Avatar
+              {...avatarConfig}
+              className="w-20 h-20 ring-4 ring-white shadow-sm"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 shrink-0 mt-3">
+            {isOwner ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onEditClick}
+                className="gap-1.5 h-8 px-3 text-xs font-medium rounded-lg border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
+              >
+                <HiPencil className="w-3.5 h-3.5" />
+                Edit publication
+              </Button>
+            ) : (
+              <>
+                <FollowButton
+                  isFollowing={isFollowing}
+                  isLoading={followLoading}
+                  followerCount={followerCount}
+                  onToggleFollow={handleToggleFollow}
+                  showFollowerCount={false}
+                />
+                <PublicationTipButton
+                  publicationId={publication.id}
+                  publicationName={publication.name}
+                />
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0 pt-0.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight truncate">
-                  {publication.name}
-                </h1>
-                {publication.isVerified && <VerifiedBadge size="lg" />}
-              </div>
-            </div>
+        {/* Identity */}
+        <div className="mt-2.5 flex items-center gap-1.5 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight truncate">
+            {publication.name}
+          </h1>
+          {publication.isVerified && <VerifiedBadge size="lg" />}
+        </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              {isOwner ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onEditClick}
-                  className={cn(
-                    'gap-1.5 h-8 px-3 text-xs font-medium rounded-lg',
-                    'border-gray-200 hover:border-primary/50',
-                    'hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-500/5',
-                    'hover:shadow-sm transition-all duration-200'
-                  )}
-                >
-                  <HiPencil className="w-3.5 h-3.5" />
-                  Edit
-                </Button>
-              ) : (
-                <>
-                  <FollowButton
-                    isFollowing={isFollowing}
-                    isLoading={followLoading}
-                    followerCount={followerCount}
-                    onToggleFollow={handleToggleFollow}
-                    showFollowerCount={false}
-                  />
-                  <PublicationTipButton
-                    publicationId={publication.id}
-                    publicationName={publication.name}
-                  />
-                </>
-              )}
-            </div>
-          </div>
+        {/* Description — full width for room to breathe */}
+        {publication.description ? (
+          <p className="mt-2 text-sm text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-3">
+            {publication.description}
+          </p>
+        ) : (
+          isOwner && (
+            <button
+              type="button"
+              onClick={onEditClick}
+              className="mt-2 text-sm text-gray-400 hover:text-primary transition-colors text-left"
+            >
+              Add a description so readers know what this publication is about →
+            </button>
+          )
+        )}
 
-          {/* Description */}
-          {publication.description && (
-            <p className="mt-1.5 text-sm text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-2">
-              {publication.description}
-            </p>
-          )}
-
-          {/* Stats - inline with subtle dividers */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <StatItem
-              icon={HiUserGroup}
-              value={followerCount || 0}
-              label="followers"
-            />
-            <span className="w-px h-4 bg-gray-200" />
-            <StatItem
-              icon={HiDocumentText}
-              value={publication.articleCount || 0}
-              label="posts"
-            />
-            <span className="w-px h-4 bg-gray-200" />
-            <TipDisplay amount={publication.totalTips || 0} size="sm" />
-          </div>
+        {/* Stats */}
+        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <StatItem
+            icon={HiUserGroup}
+            value={followerCount || 0}
+            label={(followerCount || 0) === 1 ? 'follower' : 'followers'}
+          />
+          <StatItem
+            icon={HiDocumentText}
+            value={publication.articleCount || 0}
+            label={(publication.articleCount || 0) === 1 ? 'post' : 'posts'}
+          />
+          <TipDisplay amount={publication.totalTips || 0} size="sm" />
         </div>
       </div>
     </div>
