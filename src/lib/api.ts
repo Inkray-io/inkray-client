@@ -974,3 +974,44 @@ export const gamificationAPI = {
   disconnectX: () =>
     api.delete<ApiResponse<{ success: boolean }>>('/gamification/x/disconnect'),
 };
+
+// ============ Search API ============
+
+export interface ArticleSearchResult {
+  articleId: string;
+  title: string;
+  summary: string;
+  slug: string;
+  author: string;
+  publicationId: string;
+  publicationName: string | null;
+  categoryName: string;
+  categorySlug: string;
+  gating: number;
+  hasCover: boolean;
+  viewCount: number;
+  createdAt: string;
+}
+
+export interface PublicationSearchResult {
+  id: string;
+  name: string;
+  description: string | null;
+  avatar: string | null;
+  owner: string;
+  tags: string[];
+  isVerified: boolean;
+  followerCount: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  articles: ArticleSearchResult[];
+  publications: PublicationSearchResult[];
+}
+
+export const searchAPI = {
+  // DB-backed search across articles and publications
+  search: (q: string, type: 'all' | 'articles' | 'publications' = 'all', limit = 8) =>
+    api.get<ApiResponse<SearchResponse>>('/search', { params: { q, type, limit } }),
+};

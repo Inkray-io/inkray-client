@@ -1,16 +1,24 @@
 "use client"
 
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog"
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden"
-import { SearchBox, Hits, useInstantSearch, Configure } from "react-instantsearch"
-import { InstantSearchNext } from "react-instantsearch-nextjs"
-import { HiMagnifyingGlass, HiXMark, HiDocumentText, HiUserGroup, HiSparkles, HiCheckBadge } from "react-icons/hi2"
-import { searchClient, ARTICLES_INDEX, PUBLICATIONS_INDEX, isAlgoliaConfigured, type ArticleHit, type PublicationHit } from "@/lib/algolia"
+import {
+  HiMagnifyingGlass,
+  HiXMark,
+  HiDocumentText,
+  HiUserGroup,
+  HiSparkles,
+  HiCheckBadge,
+  HiEye,
+} from "react-icons/hi2"
+import { useSearch, MIN_SEARCH_LENGTH } from "@/hooks/useSearch"
+import type { ArticleSearchResult, PublicationSearchResult } from "@/lib/api"
+import { Avatar } from "@/components/ui/Avatar"
+import { createPublicationAvatarConfig } from "@/lib/utils/avatar"
 import { ROUTES } from "@/constants/routes"
 import { cn } from "@/lib/utils"
-import { AddressDisplay } from "@/components/ui/AddressDisplay"
 
 interface SearchModalProps {
   open: boolean
@@ -21,60 +29,61 @@ type SearchTab = "articles" | "publications"
 
 export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   const [activeTab, setActiveTab] = useState<SearchTab>("articles")
+  const [input, setInput] = useState("")
+  const [query, setQuery] = useState("")
   const router = useRouter()
 
-  const handleResultClick = useCallback((type: "article" | "publication", id: string) => {
-    onOpenChange(false)
-    if (type === "article") {
-      router.push(ROUTES.ARTICLE_WITH_ID(id))
-    } else {
-      router.push(ROUTES.PUBLICATION_WITH_ID(id))
-    }
-  }, [router, onOpenChange])
-
-  // Debounce Algolia queries so holding Backspace (or fast typing) doesn't fire a
-  // query + full results re-render on every keystroke (which froze the UI).
+  // Debounce keystrokes → query (250ms)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const queryHook = useCallback(
-    (query: string, search: (value: string) => void) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => search(query), 300)
-    },
-    [],
-  )
+  const handleInputChange = useCallback((value: string) => {
+    setInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setQuery(value), 250)
+  }, [])
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
   }, [])
 
-  if (!isAlgoliaConfigured() || !searchClient) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogPortal>
-          <DialogOverlay className="backdrop-blur-sm bg-black/60" />
-          <DialogContent
-            showCloseButton={false}
-            className="sm:max-w-2xl p-0 gap-0 overflow-hidden border-0 shadow-2xl bg-background/95 backdrop-blur-xl"
-            aria-describedby={undefined}
-          >
-            <VisuallyHidden.Root>
-              <DialogTitle>Search</DialogTitle>
-            </VisuallyHidden.Root>
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <HiMagnifyingGlass className="size-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Search Not Available</h3>
-              <p className="text-muted-foreground text-sm max-w-sm">
-                Search is not configured. Please set up Algolia environment variables.
-              </p>
-            </div>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
-    )
-  }
+  // Reset on close so reopening starts fresh
+  useEffect(() => {
+    if (!open) {
+      setInput("")
+      setQuery("")
+      setActiveTab("articles")
+    }
+  }, [open])
 
-  const currentIndex = activeTab === "articles" ? ARTICLES_INDEX : PUBLICATIONS_INDEX
+  const { data, isFetching } = useSearch(query)
+  const hasQuery = query.trim().length >= MIN_SEARCH_LENGTH
+  const articles = data?.articles ?? []
+  const publications = data?.publications ?? []
+
+  const handleResultClick = useCallback(
+    (type: "article" | "publication", id: string) => {
+      onOpenChange(false)
+      if (type === "article") {
+        router.push(ROUTES.ARTICLE_WITH_ID(id))
+      } else {
+        router.push(ROUTES.PUBLICATION_WITH_ID(id))
+      }
+    },
+    [router, onOpenChange],
+  )
+
+  const tabs: { id: SearchTab; label: string; icon: typeof HiDocumentText; count: number | null }[] = [
+    {
+      id: "articles",
+      label: "Articles",
+      icon: HiDocumentText,
+      count: hasQuery && data ? articles.length : null,
+    },
+    {
+      id: "publications",
+      label: "Publications",
+      icon: HiUserGroup,
+      count: hasQuery && data ? publications.length : null,
+    },
+  ]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,163 +97,149 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
           <VisuallyHidden.Root>
             <DialogTitle>Search articles and publications</DialogTitle>
           </VisuallyHidden.Root>
-          <InstantSearchNext
-            searchClient={searchClient}
-            indexName={currentIndex}
-            future={{ preserveSharedStateOnUnmount: true }}
-          >
-            <Configure hitsPerPage={8} />
 
-            {/* Search Header */}
-            <div className="relative border-b border-border/50">
-              <div className="flex items-center px-4 py-3">
-                <HiMagnifyingGlass className="size-5 text-muted-foreground shrink-0" />
-                <SearchBox
-                  placeholder="Search articles and publications..."
-                  queryHook={queryHook}
-                  classNames={{
-                    root: "flex-1",
-                    form: "relative",
-                    input: "w-full bg-transparent border-0 px-3 py-2 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-0",
-                    submit: "hidden",
-                    reset: "hidden",
-                    loadingIndicator: "hidden",
-                  }}
-                  autoFocus
-                />
-                <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">ESC</kbd>
-                  <span>to close</span>
-                </div>
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="sm:hidden p-1.5 hover:bg-muted rounded-md transition-colors"
-                >
-                  <HiXMark className="size-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-border/50">
-              <button
-                onClick={() => setActiveTab("articles")}
+          {/* Search Header */}
+          <div className="relative border-b border-border/50">
+            <div className="flex items-center px-4 py-3">
+              <HiMagnifyingGlass
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all relative",
-                  activeTab === "articles"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                  "size-5 shrink-0 transition-colors",
+                  isFetching ? "text-primary animate-pulse" : "text-muted-foreground",
                 )}
-              >
-                <HiDocumentText className="size-4" />
-                Articles
-                {activeTab === "articles" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("publications")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all relative",
-                  activeTab === "publications"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <HiUserGroup className="size-4" />
-                Publications
-                {activeTab === "publications" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                )}
-              </button>
-            </div>
-
-            {/* Results */}
-            <div className="overflow-y-auto max-h-[calc(85vh-140px)] min-h-[300px]">
-              <SearchResults
-                tab={activeTab}
-                onResultClick={handleResultClick}
               />
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => handleInputChange(e.target.value)}
+                placeholder="Search articles and publications…"
+                className="flex-1 w-full bg-transparent border-0 px-3 py-2 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+                autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+                <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">ESC</kbd>
+                <span>to close</span>
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="sm:hidden p-1.5 hover:bg-muted rounded-md transition-colors"
+                aria-label="Close search"
+              >
+                <HiXMark className="size-5" />
+              </button>
             </div>
-          </InstantSearchNext>
+          </div>
+
+          {/* Tabs — with live result counts */}
+          <div className="flex border-b border-border/50">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all relative",
+                  activeTab === tab.id
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <tab.icon className="size-4" />
+                {tab.label}
+                {tab.count !== null && (
+                  <span
+                    className={cn(
+                      "min-w-5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                      activeTab === tab.id
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Results */}
+          <div className="overflow-y-auto max-h-[calc(85vh-140px)] min-h-[300px]">
+            {!hasQuery ? (
+              <EmptyState
+                icon={HiMagnifyingGlass}
+                title="Search Inkray"
+                message="Find articles by title, topic, or category — and publications by name."
+              />
+            ) : !data && isFetching ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                <p className="mt-4 text-sm text-muted-foreground">Searching…</p>
+              </div>
+            ) : activeTab === "articles" ? (
+              articles.length === 0 ? (
+                <EmptyState
+                  icon={HiDocumentText}
+                  title="No articles found"
+                  message={`Nothing matches “${query.trim()}”. Try a different word — or check the Publications tab.`}
+                />
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {articles.map((hit) => (
+                    <ArticleRow key={hit.articleId} hit={hit} onClick={handleResultClick} />
+                  ))}
+                </div>
+              )
+            ) : publications.length === 0 ? (
+              <EmptyState
+                icon={HiUserGroup}
+                title="No publications found"
+                message={`Nothing matches “${query.trim()}”. Try a different name — or check the Articles tab.`}
+              />
+            ) : (
+              <div className="divide-y divide-border/50">
+                {publications.map((hit) => (
+                  <PublicationRow key={hit.id} hit={hit} onClick={handleResultClick} />
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </DialogPortal>
     </Dialog>
   )
 }
 
-interface SearchResultsProps {
-  tab: SearchTab
-  onResultClick: (type: "article" | "publication", id: string) => void
-}
-
-function SearchResults({ tab, onResultClick }: SearchResultsProps) {
-  const { status, results } = useInstantSearch()
-
-  // Stable hit component so the results list isn't torn down/rebuilt on every
-  // render (each item mounts AddressDisplay → a SuiNS network call).
-  const hitComponent = useCallback(
-    ({ hit }: { hit: ArticleHit | PublicationHit }) =>
-      tab === "articles"
-        ? <ArticleHitComponent hit={hit as unknown as ArticleHit} onClick={onResultClick} />
-        : <PublicationHitComponent hit={hit as unknown as PublicationHit} onClick={onResultClick} />,
-    [tab, onResultClick],
-  )
-
-  if (status === "loading" || status === "stalled") {
-    return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <p className="mt-4 text-sm text-muted-foreground">Searching...</p>
-      </div>
-    )
-  }
-
-  if (!results?.query) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-          <HiMagnifyingGlass className="size-8 text-muted-foreground/50" />
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Start typing to search {tab}
-        </p>
-      </div>
-    )
-  }
-
-  if (results.nbHits === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-          <HiDocumentText className="size-8 text-muted-foreground/50" />
-        </div>
-        <h3 className="text-base font-medium mb-1">No results found</h3>
-        <p className="text-muted-foreground text-sm max-w-sm">
-          No {tab} match your search. Try different keywords.
-        </p>
-      </div>
-    )
-  }
-
+function EmptyState({
+  icon: Icon,
+  title,
+  message,
+}: {
+  icon: typeof HiMagnifyingGlass
+  title: string
+  message: string
+}) {
   return (
-    <Hits
-      hitComponent={hitComponent}
-      classNames={{
-        root: "divide-y divide-border/50",
-        list: "divide-y divide-border/50",
-        item: "",
-      }}
-    />
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <div className="size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+        <Icon className="size-8 text-muted-foreground/50" />
+      </div>
+      <h3 className="text-base font-medium mb-1">{title}</h3>
+      <p className="text-muted-foreground text-sm max-w-sm">{message}</p>
+    </div>
   )
 }
 
-interface ArticleHitComponentProps {
-  hit: ArticleHit
+function ArticleRow({
+  hit,
+  onClick,
+}: {
+  hit: ArticleSearchResult
   onClick: (type: "article" | "publication", id: string) => void
-}
-
-function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
+}) {
   return (
     <button
       onClick={() => onClick("article", hit.slug)}
@@ -268,24 +263,24 @@ function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
-            {hit.summary}
-          </p>
+          {hit.summary && (
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{hit.summary}</p>
+          )}
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            {hit.author ? (
-              <AddressDisplay
-                address={hit.author}
-                variant="compact"
-                textSize="text-[11px]"
-                className="font-mono"
-              />
-            ) : (
-              <span className="font-mono">Unknown</span>
+            {hit.publicationName && (
+              <>
+                <span className="font-medium text-foreground/70 truncate max-w-40">
+                  {hit.publicationName}
+                </span>
+                <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
+              </>
             )}
-            <span className="size-1 rounded-full bg-muted-foreground/30" />
-            <span>{hit.categoryName}</span>
-            <span className="size-1 rounded-full bg-muted-foreground/30" />
-            <span>{hit.viewCount} views</span>
+            <span className="shrink-0">{hit.categoryName}</span>
+            <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
+            <span className="flex items-center gap-1 shrink-0">
+              <HiEye className="size-3" />
+              {hit.viewCount.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>
@@ -293,64 +288,48 @@ function ArticleHitComponent({ hit, onClick }: ArticleHitComponentProps) {
   )
 }
 
-interface PublicationHitComponentProps {
-  hit: PublicationHit
+function PublicationRow({
+  hit,
+  onClick,
+}: {
+  hit: PublicationSearchResult
   onClick: (type: "article" | "publication", id: string) => void
-}
-
-function PublicationHitComponent({ hit, onClick }: PublicationHitComponentProps) {
+}) {
   const displayName = hit.name || "Unnamed Publication"
+  const avatarConfig = createPublicationAvatarConfig(
+    { id: hit.id, name: displayName, avatar: hit.avatar },
+    "md",
+  )
 
   return (
     <button
-      onClick={() => onClick("publication", hit.objectID)}
+      onClick={() => onClick("publication", hit.id)}
       className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors group"
     >
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">
-          {hit.avatar ? (
-            <img
-              src={hit.avatar}
-              alt={displayName}
-              className="size-10 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="size-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <span className="text-sm font-semibold text-primary">
-                {displayName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
+          <Avatar {...avatarConfig} className="size-10 rounded-lg" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
               {displayName}
             </h4>
-            {hit.isVerified && (
-              <HiCheckBadge className="size-4 text-primary shrink-0" />
-            )}
+            {hit.isVerified && <HiCheckBadge className="size-4 text-primary shrink-0" />}
           </div>
           {hit.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
-              {hit.description}
-            </p>
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{hit.description}</p>
           )}
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            {hit.owner ? (
-              <AddressDisplay
-                address={hit.owner}
-                variant="compact"
-                textSize="text-[11px]"
-                className="font-mono"
-              />
-            ) : (
-              <span className="font-mono">Unknown</span>
-            )}
+            <span className="flex items-center gap-1 shrink-0">
+              <HiUserGroup className="size-3" />
+              <span className="tabular-nums">{hit.followerCount.toLocaleString()}</span>
+              {hit.followerCount === 1 ? "follower" : "followers"}
+            </span>
             {hit.tags && hit.tags.length > 0 && (
               <>
-                <span className="size-1 rounded-full bg-muted-foreground/30" />
-                <span>{hit.tags.slice(0, 2).join(", ")}</span>
+                <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
+                <span className="truncate">{hit.tags.slice(0, 2).join(", ")}</span>
               </>
             )}
           </div>
