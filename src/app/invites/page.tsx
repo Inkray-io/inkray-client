@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Clock,
   AlertTriangle,
+  Link as LinkIcon,
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,7 @@ export default function InvitesPage() {
   const [data, setData] = useState<InviteCodesResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -82,20 +84,27 @@ export default function InvitesPage() {
     }
   };
 
+  // Build the share link off the current origin so it works in every
+  // environment (prod, staging, local) without a hardcoded domain.
+  const getShareLink = (code: string) =>
+    `${window.location.origin}/invite?code=${encodeURIComponent(code)}`;
+
   const shareOnTwitter = (code: string) => {
-    const text = `Join me on Inkray - the decentralized publishing platform where you truly own your content!\n\nUse my invite code: ${code}\n\nhttps://inkray.xyz/invite?code=${code}`;
+    const text = `Join me on Inkray - the decentralized publishing platform where you truly own your content!\n\nUse my invite code: ${code}\n\n${getShareLink(code)}`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
 
   const copyShareLink = async (code: string) => {
-    const link = `https://inkray.xyz/invite?code=${code}`;
+    const link = getShareLink(code);
     try {
       await navigator.clipboard.writeText(link);
+      setCopiedLink(code);
       toast({
         title: "Link copied!",
-        description: "Share link copied to clipboard",
+        description: "Anyone who opens it lands on the invite page with your code filled in",
       });
+      setTimeout(() => setCopiedLink(null), 2000);
     } catch (error) {
       toast({
         title: "Failed to copy",
@@ -103,6 +112,25 @@ export default function InvitesPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Native share sheet (mobile) with clipboard fallback
+  const shareNative = async (code: string) => {
+    const link = getShareLink(code);
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join me on Inkray",
+          text: `Use my invite code ${code} to join Inkray — the publishing platform where you own your content.`,
+          url: link,
+        });
+        return;
+      } catch (error) {
+        // User dismissed the share sheet — not an error
+        if ((error as { name?: string })?.name === "AbortError") return;
+      }
+    }
+    await copyShareLink(code);
   };
 
   if (authLoading || isLoading) {
@@ -248,9 +276,21 @@ export default function InvitesPage() {
                           <span className="text-white text-xl">🎟️</span>
                         </div>
                         <div>
-                          <p className="font-mono text-lg font-semibold tracking-wider">
-                            {invite.code}
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(invite.code)}
+                            title="Copy code"
+                            className="group flex items-center gap-2 rounded-md -mx-1.5 px-1.5 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+                          >
+                            <span className="font-mono text-lg font-semibold tracking-wider">
+                              {invite.code}
+                            </span>
+                            {copiedCode === invite.code ? (
+                              <Check className="w-4 h-4 text-green-500 shrink-0" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity shrink-0" />
+                            )}
+                          </button>
                           <p className="text-xs text-muted-foreground">
                             Earned via {invite.earnedVia.replace(/_/g, " ")}
                           </p>
@@ -261,24 +301,24 @@ export default function InvitesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyToClipboard(invite.code)}
+                          onClick={() => copyShareLink(invite.code)}
                           className="gap-2"
                         >
-                          {copiedCode === invite.code ? (
-                            <Check className="w-4 h-4" />
+                          {copiedLink === invite.code ? (
+                            <Check className="w-4 h-4 text-green-500" />
                           ) : (
-                            <Copy className="w-4 h-4" />
+                            <LinkIcon className="w-4 h-4" />
                           )}
-                          Copy
+                          Copy link
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyShareLink(invite.code)}
+                          onClick={() => shareNative(invite.code)}
                           className="gap-2"
                         >
                           <Share2 className="w-4 h-4" />
-                          Link
+                          Share
                         </Button>
                         <Button
                           variant="outline"
