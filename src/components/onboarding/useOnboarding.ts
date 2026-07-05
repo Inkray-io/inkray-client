@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { usePathname } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 import { ONBOARDING_CONFIG, type OnboardingStep } from "./onboarding-config"
 import { log } from "@/lib/utils/Logger"
 
@@ -48,13 +49,15 @@ function shouldShowOnboardingForRoute(pathname: string): boolean {
     return false
   }
   
-  // Show onboarding on app pages
-  const appRoutes = ['/feed', '/auth', '/create', '/publication', '/article']
+  // Show onboarding on app pages. Never on /auth (it would interrupt
+  // sign-in) and never on /invite (its own flow).
+  const appRoutes = ['/feed', '/create', '/publication', '/article']
   return appRoutes.some(route => pathname.startsWith(route))
 }
 
 export function useOnboarding(): UseOnboardingReturn {
   const pathname = usePathname()
+  const { isAuthenticated } = useAuth()
   const [isCompleted, setIsCompleted] = useState<boolean>(() => getOnboardingStatus())
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -107,7 +110,13 @@ export function useOnboarding(): UseOnboardingReturn {
   }, [])
 
   return {
-    isOpen: isHydrated && !isCompleted && shouldShowOnboardingForRoute(pathname),
+    // Only for signed-in users: the flow ends with follows, which require an
+    // account - and visitors reading a shared article shouldn't be interrupted.
+    isOpen:
+      isHydrated &&
+      isAuthenticated &&
+      !isCompleted &&
+      shouldShowOnboardingForRoute(pathname),
     currentStep,
     currentStepData,
     totalSteps,

@@ -2,6 +2,7 @@
 
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout, RightSidebar } from "@/components/layout"
+import { GettingStartedChecklist } from "@/components/onboarding"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { TopWriters } from "@/components/widgets/TopWriters"
@@ -153,6 +154,9 @@ function FeedPageContent() {
         </div>
       )}
       <div className="space-y-5">
+        {/* New-user activation checklist (self-hides when done/dismissed) */}
+        <GettingStartedChecklist />
+
         {/* Loading State */}
         {(isLoading || loadingCachedArticles) && articlesToDisplay.length === 0 && (
           <>

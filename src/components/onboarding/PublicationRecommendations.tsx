@@ -2,10 +2,11 @@
 
 import { useState, useCallback } from "react"
 import { motion } from "framer-motion"
-import { UserPlus, UserMinus, Loader2, BadgeCheck, Sparkles } from "lucide-react"
+import { UserPlus, Check, Loader2, BadgeCheck } from "lucide-react"
 import { RecommendedPublication } from "@/lib/api"
 import { followsAPI } from "@/lib/api"
 import { Avatar } from "@/components/ui/Avatar"
+import { createPublicationAvatarConfig } from "@/lib/utils/avatar"
 import { cn } from "@/lib/utils"
 import { log } from "@/lib/utils/Logger"
 
@@ -60,14 +61,13 @@ function formatFollowerCount(count: number): string {
 
 function PublicationCardSkeleton() {
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card animate-pulse">
-      <div className="w-12 h-12 rounded-full bg-muted" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-32 bg-muted rounded" />
-        <div className="h-3 w-48 bg-muted rounded" />
-        <div className="h-3 w-20 bg-muted rounded" />
+    <div className="flex items-center gap-2.5 px-3 py-2.5 animate-pulse">
+      <div className="size-9 rounded-full bg-muted shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3.5 w-28 bg-muted rounded" />
+        <div className="h-3 w-40 bg-muted rounded" />
       </div>
-      <div className="h-8 w-20 bg-muted rounded-lg" />
+      <div className="h-7 w-16 bg-muted rounded-full" />
     </div>
   )
 }
@@ -137,12 +137,12 @@ export function PublicationRecommendations({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center space-y-6">
-        <div className="text-center space-y-2">
-          <div className="h-7 w-48 bg-muted animate-pulse rounded-md mx-auto" />
-          <div className="h-4 w-64 bg-muted animate-pulse rounded-md mx-auto" />
+      <div className="flex flex-col items-center space-y-4">
+        <div className="text-center space-y-1.5">
+          <div className="h-6 w-44 bg-muted animate-pulse rounded-md mx-auto" />
+          <div className="h-3.5 w-60 bg-muted animate-pulse rounded-md mx-auto" />
         </div>
-        <div className="w-full max-w-md space-y-3">
+        <div className="w-full rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <PublicationCardSkeleton key={i} />
           ))}
@@ -154,45 +154,31 @@ export function PublicationRecommendations({
   const followedCount = Object.values(followStates).filter((s) => s.isFollowing).length
 
   return (
-    <div className="flex flex-col items-center space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">
+    <div className="flex flex-col items-center space-y-4">
+      {/* Header — counter lives here instead of a separate pill */}
+      <div className="text-center space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">
           {isFallback ? "Popular publications" : "Recommended for you"}
         </h2>
-        <p className="text-muted-foreground text-sm">
-          {isFallback
-            ? "Discover these trending publications"
-            : "Follow publications to see their articles in your feed"}
+        <p className="text-muted-foreground text-xs">
+          {followedCount > 0 ? (
+            <>
+              Following{" "}
+              <span className="font-semibold text-primary">{followedCount}</span>{" "}
+              {followedCount === 1 ? "publication" : "publications"} — they&apos;ll
+              shape your feed
+            </>
+          ) : isFallback ? (
+            "No exact topic matches — here are the ones people follow most"
+          ) : (
+            "Follow a few to build a feed worth opening"
+          )}
         </p>
       </div>
 
-      {/* Followed counter */}
-      {followedCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20"
-        >
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">
-            Following {followedCount} {followedCount === 1 ? "publication" : "publications"}
-          </span>
-        </motion.div>
-      )}
-
-      {/* Fallback message */}
-      {isFallback && !isLoading && publications.length > 0 && (
-        <div className="w-full max-w-md px-4 py-3 bg-amber-50 border border-amber-100 rounded-lg text-center">
-          <p className="text-sm text-amber-700">
-            No exact matches for your topics — here are some popular publications instead.
-          </p>
-        </div>
-      )}
-
-      {/* Publications list */}
+      {/* Publications list — capped height so Continue stays in view */}
       <motion.div
-        className="w-full max-w-md space-y-3"
+        className="w-full rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-y-auto max-h-80 overscroll-contain"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -202,72 +188,67 @@ export function PublicationRecommendations({
             isFollowing: false,
             isLoading: false,
           }
+          const avatarConfig = createPublicationAvatarConfig(
+            {
+              id: publication.id,
+              name: publication.name,
+              avatar: publication.avatar,
+            },
+            "md"
+          )
 
           return (
             <motion.div
               key={publication.id}
               variants={itemVariants}
               className={cn(
-                "flex items-center gap-4 p-4 rounded-xl border transition-all duration-200",
-                followState.isFollowing
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border bg-card hover:border-border/80 hover:bg-accent/30"
+                "flex items-center gap-2.5 px-3 py-2.5 transition-colors",
+                followState.isFollowing ? "bg-primary/3" : "hover:bg-gray-50"
               )}
             >
-              {/* Avatar */}
-              <Avatar
-                src={publication.avatar}
-                alt={publication.name}
-                size="lg"
-                fallbackText={publication.name.charAt(0).toUpperCase()}
-                gradientColors="from-blue-500 to-purple-600"
-              />
+              <Avatar {...avatarConfig} className="size-9 shrink-0" />
 
-              {/* Content */}
+              {/* Name + meta on two tight lines */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-semibold text-foreground truncate">
+                <div className="flex items-center gap-1">
+                  <h3 className="text-sm font-medium text-foreground truncate">
                     {publication.name}
                   </h3>
                   {publication.isVerified && (
-                    <BadgeCheck className="w-4 h-4 text-primary flex-shrink-0" />
+                    <BadgeCheck className="size-3.5 text-primary shrink-0" />
                   )}
                 </div>
-                {publication.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
-                    {publication.description}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground truncate">
                   {formatFollowerCount(publication.followerCount)}{" "}
                   {publication.followerCount === 1 ? "follower" : "followers"}
+                  {publication.description && (
+                    <span className="text-gray-400"> · {publication.description}</span>
+                  )}
                 </p>
               </div>
 
-              {/* Follow button */}
-              <motion.button
+              {/* Compact follow pill */}
+              <button
                 onClick={() => handleToggleFollow(publication.id)}
                 disabled={followState.isLoading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-semibold transition-all shrink-0",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   followState.isFollowing
-                    ? "bg-muted text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90",
+                    ? "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                    : "bg-primary text-white hover:bg-primary/90",
                   followState.isLoading && "opacity-60 cursor-not-allowed"
                 )}
               >
                 {followState.isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="size-3.5 animate-spin" />
                 ) : followState.isFollowing ? (
-                  <UserMinus className="w-4 h-4" />
+                  <Check className="size-3.5" />
                 ) : (
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="size-3.5" />
                 )}
-                <span>{followState.isFollowing ? "Following" : "Follow"}</span>
-              </motion.button>
+                {followState.isFollowing ? "Following" : "Follow"}
+              </button>
             </motion.div>
           )
         })}
@@ -275,7 +256,7 @@ export function PublicationRecommendations({
 
       {/* Empty state */}
       {publications.length === 0 && !isLoading && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-6 text-muted-foreground text-sm">
           <p>No publications found. Try selecting different topics.</p>
         </div>
       )}

@@ -13,7 +13,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { CacheProvider } from '@/components/providers/CacheProvider'
 import { WalletChangeProvider } from '@/components/providers/WalletChangeProvider'
 import { Toaster } from '@/components/ui/toaster'
-import { OnboardingModal, ProfileCompletionPrompt } from '@/components/onboarding'
+import { OnboardingModal } from '@/components/onboarding'
 // import { ChatModal } from '@/components/chat' // chat launcher hidden for now
 import { ChatProvider } from '@/components/chat/ChatProvider'
 
@@ -136,7 +136,6 @@ export default function RootLayout({
                   {children}
                   <Toaster />
                   <OnboardingModal />
-                  <ProfileCompletionPrompt />
                   {/* Chat launcher hidden for now — re-enable by restoring <ChatModal /> */}
                   {/* <ChatModal /> */}
                 </ChatProvider>

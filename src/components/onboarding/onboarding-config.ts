@@ -1,5 +1,10 @@
 export type OnboardingStepType = 'static' | 'topic-selection' | 'recommendations'
 
+export interface OnboardingStepBullet {
+  title: string
+  description: string
+}
+
 export interface OnboardingStep {
   id: string
   type: OnboardingStepType
@@ -7,32 +12,36 @@ export interface OnboardingStep {
   title?: string
   description?: string
   image?: string
+  bullets?: OnboardingStepBullet[]
 }
 
+/**
+ * Three steps, not five: one welcome (the pitch, condensed), then two steps
+ * that actually set the account up (topics → follows). Getting to a personal
+ * feed fast beats a longer tour — the persistent Getting Started checklist on
+ * the feed carries the rest (profile, first reactions, first article).
+ */
 export const onboardingSteps: OnboardingStep[] = [
   {
     id: 'welcome',
     type: 'static',
-    label: 'Features',
+    label: 'Welcome to Inkray',
     title: 'Write. Publish. Own.',
-    description: 'Publish essays, mint your work as collectibles, and build a community that holds stake in your ideas.',
-    image: '/onboarding.png'
-  },
-  {
-    id: 'ownership',
-    type: 'static',
-    label: 'Ownership',
-    title: 'True Digital Ownership',
-    description: 'Your content is permanently stored on the blockchain. You own it forever, not just a platform account.',
-    image: '/onboarding.png'
-  },
-  {
-    id: 'community',
-    type: 'static',
-    label: 'Community',
-    title: 'Build Your Community',
-    description: 'Readers can subscribe, tip, and collect your work as NFTs. Create lasting connections with your audience.',
-    image: '/onboarding.png'
+    description: 'A publishing home where your words stay yours.',
+    bullets: [
+      {
+        title: 'Permanent & unblockable',
+        description: 'Your posts live on Sui and Walrus — no one can take them down.',
+      },
+      {
+        title: 'Paid directly',
+        description: 'Subscriptions, tips, and collectible articles land in your wallet.',
+      },
+      {
+        title: 'Your audience, not a feed',
+        description: 'Readers follow you, not an algorithm.',
+      },
+    ],
   },
   {
     id: 'topic-selection',
@@ -43,7 +52,7 @@ export const onboardingSteps: OnboardingStep[] = [
     id: 'recommendations',
     type: 'recommendations',
     label: 'Follow',
-  }
+  },
 ]
 
 export const ONBOARDING_CONFIG = {
