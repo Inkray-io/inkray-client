@@ -29,7 +29,7 @@ function FeedPageContent() {
   // Extract feed type and category from URL params
   const [feedType, setFeedType] = useState<FeedType>(() => {
     const typeParam = searchParams.get('type') as FeedType
-    return ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'fresh'
+    return ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'popular'
   })
 
   // Get category from URL and find the corresponding category ID
@@ -73,7 +73,7 @@ function FeedPageContent() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated && (feedType === 'my' || feedType === 'bookmarks')) {
       router.replace('/feed')
-      setFeedType('fresh')
+      setFeedType('popular')
     }
   }, [authLoading, isAuthenticated, feedType])
 
@@ -107,7 +107,7 @@ function FeedPageContent() {
   // Sync state with URL params when they change
   useEffect(() => {
     const typeParam = searchParams.get('type') as FeedType
-    const newType = ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'fresh'
+    const newType = ['fresh', 'popular', 'my', 'bookmarks'].includes(typeParam) ? typeParam : 'popular'
 
     if (newType !== feedType) {
       setFeedType(newType)
@@ -211,7 +211,8 @@ function FeedPageContent() {
               publicationName?: string
             }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId?.slice(0, 8) ?? ''}...`,
             avatar: article.followInfo?.publicationAvatar || null,
-            owner: (article as { publicationOwner?: string }).publicationOwner
+            owner: (article as { publicationOwner?: string }).publicationOwner,
+            createdAt: article.followInfo?.publicationCreatedAt,
           };
 
           return (

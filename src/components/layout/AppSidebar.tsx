@@ -35,7 +35,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
   const { categories, isLoading: categoriesLoading } = useCategories()
 
   // Determine current feed type and category from URL
-  const currentFeedType = searchParams.get('type') || 'fresh'
+  const currentFeedType = searchParams.get('type') || 'popular'
   const currentCategory = searchParams.get('category')
   
   const navigationItems = [

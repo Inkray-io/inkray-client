@@ -28,7 +28,7 @@ const LEFT_ITEMS: NavItem[] = [
     id: "home",
     label: "Home",
     icon: HiBolt,
-    href: ROUTES.FEED_FRESH,
+    href: ROUTES.FEED, // default feed (popular)
     isActive: (p, type) => p === "/feed" && type !== "bookmarks",
   },
   {

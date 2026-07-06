@@ -16,6 +16,9 @@ import { HiPencil, HiDocumentText, HiUserGroup } from 'react-icons/hi2';
 import { log } from '@/lib/utils/Logger';
 import { mastheadGradient } from '@/components/ui/Identicon';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
+import { EarlyAdopterBadge } from '@/components/ui/EarlyAdopterBadge';
+import { isEarlyAdopter } from '@/lib/utils/earlyAdopter';
+import { formatMonthYear } from '@/lib/utils/date';
 
 interface PublicationHeaderProps {
   publication: Publication;
@@ -169,7 +172,15 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
             {publication.name}
           </h1>
           {publication.isVerified && <VerifiedBadge size="lg" />}
+          {isEarlyAdopter(publication.createdAt) && (
+            <EarlyAdopterBadge variant="full" className="shrink-0" />
+          )}
         </div>
+        {publication.createdAt && (
+          <p className="text-xs text-gray-400 mt-1">
+            Created {formatMonthYear(publication.createdAt)}
+          </p>
+        )}
 
         {/* Description — full width for room to breathe */}
         {publication.description ? (

@@ -16,8 +16,8 @@ export const ROUTES = {
   PUBLICATIONS: '/publications',
   
   // Feed types
-  FEED_POPULAR: '/feed?type=popular',
-  FEED_FRESH: '/feed',
+  FEED_POPULAR: '/feed',
+  FEED_FRESH: '/feed?type=fresh',
   FEED_MY_FEED: '/feed?type=my',
   FEED_BOOKMARKS: '/feed?type=bookmarks',
   

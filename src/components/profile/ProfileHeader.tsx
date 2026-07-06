@@ -9,6 +9,9 @@ import { formatAddress } from '@/utils/address';
 import { HiPencil, HiDocumentText, HiUserGroup, HiEye } from 'react-icons/hi2';
 import { Profile } from '@/hooks/useProfile';
 import { mastheadGradient } from '@/components/ui/Identicon';
+import { EarlyAdopterBadge } from '@/components/ui/EarlyAdopterBadge';
+import { isEarlyAdopter } from '@/lib/utils/earlyAdopter';
+import { formatMonthYear } from '@/lib/utils/date';
 
 interface ProfileHeaderProps {
   profile: Profile | null;
@@ -110,16 +113,26 @@ export function ProfileHeader({
 
         {/* Identity */}
         <div className="mt-2.5">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
-            {suiNSLoading ? (
-              <span className="text-gray-400">Loading…</span>
-            ) : (
-              displayName
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+              {suiNSLoading ? (
+                <span className="text-gray-400">Loading…</span>
+              ) : (
+                displayName
+              )}
+            </h1>
+            {isEarlyAdopter(profile?.createdAt) && (
+              <EarlyAdopterBadge variant="full" />
             )}
-          </h1>
+          </div>
           {hasResolvedName && profile?.publicKey && (
             <p className="text-xs text-gray-400 font-mono mt-0.5">
               {formatAddress(profile.publicKey)}
+            </p>
+          )}
+          {profile?.createdAt && (
+            <p className="text-xs text-gray-400 mt-1">
+              Joined {formatMonthYear(profile.createdAt)}
             </p>
           )}
         </div>

@@ -63,6 +63,7 @@ export interface Article {
     isFollowing: boolean;
     followedAt?: string;
     isVerified?: boolean;
+    publicationCreatedAt?: string;
   };
   /** Total tip amount received for this article (in MIST) */
   totalTips: number;

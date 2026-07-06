@@ -24,16 +24,16 @@ interface FeedOption {
 
 const feedOptions: FeedOption[] = [
   {
-    id: 'fresh',
-    label: 'Fresh',
-    description: 'Latest articles from all publications',
-    icon: HiClock,
-  },
-  {
     id: 'popular',
     label: 'Popular',
     description: 'Trending articles by engagement',
     icon: HiFire,
+  },
+  {
+    id: 'fresh',
+    label: 'Fresh',
+    description: 'Latest articles from all publications',
+    icon: HiClock,
   },
   {
     id: 'my',

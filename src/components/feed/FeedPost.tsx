@@ -24,6 +24,8 @@ import { useFollows } from "@/hooks/useFollows"
 import { FollowButton } from "@/components/follow/FollowButton"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge"
+import { EarlyAdopterBadge } from "@/components/ui/EarlyAdopterBadge"
+import { isEarlyAdopter } from "@/lib/utils/earlyAdopter"
 import { CommentsSection } from "@/components/comments/CommentsSection"
 
 interface FeedPostProps {
@@ -60,6 +62,7 @@ interface FeedPostProps {
     avatar?: string | null
     owner?: string
     isVerified?: boolean
+    createdAt?: string
   }
   // Article information for tipping
   articleId?: string
@@ -299,6 +302,7 @@ export function FeedPost({
                   {publication.name}
                 </button>
                 {publication.isVerified && <VerifiedBadge size="sm" />}
+                {isEarlyAdopter(publication.createdAt) && <EarlyAdopterBadge size="sm" />}
               </div>
             ) : (
               <div className="font-semibold text-black text-xs">{author.name}</div>

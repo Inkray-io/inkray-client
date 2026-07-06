@@ -86,7 +86,7 @@ export function MobileMenu({ children }: MobileMenuProps) {
   const [copying, setCopying] = useState(false)
   const [showMobileConnect, setShowMobileConnect] = useState(false)
 
-  const feedType = searchParams.get("type") || "fresh"
+  const feedType = searchParams.get("type") || "popular"
   const activeCategory = searchParams.get("category")
   const onFeed = pathname === "/feed"
 
