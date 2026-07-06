@@ -40,6 +40,7 @@ export async function generateMetadata({
     publication.description ||
     `Read ${publication.name} on Inkray — permanent, independent publishing.`;
   const url = `${APP_URL}/publication?id=${id}`;
+  const ogImageUrl = `${API_URL}/publications/og/${id}`;
 
   return {
     title,
@@ -51,12 +52,14 @@ export async function generateMetadata({
       description,
       url,
       siteName: 'Inkray',
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
       site: '@inkray_io',
+      images: [ogImageUrl],
     },
   };
 }

@@ -19,6 +19,14 @@ export const metadata: Metadata = {
       "A publishing platform where your words are permanent, unblockable, and paid for directly — no platform in the middle.",
     url: "https://inkray.xyz/about",
     siteName: "Inkray",
+    images: [
+      {
+        url: "https://inkray.xyz/og-image.jpeg",
+        width: 1600,
+        height: 900,
+        alt: "About Inkray",
+      },
+    ],
   },
 }
 
