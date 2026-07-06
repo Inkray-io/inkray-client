@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { followsAPI } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { log } from '@/lib/utils/Logger';
 
 interface FollowState {
@@ -34,6 +35,7 @@ export const useFollows = (
     followerCount: number;
   }
 ) => {
+  const { isAuthenticated } = useAuth();
   const [followState, setFollowState] = useState<FollowState>({
     isFollowing: initialFollowInfo?.isFollowing ?? false,
     followerCount: initialFollowInfo?.followerCount ?? 0,
@@ -100,7 +102,7 @@ export const useFollows = (
     } finally {
       setFollowState(prev => ({ ...prev, isLoading: false }));
     }
-  }, [publicationId]);
+  }, [publicationId, isAuthenticated]);
 
   /**
    * Unfollow a publication
@@ -162,6 +164,18 @@ export const useFollows = (
   const toggleFollow = useCallback(async (): Promise<FollowResult> => {
     if (!publicationId) {
       return { success: false, message: 'Publication ID is required' };
+    }
+
+    // Anonymous visitors: following requires an account — send them to
+    // sign-in and bring them back here afterwards.
+    if (!isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        const next = encodeURIComponent(
+          window.location.pathname + window.location.search,
+        );
+        window.location.href = `/auth?next=${next}`;
+      }
+      return { success: false, message: 'Sign in to follow publications' };
     }
 
     setFollowState(prev => ({ ...prev, isLoading: true, error: null }));

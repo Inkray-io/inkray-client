@@ -2,6 +2,7 @@
 
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { GettingStartedChecklist } from "@/components/onboarding"
+import { useAuth } from "@/contexts/AuthContext"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { TopWriters } from "@/components/widgets/TopWriters"
@@ -20,6 +21,7 @@ import { Article } from "@/types/article";
 import { log } from "@/lib/utils/Logger";
 
 function FeedPageContent() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { categories } = useCategories()
@@ -65,6 +67,15 @@ function FeedPageContent() {
   const hasCachedArticles = useMemo(() => {
     return cachedArticles !== null && cachedArticles.length > 0
   }, [cachedArticles]);
+
+  // Personal feed types require an account — anonymous visitors fall back
+  // to the fresh feed instead of hitting a 401.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated && (feedType === 'my' || feedType === 'bookmarks')) {
+      router.replace('/feed')
+      setFeedType('fresh')
+    }
+  }, [authLoading, isAuthenticated, feedType])
 
   useEffect(() => {
     if (isLoading) { return; }

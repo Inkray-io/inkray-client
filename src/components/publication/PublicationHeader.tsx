@@ -72,9 +72,10 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
     ? isOwnerProp
     : addressesEqual(account?.publicKey, publication?.owner);
 
-  // Refresh follow status when publication data loads
+  // Refresh follow status when publication data loads (authenticated only —
+  // the status endpoint requires auth; anonymous visitors keep server counts)
   useEffect(() => {
-    if (publication?.id && !isLoading) {
+    if (publication?.id && !isLoading && account) {
       log.debug('Publication follow state', {
         publicationId: publication.id,
         isFollowing: publication.isFollowing,
@@ -84,7 +85,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
       // Refresh from server to ensure we have the correct state
       refreshFollowStatus();
     }
-  }, [publication?.id, publication?.isFollowing, isLoading, refreshFollowStatus]);
+  }, [publication?.id, publication?.isFollowing, isLoading, account, refreshFollowStatus]);
 
   const handleToggleFollow = async () => {
     await toggleFollow();

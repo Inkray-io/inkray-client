@@ -32,17 +32,30 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear invalid token
+      // Clear invalid token so future requests go out anonymously
       Cookies.remove('access_token');
 
-      // Only redirect to /auth from pages that require authentication.
-      // Public pages (articles, publications, profiles) stay accessible.
+      // Redirect to sign-in ONLY from auth-required pages. Everything else is
+      // public by default — an expired session or a 401 from an auth-only
+      // widget must never bounce a visitor off a public page.
       if (typeof window !== 'undefined') {
-        const publicPaths = ['/article', '/publication/', '/user/', '/publications', '/about', '/rules'];
-        const isPublicPage = publicPaths.some(p => window.location.pathname.startsWith(p));
+        const path = window.location.pathname;
+        const protectedPaths = [
+          '/drafts',
+          '/invites',
+          '/notifications',
+          '/create',
+          '/create-publication',
+          '/publication/settings',
+          '/offline',
+        ];
+        const isProtected = protectedPaths.some(
+          (p) => path === p || path.startsWith(p + '/'),
+        );
 
-        if (!isPublicPage) {
-          window.location.href = '/auth';
+        if (isProtected) {
+          const next = encodeURIComponent(path + window.location.search);
+          window.location.href = `/auth?next=${next}`;
         }
       }
     }
