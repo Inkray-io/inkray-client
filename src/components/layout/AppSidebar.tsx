@@ -252,6 +252,7 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
               {inkrayLinks.map((link) => (
                 <button
                   key={link.id}
+                  onClick={() => router.push(link.href)}
                   className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
@@ -273,7 +274,10 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
                 label={link.label}
                 isCompact={isCompact}
               >
-                <button className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center">
+                <button
+                  onClick={() => router.push(link.href)}
+                  className="w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex justify-center"
+                >
                   <link.icon className="size-4 text-gray-500" />
                 </button>
               </ExpandableTooltip>

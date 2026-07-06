@@ -193,7 +193,7 @@ function NotificationsPageContent() {
 
 export default function NotificationsPage() {
   return (
-    <RequireAuth redirectTo="/">
+    <RequireAuth>
       <AppLayout currentPage="notifications">
         <NotificationsPageContent />
       </AppLayout>

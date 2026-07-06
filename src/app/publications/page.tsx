@@ -1,6 +1,5 @@
 "use client"
 
-import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout } from "@/components/layout"
 import { usePublications } from "@/hooks/usePublications"
 import { Avatar } from "@/components/ui/Avatar"
@@ -280,9 +279,5 @@ function PublicationsPageContent() {
 }
 
 export default function PublicationsPage() {
-  return (
-    <RequireAuth redirectTo="/">
-      <PublicationsPageContent />
-    </RequireAuth>
-  )
+  return <PublicationsPageContent />
 }

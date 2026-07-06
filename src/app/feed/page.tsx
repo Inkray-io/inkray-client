@@ -1,6 +1,5 @@
 "use client"
 
-import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { GettingStartedChecklist } from "@/components/onboarding"
 import { FeedPost } from "@/components/feed/FeedPost"
@@ -14,7 +13,7 @@ import { useCategories } from "@/hooks/useCategories"
 import { FeedType, TimeFrame } from "@/components/feed/FeedTypeSelector"
 import { Loader2, AlertCircle, RefreshCw, Info } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState , Suspense } from "react"
 import { useArticleDeletion } from "@/hooks/useArticleDeletion"
 import { listAllCachedArticles } from "@/lib/idb";
 import { Article } from "@/types/article";
@@ -301,8 +300,18 @@ function FeedPageContent() {
 
 export default function FeedPage() {
   return (
-    <RequireAuth>
+    <Suspense
+      fallback={
+        <AppLayout currentPage="feed">
+          <div className="space-y-5">
+            <FeedPostSkeleton />
+            <FeedPostSkeleton />
+            <FeedPostSkeleton />
+          </div>
+        </AppLayout>
+      }
+    >
       <FeedPageContent />
-    </RequireAuth>
+    </Suspense>
   )
 }

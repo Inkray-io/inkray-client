@@ -2,7 +2,6 @@
 
 import React, { Suspense, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { RequireAuth } from '@/components/auth/RequireAuth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { TopWriters } from '@/components/widgets/TopWriters';
 import { LeaderboardWidget } from '@/components/widgets/LeaderboardWidget';
@@ -246,11 +245,9 @@ const ProfilePageContent: React.FC = () => {
  */
 const ProfilePage: React.FC = () => {
   return (
-    <RequireAuth>
-      <Suspense fallback={<ProfilePageSkeleton />}>
-        <ProfilePageContent />
-      </Suspense>
-    </RequireAuth>
+    <Suspense fallback={<ProfilePageSkeleton />}>
+      <ProfilePageContent />
+    </Suspense>
   );
 };
 

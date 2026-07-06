@@ -4,7 +4,22 @@ import useDraftMode from "@/hooks/useDraftMode";
 import { useRouter } from "next/navigation";
 import { useArticleCreation, useToast } from "@/hooks";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArticleEditor, ArticleEditorRef } from "@/components/editor/ArticleEditor";
+import dynamic from "next/dynamic";
+import type { ArticleEditorRef } from "@/components/editor/ArticleEditor";
+
+// The Milkdown editor is ~400kB of JS — load it only when the create page
+// actually renders, with a lightweight placeholder while it downloads.
+const ArticleEditor = dynamic(
+  () => import("@/components/editor/ArticleEditorLazy"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[320px] rounded-xl border border-gray-100 bg-gray-50/50 animate-pulse flex items-center justify-center">
+        <span className="text-sm text-gray-400">Loading editor…</span>
+      </div>
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2, Trash2, CalendarClock, X, MoreHorizontal, Lock, LockOpen, Sparkles, Check } from "lucide-react";
 import { HiDocumentText } from "react-icons/hi2";
@@ -480,7 +495,7 @@ export default function ArticleCreationPage() {
             {((draft && contentInitialized) || (!draftId && !loadingDraft)) && (
                 <MilkdownEditorWrapper>
                   <ArticleEditor
-                      ref={editorRef}
+                      editorRef={editorRef}
                       initialValue={content}
                       onChange={setContent}
                       onImageUpload={uploadDraftImage}

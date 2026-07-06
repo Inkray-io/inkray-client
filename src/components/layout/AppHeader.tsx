@@ -36,8 +36,8 @@ export function AppHeader() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2 lg:gap-3">
-            {isConnected ? (
-              <>
+            {/* Search — public (reading and search don't require an account) */}
+            <>
                 {/* Search — input-look pill with the shortcut on desktop */}
                 <button
                   onClick={openSearch}
@@ -61,7 +61,10 @@ export function AppHeader() {
                 >
                   <HiMagnifyingGlass className="size-5" />
                 </Button>
+            </>
 
+            {isConnected ? (
+              <>
                 <div className="hidden lg:flex items-center gap-1">
                   <NotificationsBell />
                   <UserProfile />

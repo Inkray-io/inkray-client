@@ -40,12 +40,19 @@ function AuthPageContent() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviteSystemChecked, setInviteSystemChecked] = useState(false);
 
+  // Where to land after sign-in (set by RequireAuth); internal paths only
+  const rawNext = searchParams.get('next');
+  const nextPath =
+    rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+      ? rawNext
+      : '/feed';
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/feed');
+      router.push(nextPath);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, nextPath]);
 
   // Check for invite code in URL or sessionStorage (don't redirect - let backend handle validation)
   useEffect(() => {
@@ -282,7 +289,7 @@ function AuthPageContent() {
         title: "Success",
         description: "Successfully authenticated!",
       });
-      router.push('/feed');
+      router.push(nextPath);
     } catch (error: unknown) {
       log.error('Authentication failed', { error }, 'AuthPage');
 
@@ -312,7 +319,7 @@ function AuthPageContent() {
         variant: "destructive",
       });
     }
-  }, [authData, address, login, toast, router, inviteCode]);
+  }, [authData, address, login, toast, router, inviteCode, nextPath]);
 
   const handleDisconnect = () => {
     disconnect();

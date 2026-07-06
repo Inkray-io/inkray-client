@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
@@ -18,6 +18,7 @@ import { OnboardingModal } from '@/components/onboarding'
 import { ChatProvider } from '@/components/chat/ChatProvider'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://inkray.xyz'),
   title: 'Inkray — The Publishing Platform Where You Own Your Content',
   description:
     'Inkray is a publishing platform where creators truly own their work. Write in a modern editor, publish permanently, and earn from subscriptions, tips, and collectibles — with no platform risk and no middlemen.',
@@ -42,14 +43,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'Inkray Team', url: 'https://inkray.xyz' }],
   creator: 'Inkray',
   publisher: 'Inkray',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  alternates: {
-    canonical: 'https://inkray.xyz',
-  },
   openGraph: {
     type: 'website',
     url: 'https://inkray.xyz',
@@ -82,6 +75,12 @@ export const metadata: Metadata = {
   category: 'technology',
 }
 
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
 
 export default function RootLayout({
   children,
