@@ -1,3 +1,4 @@
+import { getPlainTextFromMarkdown } from '@/lib/utils/markdown';
 /**
  * Frontend validation utilities that match backend validation rules
  * Ensures consistent validation between client and server
@@ -14,6 +15,10 @@ export const VALIDATION_CONFIG = {
       MIN_LENGTH: 10,
       MAX_LENGTH: 1000000, // 1MB in characters
       MAX_LINES: 10000,
+      // Word bounds (mirrors backend): counted on markdown-stripped text,
+      // the same way the editor's word counter counts.
+      MIN_WORDS: 100,
+      MAX_WORDS: 10000,
     },
   },
   FILES: {
@@ -62,6 +67,8 @@ export const VALIDATION_MESSAGES = {
     CONTENT_TOO_SHORT: `Article content must be at least ${VALIDATION_CONFIG.ARTICLE.CONTENT.MIN_LENGTH} characters long`,
     CONTENT_TOO_LONG: `Article content must be less than ${VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_LENGTH} characters`,
     CONTENT_TOO_MANY_LINES: `Article content must have less than ${VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_LINES} lines`,
+    CONTENT_TOO_FEW_WORDS: `Articles must be at least ${VALIDATION_CONFIG.ARTICLE.CONTENT.MIN_WORDS} words — add a bit more substance before publishing`,
+    CONTENT_TOO_MANY_WORDS: `Articles can be at most ${VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_WORDS.toLocaleString()} words — consider splitting this into a series`,
   },
   FILES: {
     FILE_TOO_LARGE: `File size must be less than ${VALIDATION_CONFIG.FILES.MAX_FILE_SIZE / (1024 * 1024)}MB`,
@@ -127,6 +134,18 @@ export function validateArticleContent(content: string): ValidationResult {
     const lineCount = trimmedContent.split('\n').length;
     if (lineCount > VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_LINES) {
       errors.push(VALIDATION_MESSAGES.ARTICLE.CONTENT_TOO_MANY_LINES);
+    }
+
+    // Word bounds — counted on plain text (markdown syntax stripped), matching
+    // the editor's live word counter
+    const words = getPlainTextFromMarkdown(trimmedContent)
+      .split(/\s+/)
+      .filter((w) => w.length > 0).length;
+    if (words < VALIDATION_CONFIG.ARTICLE.CONTENT.MIN_WORDS) {
+      errors.push(VALIDATION_MESSAGES.ARTICLE.CONTENT_TOO_FEW_WORDS);
+    }
+    if (words > VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_WORDS) {
+      errors.push(VALIDATION_MESSAGES.ARTICLE.CONTENT_TOO_MANY_WORDS);
     }
   }
 

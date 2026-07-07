@@ -168,6 +168,18 @@ export default function ArticleCreationPage() {
       return
     }
 
+    if (!wordsInBounds) {
+      toast({
+        title: wordCount < MIN_WORDS ? "Article too short" : "Article too long",
+        description:
+          wordCount < MIN_WORDS
+            ? `Articles need at least ${MIN_WORDS} words — you have ${wordCount}.`
+            : `Articles can be at most ${MAX_WORDS.toLocaleString()} words — you have ${wordCount.toLocaleString()}.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     if (!draft) {
       toast({
         title: "No Draft",
@@ -244,6 +256,18 @@ export default function ArticleCreationPage() {
       return
     }
 
+    if (!wordsInBounds) {
+      toast({
+        title: wordCount < MIN_WORDS ? "Article too short" : "Article too long",
+        description:
+          wordCount < MIN_WORDS
+            ? `Articles need at least ${MIN_WORDS} words — you have ${wordCount}.`
+            : `Articles can be at most ${MAX_WORDS.toLocaleString()} words — you have ${wordCount.toLocaleString()}.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     const success = await scheduleDraft(date);
     if (success) {
       setScheduleModalOpen(false);
@@ -294,7 +318,10 @@ export default function ArticleCreationPage() {
   const readingTime = calculateReadingTime(plainText)
   const isOwner = !!(account && draft && account.id === draft.authorId)
   const isBusy = isProcessing || isWaitingForRedirect
-  const canPublish = !!title.trim() && !!content.trim()
+  const MIN_WORDS = 100
+  const MAX_WORDS = 10000
+  const wordsInBounds = wordCount >= MIN_WORDS && wordCount <= MAX_WORDS
+  const canPublish = !!title.trim() && !!content.trim() && wordsInBounds
 
   return (
       <>
@@ -511,7 +538,11 @@ export default function ArticleCreationPage() {
           {/* Footer meta — quiet, always under the canvas */}
           <div className="mx-auto max-w-[880px] px-5 sm:px-8 md:px-10 pb-8 sm:pb-10">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-gray-100 pt-5 text-xs text-gray-400">
-              <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+              <span className={!wordsInBounds && wordCount > 0 ? 'text-amber-600 font-medium' : undefined}>
+                {wordCount} {wordCount === 1 ? 'word' : 'words'}
+                {wordCount > 0 && wordCount < MIN_WORDS && ` — ${MIN_WORDS - wordCount} more to publish (min ${MIN_WORDS})`}
+                {wordCount > MAX_WORDS && ` — over the ${MAX_WORDS.toLocaleString()}-word limit`}
+              </span>
               <span aria-hidden="true">·</span>
               <span>~{readingTime} min read</span>
               <span aria-hidden="true">·</span>
