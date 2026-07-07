@@ -6,6 +6,7 @@ import { nftAPI } from "@/lib/api";
 import { Clock, ExternalLink } from "lucide-react";
 import { log } from "@/lib/utils/Logger";
 import { ROUTES } from "@/constants/routes";
+import { network } from '@/config/sui';
 
 interface MintTransaction {
   id: string;
@@ -128,7 +129,7 @@ export function RecentMints({ articleId }: RecentMintsProps) {
                   NFT: {formatAddress(mint.nftId)}
                 </span>
                 <button
-                  onClick={() => window.open(`https://suiexplorer.com/object/${mint.nftId}?network=testnet`, '_blank')}
+                  onClick={() => window.open(`https://suiscan.xyz/${network}/object/${mint.nftId}`, '_blank')}
                   className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />

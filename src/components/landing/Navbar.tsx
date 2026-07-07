@@ -78,7 +78,9 @@ export function Navbar() {
             </a>
             <button
               className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_4px_12px_rgba(0,94,252,0.15)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.25)] hover:-translate-y-px active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,94,252,0.4)] transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0! disabled:shadow-none!"
-              onClick={() => router.push(ROUTES.FEED)}
+              onClick={() =>
+                router.push(isConnected ? ROUTES.FEED : ROUTES.AUTH)
+              }
               disabled={!LANDING_CTA_ENABLED}
               title={!LANDING_CTA_ENABLED ? "Available at launch" : undefined}
             >
@@ -132,7 +134,7 @@ export function Navbar() {
                   className="px-8 py-3 rounded-xl text-lg font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.2)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_8px_28px_rgba(0,94,252,0.3)] hover:-translate-y-px active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0! disabled:shadow-none!"
                   onClick={() => {
                     setMobileOpen(false)
-                    router.push(ROUTES.FEED)
+                    router.push(isConnected ? ROUTES.FEED : ROUTES.AUTH)
                   }}
                   disabled={!LANDING_CTA_ENABLED}
                   title={!LANDING_CTA_ENABLED ? "Available at launch" : undefined}

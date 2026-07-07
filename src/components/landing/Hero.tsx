@@ -88,7 +88,7 @@ export function Hero() {
           >
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-sm font-medium text-primary">
-              Now live on Sui Testnet
+              Live on Sui Mainnet
             </span>
           </motion.div>
 
@@ -108,7 +108,7 @@ export function Hero() {
           <div className="flex flex-wrap items-center gap-5">
             <button
               className="relative px-7 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-b from-[#1a6fff] to-[#005EFC] shadow-[0_1px_2px_rgba(0,94,252,0.4),0_6px_20px_rgba(0,94,252,0.2)] hover:shadow-[0_1px_2px_rgba(0,94,252,0.4),0_8px_28px_rgba(0,94,252,0.3)] hover:-translate-y-px active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,94,252,0.4)] transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0! disabled:shadow-none!"
-              onClick={() => router.push(isConnected ? ROUTES.CREATE : ROUTES.FEED)}
+              onClick={() => router.push(isConnected ? ROUTES.CREATE : ROUTES.AUTH)}
               disabled={!LANDING_CTA_ENABLED}
               title={!LANDING_CTA_ENABLED ? "Available at launch" : undefined}
             >

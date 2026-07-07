@@ -6,6 +6,7 @@
 export const ROUTES = {
   // Main pages
   HOME: '/',
+  AUTH: '/auth',
   FEED: '/feed',
   ARTICLE: '/article',
   CREATE: '/create',

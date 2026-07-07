@@ -39,7 +39,7 @@ export function PageCta({
           <div className="flex flex-wrap justify-center items-center gap-5 pt-2">
             <button
               className="px-8 py-3 rounded-xl text-base font-semibold text-[#080F1A] bg-white shadow-[0_1px_2px_rgba(255,255,255,0.3),0_6px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_1px_2px_rgba(255,255,255,0.3),0_8px_28px_rgba(255,255,255,0.18)] hover:-translate-y-px active:translate-y-0 active:shadow-[0_1px_2px_rgba(255,255,255,0.3)] transition-all duration-200 cursor-pointer"
-              onClick={() => router.push(isConnected ? ROUTES.CREATE : ROUTES.FEED)}
+              onClick={() => router.push(isConnected ? ROUTES.CREATE : ROUTES.AUTH)}
             >
               {isConnected ? "Start Writing" : "Try Inkray"}
             </button>
