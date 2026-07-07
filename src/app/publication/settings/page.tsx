@@ -9,7 +9,6 @@ import { usePublication } from "@/hooks/usePublication";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import {
-  HiCurrencyDollar,
   HiChartBarSquare,
   HiGift,
   HiArrowDownTray,
@@ -20,7 +19,7 @@ import { addressesEqual } from "@/utils/address";
 import Link from "next/link";
 import {
   SettingsTabs,
-  SubscriptionSettings,
+  // SubscriptionSettings, // disabled for now (see TABS)
   TipsSettings,
   ExportSettings,
   AnalyticsSettings,
@@ -55,12 +54,14 @@ const TABS: TabConfig[] = [
     icon: HiRss,
     component: RssFeedsSettings,
   },
-  {
-    id: "subscription",
-    label: "Subscription",
-    icon: HiCurrencyDollar,
-    component: SubscriptionSettings,
-  },
+  // Subscription settings are disabled for now — re-add to TABS and the
+  // "revenue" group below to re-enable.
+  // {
+  //   id: "subscription",
+  //   label: "Subscription",
+  //   icon: HiCurrencyDollar,
+  //   component: SubscriptionSettings,
+  // },
   {
     id: "tips",
     label: "Tips",
@@ -85,7 +86,7 @@ const TABS: TabConfig[] = [
 const TAB_GROUPS: TabGroup[] = [
   { id: "insights", label: "Insights", tabs: ["analytics"] },
   { id: "content", label: "Content", tabs: ["rss-feeds"] },
-  { id: "revenue", label: "Revenue", tabs: ["subscription", "tips"] },
+  { id: "revenue", label: "Revenue", tabs: ["tips"] },
   { id: "distribution", label: "Distribution", tabs: ["airdrop", "export"] },
 ];
 
