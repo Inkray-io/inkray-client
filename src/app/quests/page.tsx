@@ -31,6 +31,7 @@ import {
   Trophy,
   Lock,
   Award,
+  History,
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import type {
@@ -38,6 +39,11 @@ import type {
   RecurringQuestItem,
   AchievementQuestItem,
 } from '@/lib/api';
+import {
+  QuestInfoButton,
+  questInfoBuilders,
+} from '@/components/quests/QuestInfoButton';
+import { XpHistorySection } from '@/components/quests/XpHistorySection';
 
 const RECURRING_CATEGORY_LABELS: Record<RecurringQuestItem['category'], string> = {
   create: 'Create',
@@ -79,7 +85,8 @@ function RecurringQuestRow({ item }: { item: RecurringQuestItem }) {
             </span>
           )}
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-1.5">
+          <QuestInfoButton info={questInfoBuilders.recurring(item)} />
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold bg-amber-50 text-amber-700">
             <Zap className="size-3.5" />+{item.xp}
           </div>
@@ -117,7 +124,8 @@ function AchievementRow({ item }: { item: AchievementQuestItem }) {
           </h3>
           <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-1.5">
+          <QuestInfoButton info={questInfoBuilders.achievement(item)} />
           <div
             className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold ${
               item.earned ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
@@ -276,7 +284,8 @@ function QuestCard({ quest }: { quest: QuestResponse }) {
         </div>
 
         {/* XP reward */}
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-1.5">
+          <QuestInfoButton info={questInfoBuilders.quest(quest)} />
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold bg-amber-50 text-amber-700">
             <Zap className="size-3.5" />
             {quest.xpReward}
@@ -304,6 +313,7 @@ function CompletedQuestRow({ quest }: { quest: QuestResponse }) {
       <span className="text-xs text-muted-foreground tabular-nums shrink-0">
         +{quest.xpReward} XP
       </span>
+      <QuestInfoButton info={questInfoBuilders.quest(quest)} />
     </div>
   );
 }
@@ -589,7 +599,7 @@ function XpSummarySection() {
   );
 }
 
-type QuestTab = 'active' | 'recurring' | 'achievements' | 'completed';
+type QuestTab = 'active' | 'recurring' | 'achievements' | 'completed' | 'history';
 
 export default function QuestsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -645,6 +655,7 @@ export default function QuestsPage() {
       icon: Check,
       badge: completedQuests.length > 0 ? String(completedQuests.length) : null,
     },
+    { id: 'history', label: 'History', icon: History, badge: null },
   ];
 
   return (
@@ -789,6 +800,8 @@ export default function QuestsPage() {
               {tab === 'recurring' && <RecurringQuestsSection />}
 
               {tab === 'achievements' && <AchievementsSection />}
+
+              {tab === 'history' && <XpHistorySection />}
 
               {tab === 'completed' &&
                 (completedQuests.length > 0 ? (
