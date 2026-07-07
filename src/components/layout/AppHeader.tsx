@@ -31,7 +31,7 @@ export function AppHeader() {
         <div className="flex items-center justify-between gap-3 px-4 sm:px-8 lg:px-15 xl:px-20 py-4 max-w-500 xl:max-w-650 2xl:max-w-750 mx-auto w-full">
           {/* Left side - Logo (mobile menu lives in the bottom nav) */}
           <Link href={ROUTES.FEED} className="shrink-0">
-            <img src="/logo.svg" alt="Inkray" className="h-8 lg:h-10 cursor-pointer hover:opacity-80 transition-opacity" />
+            <img src="/logo.svg" alt="Inkray" className="h-7 lg:h-8 cursor-pointer hover:opacity-80 transition-opacity" />
           </Link>
 
           {/* Right side - Actions */}
