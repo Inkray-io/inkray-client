@@ -166,7 +166,7 @@ function PublicationsPageContent() {
                       />
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <span className="font-semibold text-black text-base truncate group-hover:text-primary transition-colors">
                         {publication.name}
                       </span>

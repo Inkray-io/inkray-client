@@ -117,7 +117,7 @@ export function PublicationTipButton({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg">Tip This Publication</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground break-words">
             Send a tip to support &ldquo;{publicationName}&rdquo;
           </p>
         </DialogHeader>

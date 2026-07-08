@@ -15,6 +15,7 @@ import { PublicationTagsSelector } from './PublicationTagsSelector';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 import { cn } from '@/lib/utils';
 import { publicationsAPI, UpdatePublicationData, SocialAccounts } from '@/lib/api';
+import { validatePublicationName, VALIDATION_CONFIG } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 import { useEnhancedTransaction } from '@/hooks/useEnhancedTransaction';
 import { useUserPublications } from '@/hooks/useUserPublications';
@@ -117,11 +118,26 @@ export function PublicationEditModal({
     e.preventDefault();
     if (!publication) return;
 
+    const nameChanged = name.trim() !== (publication.name || '');
+
+    // Validate only when the name changed — legacy publications with
+    // over-limit names must still be able to save other fields untouched.
+    // The name goes on-chain, so this runs before the transaction.
+    if (nameChanged) {
+      const nameValidation = validatePublicationName(name);
+      if (!nameValidation.isValid) {
+        toast({
+          title: 'Error',
+          description: nameValidation.errors[0],
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      const nameChanged = name.trim() !== (publication.name || '');
-
       // If name changed, send on-chain transaction first
       if (nameChanged && name.trim()) {
         const ownerCapId = firstPublication?.ownerCapId;
@@ -270,17 +286,25 @@ export function PublicationEditModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Publication name"
-                    maxLength={100}
+                    maxLength={VALIDATION_CONFIG.PUBLICATION.NAME.MAX_LENGTH}
                     className="rounded-xl"
                   />
-                  <p className={cn(
-                    'text-xs',
-                    name.trim() !== (publication?.name || '') ? 'text-amber-500' : 'text-gray-400'
-                  )}>
-                    {name.trim() !== (publication?.name || '')
-                      ? 'Name change requires a blockchain transaction'
-                      : 'Your publication\'s display name'}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className={cn(
+                      'text-xs',
+                      name.trim() !== (publication?.name || '') ? 'text-amber-500' : 'text-gray-400'
+                    )}>
+                      {name.trim() !== (publication?.name || '')
+                        ? 'Name change requires a blockchain transaction'
+                        : 'Your publication\'s display name'}
+                    </p>
+                    <p className={cn(
+                      'text-xs font-medium tabular-nums',
+                      name.length > 45 ? 'text-amber-500' : 'text-gray-400'
+                    )}>
+                      {name.length}/50
+                    </p>
+                  </div>
                 </div>
 
                 {/* Description */}

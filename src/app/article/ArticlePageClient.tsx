@@ -383,9 +383,9 @@ function ArticlePageContent() {
                         )}
                         size="md"
                       />
-                      <div>
+                      <div className="min-w-0">
                         {/* Publication Name - Primary */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 min-w-0">
                           <button
                             type="button"
                             onClick={() => {
@@ -393,7 +393,7 @@ function ArticlePageContent() {
                                 router.push(ROUTES.PUBLICATION_WITH_ID(article.publicationId))
                               }
                             }}
-                            className="font-semibold text-black text-sm hover:text-primary hover:underline transition-colors"
+                            className="font-semibold text-black text-sm truncate max-w-56 sm:max-w-xs hover:text-primary hover:underline transition-colors"
                           >
                             {article.followInfo?.publicationName || 'Publication'}
                           </button>

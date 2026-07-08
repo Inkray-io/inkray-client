@@ -14,6 +14,7 @@ import {
   CalendarClock,
   ShieldCheck,
   BadgeCheck,
+  Timer,
 } from 'lucide-react';
 import type {
   QuestResponse,
@@ -32,6 +33,8 @@ export interface QuestInfo {
   frequency: string;
   /** When the counter resets (only for capped quests) */
   resets?: string;
+  /** Cooldown line, e.g. "Counts at most once every 2 minutes." */
+  cooldown?: string;
   /** Longer "how it works" explanation */
   how: string;
   /** Fair-play / anti-abuse rules that apply */
@@ -63,6 +66,7 @@ const RECURRING_DETAILS: Record<
     rules: [
       'Comments must be at least 50 characters to count.',
       'Only your first 3 comments on the same article each day earn XP.',
+      'Comments on your own articles do not earn XP.',
     ],
   },
   like_article: {
@@ -78,7 +82,10 @@ const RECURRING_DETAILS: Record<
   },
   bookmark_article: {
     how: 'Save articles to your bookmarks to read later. Bookmarks are private.',
-    rules: ['Each article counts once, ever.'],
+    rules: [
+      'Each article counts once, ever.',
+      'Bookmarking your own articles earns nothing.',
+    ],
   },
   received_like: {
     how: 'Earn XP passively whenever a reader likes one of your articles. Write things people love and the XP takes care of itself.',
@@ -123,6 +130,17 @@ const ACHIEVEMENT_DETAILS: Record<string, string> = {
     'Link your X (Twitter) account from the Quests page. This also unlocks X social quests.',
 };
 
+/** "45" -> "45 seconds", "90" -> "90 seconds", "120" -> "2 minutes" */
+function humanizeCooldown(seconds: number): string {
+  // Only collapse to minutes for exact multiples of 60, so operator-configured
+  // values like 90 render as "90 seconds" rather than an inaccurate "2 minutes".
+  if (seconds < 60 || seconds % 60 !== 0) {
+    return `${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
+  }
+  const minutes = seconds / 60;
+  return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+}
+
 function recurringInfo(item: RecurringQuestItem): QuestInfo {
   const details = RECURRING_DETAILS[item.key];
   const capped = item.dailyCap !== null;
@@ -133,6 +151,9 @@ function recurringInfo(item: RecurringQuestItem): QuestInfo {
       ? `Daily — up to ${item.dailyCap}× per day`
       : 'Repeatable — no daily cap',
     resets: capped ? 'Progress resets every day at 00:00 UTC' : undefined,
+    cooldown: item.cooldownSeconds
+      ? `Counts at most once every ${humanizeCooldown(item.cooldownSeconds)}.`
+      : undefined,
     how: details?.how ?? item.description,
     rules: details?.rules,
   };
@@ -211,6 +232,18 @@ function InfoDialogBody({ info }: { info: QuestInfo }) {
             <div>
               <div className="text-xs font-semibold text-gray-900">Resets</div>
               <div className="text-xs text-gray-600">{info.resets}</div>
+            </div>
+          </div>
+        )}
+
+        {info.cooldown && (
+          <div className="flex items-start gap-2.5">
+            <Timer className="size-4 text-gray-500 shrink-0 mt-0.5" />
+            <div>
+              <div className="text-xs font-semibold text-gray-900">
+                Cooldown
+              </div>
+              <div className="text-xs text-gray-600">{info.cooldown}</div>
             </div>
           </div>
         )}

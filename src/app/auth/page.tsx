@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { useSuiWalletDetection } from "@/hooks/useSuiWalletDetection";
 import { authAPI, feedAPI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
   Heart,
   Loader2,
   ShieldCheck,
+  TriangleAlert,
   Wallet,
 } from "lucide-react";
 import { HiDocumentText, HiOutlineBanknotes } from "react-icons/hi2";
@@ -298,6 +300,7 @@ function AuthPageContent() {
   const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuth();
   const { disconnect, isConnected, address } = useWalletConnection();
+  const { ready: walletDetectionReady, hasWallet, isMobile } = useSuiWalletDetection();
   const { toast } = useToast();
   const { mutate: signPersonalMessage } = useSignPersonalMessage();
 
@@ -608,10 +611,39 @@ function AuthPageContent() {
                       </span>
                     </Button>
 
-                    <p className="text-xs text-center text-gray-400">
-                      New to Sui? A wallet is free and takes about a minute to
-                      set up.
-                    </p>
+                    {walletDetectionReady && !hasWallet ? (
+                      <div className="flex items-start gap-2.5 rounded-xl border border-amber-200/70 bg-amber-50/60 p-3 text-left">
+                        <TriangleAlert className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                        <p className="text-[13px] leading-snug text-amber-900">
+                          {isMobile ? (
+                            <>
+                              No Sui wallet detected. Open inkray.xyz from
+                              inside a Sui wallet app&apos;s built-in browser
+                              (like Slush) to connect.
+                            </>
+                          ) : (
+                            <>
+                              No Sui wallet detected. Install a wallet
+                              extension like{" "}
+                              <a
+                                href="https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdi"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline font-medium"
+                              >
+                                Slush
+                              </a>
+                              , then refresh this page.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-center text-gray-400">
+                        New to Sui? A wallet is free and takes about a minute to
+                        set up.
+                      </p>
+                    )}
                   </motion.div>
                 )}
 

@@ -180,12 +180,14 @@ export function SubscriptionButton({
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Subscribe to {subscriptionInfo.publicationName || "Publication"}
+            <DialogTitle className="text-lg flex items-center gap-2 min-w-0">
+              <Lock className="h-5 w-5 shrink-0" />
+              <span className="truncate">
+                Subscribe to {subscriptionInfo.publicationName || "Publication"}
+              </span>
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              {isSubscribed 
+              {isSubscribed
                 ? "Extend your subscription to continue accessing premium content"
                 : "Subscribe to access premium content and support the creator"
               }
@@ -297,7 +299,7 @@ export function SubscriptionButton({
               <Lock className="h-5 w-5" />
               Subscription Status
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground break-words">
               You&apos;re subscribed to {subscriptionInfo.publicationName || "this publication"}
             </p>
           </DialogHeader>
@@ -383,9 +385,11 @@ export function SubscriptionButton({
       
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Subscribe to {subscriptionInfo.publicationName || "Publication"}
+          <DialogTitle className="text-lg flex items-center gap-2 min-w-0">
+            <Lock className="h-5 w-5 shrink-0" />
+            <span className="truncate">
+              Subscribe to {subscriptionInfo.publicationName || "Publication"}
+            </span>
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Subscribe to access premium content and support the creator

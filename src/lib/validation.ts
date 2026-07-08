@@ -21,6 +21,12 @@ export const VALIDATION_CONFIG = {
       MAX_WORDS: 10000,
     },
   },
+  PUBLICATION: {
+    NAME: {
+      MIN_LENGTH: 2,
+      MAX_LENGTH: 50,
+    },
+  },
   FILES: {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB per file
     MAX_TOTAL_SIZE: 50 * 1024 * 1024, // 50MB total
@@ -70,6 +76,11 @@ export const VALIDATION_MESSAGES = {
     CONTENT_TOO_FEW_WORDS: `Articles must be at least ${VALIDATION_CONFIG.ARTICLE.CONTENT.MIN_WORDS} words — add a bit more substance before publishing`,
     CONTENT_TOO_MANY_WORDS: `Articles can be at most ${VALIDATION_CONFIG.ARTICLE.CONTENT.MAX_WORDS.toLocaleString()} words — consider splitting this into a series`,
   },
+  PUBLICATION: {
+    NAME_REQUIRED: 'Publication name is required',
+    NAME_TOO_SHORT: `Publication name must be at least ${VALIDATION_CONFIG.PUBLICATION.NAME.MIN_LENGTH} characters long`,
+    NAME_TOO_LONG: `Publication name must be less than ${VALIDATION_CONFIG.PUBLICATION.NAME.MAX_LENGTH} characters`,
+  },
   FILES: {
     FILE_TOO_LARGE: `File size must be less than ${VALIDATION_CONFIG.FILES.MAX_FILE_SIZE / (1024 * 1024)}MB`,
     TOTAL_SIZE_TOO_LARGE: `Total upload size must be less than ${VALIDATION_CONFIG.FILES.MAX_TOTAL_SIZE / (1024 * 1024)}MB`,
@@ -103,6 +114,31 @@ export function validateArticleTitle(title: string): ValidationResult {
     }
     if (trimmedTitle.length > VALIDATION_CONFIG.ARTICLE.TITLE.MAX_LENGTH) {
       errors.push(VALIDATION_MESSAGES.ARTICLE.TITLE_TOO_LONG);
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Validates publication name — the name is written on-chain from the client,
+ * so this pre-transaction check is the real gate
+ */
+export function validatePublicationName(name: string): ValidationResult {
+  const errors: string[] = [];
+
+  if (!name || name.trim().length === 0) {
+    errors.push(VALIDATION_MESSAGES.PUBLICATION.NAME_REQUIRED);
+  } else {
+    const trimmedName = name.trim();
+    if (trimmedName.length < VALIDATION_CONFIG.PUBLICATION.NAME.MIN_LENGTH) {
+      errors.push(VALIDATION_MESSAGES.PUBLICATION.NAME_TOO_SHORT);
+    }
+    if (trimmedName.length > VALIDATION_CONFIG.PUBLICATION.NAME.MAX_LENGTH) {
+      errors.push(VALIDATION_MESSAGES.PUBLICATION.NAME_TOO_LONG);
     }
   }
 

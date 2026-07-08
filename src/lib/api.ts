@@ -168,6 +168,11 @@ export const feedAPI = {
     timeframe?: 'day' | 'week' | 'month';
   }) => api.get('/feed/trending', { params }),
 
+  getRelated: (params: {
+    articleId: string;
+    limit?: number;
+  }) => api.get('/feed/related', { params }),
+
   getByPublication: (publicationId: string, params: {
     limit?: number;
     cursor?: string;
@@ -264,6 +269,9 @@ export const followsAPI = {
 
   getMyFollows: (params: { cursor?: string; limit?: number }) =>
     api.get('/follows/my-follows', { params }),
+
+  getFollowers: (publicationId: string, params: { cursor?: string; limit?: number }) =>
+    api.get(`/follows/${publicationId}/followers`, { params }),
 
   getPublicationStats: (publicationId: string) =>
     api.get(`/follows/${publicationId}/stats`),
@@ -829,6 +837,8 @@ export interface RecurringQuestItem {
   category: 'create' | 'engage' | 'audience' | 'bonus';
   doneToday: number | null;
   capReached: boolean;
+  /** Min seconds between counted actions; null = no cooldown */
+  cooldownSeconds: number | null;
 }
 
 export interface AchievementQuestItem {

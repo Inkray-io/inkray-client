@@ -168,7 +168,7 @@ export function NotificationRow({
       <div className="flex-1 min-w-0">
         <p
           className={cn(
-            'font-medium text-gray-900 leading-snug',
+            'font-medium text-gray-900 leading-snug break-words',
             md ? 'text-[15px]' : 'text-sm',
           )}
         >

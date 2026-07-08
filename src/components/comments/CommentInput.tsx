@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
+import { createUserAvatarConfig } from "@/lib/utils/avatar";
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<{ success: boolean; message: string }>;
@@ -97,11 +98,14 @@ export function CommentInput({
           {/* User Avatar */}
           <div className="flex-shrink-0 pt-0.5">
             <Avatar
-              src={profile?.avatar || undefined}
-              alt={displayName}
-              size="sm"
-              fallbackText={(displayName || shortAddress).slice(0, 2).toUpperCase()}
-              gradientColors="from-primary/60 to-primary"
+              {...createUserAvatarConfig(
+                {
+                  publicKey: address || undefined,
+                  name: displayName || undefined,
+                  avatar: profile?.avatar,
+                },
+                "sm"
+              )}
             />
           </div>
 

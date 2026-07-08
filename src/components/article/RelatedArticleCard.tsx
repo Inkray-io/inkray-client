@@ -68,6 +68,12 @@ export function RelatedArticleCard({ article }: RelatedArticleCardProps) {
           <span className="truncate">{publicationName}</span>
           <span>·</span>
           <span className="flex-shrink-0">{article.timeAgo}</span>
+          {article.readTimeMinutes ? (
+            <>
+              <span>·</span>
+              <span className="flex-shrink-0">{article.readTimeMinutes} min read</span>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

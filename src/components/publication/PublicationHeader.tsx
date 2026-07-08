@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Publication } from '@/types/article';
 import { useFollows } from '@/hooks/useFollows';
 import { FollowButton } from '@/components/follow/FollowButton';
 import { PublicationTipButton } from '@/components/publication/PublicationTipButton';
+import { FollowersDialog } from '@/components/publication/FollowersDialog';
 import { TipDisplay } from '@/components/ui/TipDisplay';
 import { Avatar } from '@/components/ui/Avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,18 +32,40 @@ function StatItem({
   icon: Icon,
   value,
   label,
+  onClick,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   value: number;
   label: string;
+  onClick?: () => void;
 }) {
-  return (
-    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+  const content = (
+    <>
       <Icon className="size-3.5" />
       <span className="tabular-nums font-semibold text-gray-700 text-sm">
         {value.toLocaleString()}
       </span>
       {label}
+    </>
+  );
+
+  // Interactive variant — same visual, but a real button that opens a dialog
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-haspopup="dialog"
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+      {content}
     </span>
   );
 }
@@ -59,6 +82,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
   onEditClick,
 }) => {
   const { account } = useAuth();
+  const [followersOpen, setFollowersOpen] = useState(false);
   const {
     isFollowing,
     followerCount,
@@ -205,6 +229,7 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
             icon={HiUserGroup}
             value={followerCount || 0}
             label={(followerCount || 0) === 1 ? 'follower' : 'followers'}
+            onClick={() => setFollowersOpen(true)}
           />
           <StatItem
             icon={HiDocumentText}
@@ -214,6 +239,13 @@ export const PublicationHeader: React.FC<PublicationHeaderProps> = ({
           <TipDisplay amount={publication.totalTips || 0} size="sm" />
         </div>
       </div>
+
+      <FollowersDialog
+        open={followersOpen}
+        onOpenChange={setFollowersOpen}
+        publicationId={publication.id}
+        followerCount={followerCount || 0}
+      />
     </div>
   );
 };

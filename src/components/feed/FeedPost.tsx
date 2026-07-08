@@ -286,18 +286,18 @@ export function FeedPost({
     <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
       {/* Author Header */}
       <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Avatar
             {...displayAvatarConfig}
             size="sm"
           />
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             {publication ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 min-w-0">
                 <button
                   type="button"
                   onClick={handlePublicationClick}
-                  className="font-semibold text-black text-xs text-left hover:text-primary transition-colors"
+                  className="font-semibold text-black text-xs text-left truncate max-w-full hover:text-primary transition-colors"
                 >
                   {publication.name}
                 </button>

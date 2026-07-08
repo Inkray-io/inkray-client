@@ -175,7 +175,7 @@ export function FollowBar({
 
       {/* Publication Description */}
       <div className="text-xs text-gray-500">
-        <p>
+        <p className="break-words">
           Follow <strong>{publicationName}</strong> to get notified about new articles
           and updates from this publication.
         </p>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AddressDisplay } from "@/components/ui/AddressDisplay";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { createUserAvatarConfig } from "@/lib/utils/avatar";
 import { ROUTES } from "@/constants/routes";
 
 interface CommentItemProps {
@@ -35,7 +36,6 @@ export function CommentItem({
   onDelete,
 }: CommentItemProps) {
   const router = useRouter();
-  const displayName = author.username || author.shortAddress;
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
 
   const handleAuthorClick = () => {
@@ -62,11 +62,15 @@ export function CommentItem({
           className="flex-shrink-0 hover:scale-105 transition-transform duration-200"
         >
           <Avatar
-            src={author.avatar}
-            alt={displayName}
-            size="sm"
-            fallbackText={displayName.slice(0, 2).toUpperCase()}
-            gradientColors="from-primary/60 to-primary"
+            {...createUserAvatarConfig(
+              {
+                id: author.id,
+                publicKey: author.publicKey,
+                name: author.username || undefined,
+                avatar: author.avatar,
+              },
+              "sm"
+            )}
           />
         </button>
 

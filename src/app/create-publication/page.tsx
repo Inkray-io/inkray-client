@@ -12,6 +12,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { setCachedPublication } from "@/lib/cache-manager";
+import { validatePublicationName, VALIDATION_CONFIG } from "@/lib/validation";
 import { log } from "@/lib/utils/Logger";
 
 export default function CreatePublicationPage() {
@@ -61,10 +62,13 @@ export default function CreatePublicationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!publicationName.trim()) {
+    // Validate before the on-chain tx — the name is written on-chain, so
+    // this is the real gate
+    const nameValidation = validatePublicationName(publicationName);
+    if (!nameValidation.isValid) {
       toast({
         title: "Error",
-        description: "Please enter a publication name.",
+        description: nameValidation.errors[0],
         variant: "destructive",
       });
       return;
@@ -191,12 +195,19 @@ export default function CreatePublicationPage() {
                 value={publicationName}
                 onChange={(e) => setPublicationName(e.target.value)}
                 required
-                maxLength={100}
+                maxLength={VALIDATION_CONFIG.PUBLICATION.NAME.MAX_LENGTH}
                 disabled={isCreating}
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Choose a name for your publication (max 100 characters)
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Choose a name for your publication (max 50 characters)
+                </p>
+                <p className={`text-xs font-medium tabular-nums ${
+                  publicationName.length > 45 ? 'text-amber-500' : 'text-gray-400'
+                }`}>
+                  {publicationName.length}/50
+                </p>
+              </div>
             </div>
 
             <Button
