@@ -23,7 +23,6 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { FaDiscord } from "react-icons/fa";
-import { FaXTwitter } from "react-icons/fa6";
 import { HiUserGroup } from "react-icons/hi2";
 import { serif } from "./fonts";
 
@@ -216,15 +215,8 @@ function InvitePageContent() {
       icon: FaDiscord,
       title: "Join our Discord",
       description: "Active members receive codes",
-      link: "#",
+      link: "https://discord.gg/aNBydFtntv",
       color: "bg-[#5865F2]",
-    },
-    {
-      icon: FaXTwitter,
-      title: "Follow us on X",
-      description: "We share codes with followers",
-      link: "#",
-      color: "bg-black",
     },
     {
       icon: HiUserGroup,
