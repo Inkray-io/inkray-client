@@ -10,6 +10,7 @@ import {
 import { HiGlobeAlt } from 'react-icons/hi2';
 import { cn } from '@/lib/utils';
 import { SocialAccounts } from '@/lib/api';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +20,11 @@ import {
 
 interface ProfileSocialLinksProps {
   socialAccounts: SocialAccounts;
+  /**
+   * True when the profile's X link matches the account connected (OAuth-verified)
+   * in the quest module — renders a blue check on the X icon.
+   */
+  xVerified?: boolean;
 }
 
 const SOCIAL_CONFIG = {
@@ -61,6 +67,7 @@ const SOCIAL_CONFIG = {
 
 export function ProfileSocialLinks({
   socialAccounts,
+  xVerified = false,
 }: ProfileSocialLinksProps) {
   const links = Object.entries(socialAccounts).filter(
     ([_, value]) => value && value.trim()
@@ -82,21 +89,32 @@ export function ProfileSocialLinks({
               const Icon = config.icon;
               const isClickable = config.isUrl && value;
               const href = isClickable ? value : undefined;
+              const verified = platform === 'twitter' && xVerified;
 
               const iconButton = (
-                <div
-                  className={cn(
-                    'w-8 h-8 rounded-lg flex items-center justify-center',
-                    'bg-gray-50 border border-gray-100 transition-all duration-200',
-                    config.hoverBg
-                  )}
-                >
-                  <Icon
+                <div className="relative">
+                  <div
                     className={cn(
-                      'w-4 h-4 text-gray-500 transition-colors',
-                      config.hoverText
+                      'w-8 h-8 rounded-lg flex items-center justify-center',
+                      'bg-gray-50 border border-gray-100 transition-all duration-200',
+                      config.hoverBg
                     )}
-                  />
+                  >
+                    <Icon
+                      className={cn(
+                        'w-4 h-4 text-gray-500 transition-colors',
+                        config.hoverText
+                      )}
+                    />
+                  </div>
+                  {verified && (
+                    <VerifiedBadge
+                      size="sm"
+                      showTooltip={false}
+                      label="Verified X account"
+                      className="absolute -top-1 -right-1 size-3.5 rounded-full bg-white drop-shadow-sm"
+                    />
+                  )}
                 </div>
               );
 
@@ -114,7 +132,12 @@ export function ProfileSocialLinks({
                       </a>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={6} hideArrow className="text-xs bg-white border border-gray-200 text-gray-700 shadow-sm">
-                      <p className="font-medium">{config.label}</p>
+                      <p className="font-medium">
+                        {config.label}
+                        {verified && (
+                          <span className="ml-1 text-blue-500">· Verified</span>
+                        )}
+                      </p>
                       <p className="text-gray-400 truncate max-w-[200px]">{value}</p>
                     </TooltipContent>
                   </Tooltip>

@@ -1029,14 +1029,29 @@ export interface PublicationSearchResult {
   followerCount: number;
 }
 
+export interface UserSearchResult {
+  address: string;
+  username: string | null;
+  avatar: string | null;
+  suinsName: string | null;
+  /** Present only when the user connected this X handle via the quest module. */
+  xUsername: string | null;
+  xVerified: boolean;
+}
+
 export interface SearchResponse {
   query: string;
   articles: ArticleSearchResult[];
   publications: PublicationSearchResult[];
+  users: UserSearchResult[];
 }
 
 export const searchAPI = {
-  // DB-backed search across articles and publications
-  search: (q: string, type: 'all' | 'articles' | 'publications' = 'all', limit = 8) =>
+  // DB-backed search across articles, publications, and users
+  search: (
+    q: string,
+    type: 'all' | 'articles' | 'publications' | 'users' = 'all',
+    limit = 8,
+  ) =>
     api.get<ApiResponse<SearchResponse>>('/search', { params: { q, type, limit } }),
 };

@@ -19,6 +19,9 @@ export interface Profile {
   description: string | null;
   skills: string[] | null;
   socialAccounts: SocialAccounts | null;
+  /** True when the profile's X link matches the X account connected via quests. */
+  xVerified?: boolean;
+  xVerifiedUsername?: string | null;
   createdAt: string;
   stats: ProfileStats;
 }

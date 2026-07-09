@@ -15,6 +15,8 @@ interface VerifiedBadgeProps {
   className?: string
   /** Whether to show tooltip on hover */
   showTooltip?: boolean
+  /** Tooltip + aria label (defaults to the publication trust seal) */
+  label?: string
 }
 
 const sizeConfig = {
@@ -31,6 +33,7 @@ export function VerifiedBadge({
   size = "sm",
   className,
   showTooltip = true,
+  label = "Verified Publication",
 }: VerifiedBadgeProps) {
   const badge = (
     <BadgeCheck
@@ -43,7 +46,7 @@ export function VerifiedBadge({
         "hover:scale-110",
         className
       )}
-      aria-label="Verified publication"
+      aria-label={label}
     />
   )
 
@@ -62,7 +65,7 @@ export function VerifiedBadge({
         hideArrow
         className="bg-gray-900 dark:bg-gray-800 text-white text-[11px] font-medium px-2 py-1 rounded-md shadow-lg"
       >
-        Verified Publication
+        {label}
       </TooltipContent>
     </Tooltip>
   )

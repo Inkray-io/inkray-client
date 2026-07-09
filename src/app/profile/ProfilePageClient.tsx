@@ -198,7 +198,10 @@ const ProfilePageContent: React.FC = () => {
 
         {/* Social Links Section */}
         {!profileLoading && profile?.socialAccounts && (
-          <ProfileSocialLinks socialAccounts={profile.socialAccounts} />
+          <ProfileSocialLinks
+            socialAccounts={profile.socialAccounts}
+            xVerified={profile.xVerified}
+          />
         )}
       </div>
 

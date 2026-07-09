@@ -9,23 +9,36 @@ import {
   HiXMark,
   HiDocumentText,
   HiUserGroup,
+  HiUser,
   HiSparkles,
   HiCheckBadge,
   HiEye,
 } from "react-icons/hi2"
 import { useSearch, MIN_SEARCH_LENGTH } from "@/hooks/useSearch"
-import type { ArticleSearchResult, PublicationSearchResult } from "@/lib/api"
+import type {
+  ArticleSearchResult,
+  PublicationSearchResult,
+  UserSearchResult,
+} from "@/lib/api"
 import { Avatar } from "@/components/ui/Avatar"
-import { createPublicationAvatarConfig } from "@/lib/utils/avatar"
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge"
+import {
+  createPublicationAvatarConfig,
+  createUserAvatarConfig,
+} from "@/lib/utils/avatar"
 import { ROUTES } from "@/constants/routes"
 import { cn } from "@/lib/utils"
+
+function shortAddress(addr: string): string {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
+}
 
 interface SearchModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-type SearchTab = "articles" | "publications"
+type SearchTab = "articles" | "publications" | "users"
 
 export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   const [activeTab, setActiveTab] = useState<SearchTab>("articles")
@@ -57,12 +70,15 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   const hasQuery = query.trim().length >= MIN_SEARCH_LENGTH
   const articles = data?.articles ?? []
   const publications = data?.publications ?? []
+  const users = data?.users ?? []
 
   const handleResultClick = useCallback(
-    (type: "article" | "publication", id: string) => {
+    (type: "article" | "publication" | "user", id: string) => {
       onOpenChange(false)
       if (type === "article") {
         router.push(ROUTES.ARTICLE_WITH_ID(id))
+      } else if (type === "user") {
+        router.push(ROUTES.PROFILE_WITH_ID(id))
       } else {
         router.push(ROUTES.PUBLICATION_WITH_ID(id))
       }
@@ -83,6 +99,12 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
       icon: HiUserGroup,
       count: hasQuery && data ? publications.length : null,
     },
+    {
+      id: "users",
+      label: "People",
+      icon: HiUser,
+      count: hasQuery && data ? users.length : null,
+    },
   ]
 
   return (
@@ -95,7 +117,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
           aria-describedby={undefined}
         >
           <VisuallyHidden.Root>
-            <DialogTitle>Search articles and publications</DialogTitle>
+            <DialogTitle>Search articles, publications, and people</DialogTitle>
           </VisuallyHidden.Root>
 
           {/* Search Header */}
@@ -111,7 +133,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
                 type="text"
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value)}
-                placeholder="Search articles and publications…"
+                placeholder="Search articles, publications, people…"
                 className="flex-1 w-full bg-transparent border-0 px-3 py-2 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-0"
                 autoFocus
                 autoComplete="off"
@@ -172,7 +194,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
               <EmptyState
                 icon={HiMagnifyingGlass}
                 title="Search Inkray"
-                message="Find articles by title, topic, or category — and publications by name."
+                message="Find articles by title or topic, publications by name, and people by wallet address, SuiNS name, or connected X handle."
               />
             ) : !data && isFetching ? (
               <div className="flex flex-col items-center justify-center py-16">
@@ -184,7 +206,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
                 <EmptyState
                   icon={HiDocumentText}
                   title="No articles found"
-                  message={`Nothing matches “${query.trim()}”. Try a different word — or check the Publications tab.`}
+                  message={`Nothing matches “${query.trim()}”. Try a different word — or check the other tabs.`}
                 />
               ) : (
                 <div className="divide-y divide-border/50">
@@ -193,16 +215,30 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
                   ))}
                 </div>
               )
-            ) : publications.length === 0 ? (
+            ) : activeTab === "publications" ? (
+              publications.length === 0 ? (
+                <EmptyState
+                  icon={HiUserGroup}
+                  title="No publications found"
+                  message={`Nothing matches “${query.trim()}”. Try a different name — or check the other tabs.`}
+                />
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {publications.map((hit) => (
+                    <PublicationRow key={hit.id} hit={hit} onClick={handleResultClick} />
+                  ))}
+                </div>
+              )
+            ) : users.length === 0 ? (
               <EmptyState
-                icon={HiUserGroup}
-                title="No publications found"
-                message={`Nothing matches “${query.trim()}”. Try a different name — or check the Articles tab.`}
+                icon={HiUser}
+                title="No people found"
+                message={`Nothing matches “${query.trim()}”. Search by wallet address, SuiNS name, or a connected X handle.`}
               />
             ) : (
               <div className="divide-y divide-border/50">
-                {publications.map((hit) => (
-                  <PublicationRow key={hit.id} hit={hit} onClick={handleResultClick} />
+                {users.map((hit) => (
+                  <UserRow key={hit.address} hit={hit} onClick={handleResultClick} />
                 ))}
               </div>
             )}
@@ -330,6 +366,63 @@ function PublicationRow({
               <>
                 <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
                 <span className="truncate">{hit.tags.slice(0, 2).join(", ")}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function UserRow({
+  hit,
+  onClick,
+}: {
+  hit: UserSearchResult
+  onClick: (type: "article" | "publication" | "user", id: string) => void
+}) {
+  const displayName = hit.username || hit.suinsName || shortAddress(hit.address)
+  const avatarConfig = createUserAvatarConfig(
+    {
+      publicKey: hit.address,
+      name: hit.username || hit.suinsName || undefined,
+      avatar: hit.avatar,
+    },
+    "md",
+  )
+  const showSuins = hit.suinsName && hit.suinsName !== displayName
+
+  return (
+    <button
+      onClick={() => onClick("user", hit.address)}
+      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors group"
+    >
+      <div className="flex items-start gap-3">
+        <div className="shrink-0 mt-0.5">
+          <Avatar {...avatarConfig} className="size-10 rounded-full" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+              {displayName}
+            </h4>
+            {hit.xVerified && (
+              <VerifiedBadge size="sm" label="Verified X account" className="shrink-0" />
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            {showSuins && (
+              <>
+                <span className="truncate text-foreground/70">{hit.suinsName}</span>
+                <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
+              </>
+            )}
+            <span className="font-mono shrink-0">{shortAddress(hit.address)}</span>
+            {hit.xUsername && (
+              <>
+                <span className="size-1 rounded-full bg-muted-foreground/30 shrink-0" />
+                <span className="truncate">@{hit.xUsername}</span>
               </>
             )}
           </div>
