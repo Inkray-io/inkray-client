@@ -8,7 +8,6 @@ import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
-import { ConnectButton } from "@mysten/dapp-kit";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
 import { useToast } from "@/hooks/use-toast";
 
@@ -99,8 +98,10 @@ export function PublicationTipButton({
     handleTip(amountInMist);
   };
 
+  // Anonymous / not-connected visitors can't tip — hide the action entirely
+  // rather than dropping a bare "Connect wallet" button into the header.
   if (!isConnected) {
-    return <ConnectButton />;
+    return null;
   }
 
   return (

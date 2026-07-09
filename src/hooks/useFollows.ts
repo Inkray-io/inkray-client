@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { followsAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { log } from '@/lib/utils/Logger';
@@ -42,6 +42,24 @@ export const useFollows = (
     isLoading: false,
     error: null,
   });
+
+  // The initial follow info often arrives AFTER the first render (the parent
+  // fetches the publication asynchronously), so the useState seed above is `0`.
+  // Authenticated users self-correct via refreshFollowStatus(), but anonymous
+  // visitors never call it — leaving the count stuck at 0. Sync once, the first
+  // time real data lands for a given publication, without clobbering later
+  // optimistic follow/unfollow updates.
+  const seededForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!publicationId || !initialFollowInfo) return;
+    if (seededForRef.current === publicationId) return;
+    seededForRef.current = publicationId;
+    setFollowState((prev) => ({
+      ...prev,
+      isFollowing: initialFollowInfo.isFollowing,
+      followerCount: initialFollowInfo.followerCount,
+    }));
+  }, [publicationId, initialFollowInfo]);
 
   /**
    * Clear error state
