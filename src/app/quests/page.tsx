@@ -269,17 +269,31 @@ function QuestCard({ quest }: { quest: QuestResponse }) {
           )}
 
           {/* Action link for X quests */}
-          {isXQuest && postUrl && (
+          {quest.type === 'x_follow' ? (
             <a
-              href={postUrl}
+              href="https://x.com/intent/follow?screen_name=inkray_io"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 mt-2 font-medium"
             >
               <FaXTwitter className="size-3" />
-              Open on X
+              Follow @inkray_io
               <ExternalLink className="size-3" />
             </a>
+          ) : (
+            isXQuest &&
+            postUrl && (
+              <a
+                href={postUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 mt-2 font-medium"
+              >
+                <FaXTwitter className="size-3" />
+                Open on X
+                <ExternalLink className="size-3" />
+              </a>
+            )
           )}
         </div>
 
