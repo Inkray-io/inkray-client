@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { invitesAPI, InviteCodesResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Avatar } from "@/components/ui/Avatar";
+import { createUserAvatarConfig } from "@/lib/utils/avatar";
 import {
   Loader2,
   Copy,
@@ -415,28 +417,29 @@ export default function InvitesPage() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 + index * 0.05 }}
                 >
-                  {invite.usedBy?.avatar ? (
-                    <img
-                      src={invite.usedBy.avatar}
-                      alt=""
-                      className="w-10 h-10 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary font-semibold">
-                        {invite.usedBy?.username?.[0]?.toUpperCase() || "?"}
-                      </span>
-                    </div>
-                  )}
+                  <Avatar
+                    {...createUserAvatarConfig(
+                      {
+                        id: invite.usedBy?.id,
+                        publicKey: invite.usedBy?.publicKey,
+                        name: invite.usedBy?.username || undefined,
+                        avatar: invite.usedBy?.avatar,
+                      },
+                      "md",
+                    )}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
-                      {invite.usedBy?.username || "Anonymous User"}
+                      {invite.usedBy?.username ||
+                        (invite.usedBy?.publicKey
+                          ? `${invite.usedBy.publicKey.slice(0, 6)}...${invite.usedBy.publicKey.slice(-4)}`
+                          : "New member")}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {invite.usedBy?.publicKey
-                        ? `${invite.usedBy.publicKey.slice(0, 6)}...${invite.usedBy.publicKey.slice(-4)}`
-                        : ""}
-                    </p>
+                    {invite.usedBy?.username && invite.usedBy?.publicKey && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {`${invite.usedBy.publicKey.slice(0, 6)}...${invite.usedBy.publicKey.slice(-4)}`}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">
