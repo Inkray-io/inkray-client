@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useSuiWalletDetection } from "@/hooks/useSuiWalletDetection";
 import { useToast } from "@/hooks/use-toast";
-import { ConnectModal } from "@mysten/dapp-kit";
+import { ConnectButton } from '@/components/wallet/connect';
 import {
   Loader2,
   CheckCircle2,
@@ -427,14 +427,7 @@ function InvitePageContent() {
                             Inkray accounts are secured by your Sui wallet — no email or password. Connect one to finish signing up.
                           </p>
                         </div>
-                        <ConnectModal
-                          trigger={
-                            <Button className="w-full h-11 gap-2">
-                              <Wallet className="w-4 h-4" />
-                              Connect wallet
-                            </Button>
-                          }
-                        />
+                        <ConnectButton />
                         {walletDetectionReady && !hasWallet ? (
                           <div className="flex items-start gap-2.5 rounded-xl border border-amber-200/70 bg-amber-50/60 dark:border-amber-500/20 dark:bg-amber-500/10 p-3 text-left">
                             <TriangleAlert className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />

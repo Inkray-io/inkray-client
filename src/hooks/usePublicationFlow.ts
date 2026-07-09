@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Transaction } from '@mysten/sui/transactions';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { INKRAY_CONFIG } from '@/lib/sui-clients';
 import { useEnhancedTransaction, type EnhancedTransactionResult } from './useEnhancedTransaction';
 import { log } from '@/lib/utils/Logger';
@@ -80,7 +80,7 @@ export const usePublicationFlow = () => {
 
   const { signAndExecuteTransaction } = useEnhancedTransaction();
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
 
   /**
    * Create a new publication. The user signs and pays gas for the transaction.
@@ -277,23 +277,25 @@ export const usePublicationFlow = () => {
       try {
         log.debug('Getting publication info', { publicationId }, 'usePublicationFlow');
 
-        const publicationObject = await suiClient.getObject({
-          id: publicationId,
-          options: { showContent: true },
-        });
-
-        if (!publicationObject.data) {
+        // core.getObject throws when the object does not exist
+        let publicationObject;
+        try {
+          publicationObject = await client.core.getObject({
+            objectId: publicationId,
+            include: { json: true },
+          });
+        } catch {
           throw new Error('Publication not found');
         }
 
-        log.debug('Publication info retrieved', { data: publicationObject.data }, 'usePublicationFlow');
-        return publicationObject.data;
+        log.debug('Publication info retrieved', { data: publicationObject.object }, 'usePublicationFlow');
+        return publicationObject.object;
       } catch (error) {
         log.error('Failed to get publication info', { error }, 'usePublicationFlow');
         throw error;
       }
     },
-    [suiClient]
+    [client]
   );
 
   /**
@@ -307,26 +309,22 @@ export const usePublicationFlow = () => {
 
       try {
         // Query for PublicationOwnerCap objects owned by the current account
-        const ownedObjects = await suiClient.getOwnedObjects({
+        const ownedObjects = await client.core.listOwnedObjects({
           owner: currentAccount.address,
-          filter: {
-            StructType: `${INKRAY_CONFIG.PACKAGE_ID}::publication::PublicationOwnerCap`,
-          },
-          options: {
-            showContent: true,
+          type: `${INKRAY_CONFIG.PACKAGE_ID}::publication::PublicationOwnerCap`,
+          include: {
+            json: true,
           },
         });
 
-        log.debug('Found publication owner caps', { count: ownedObjects.data.length }, 'usePublicationFlow');
+        log.debug('Found publication owner caps', { count: ownedObjects.objects.length }, 'usePublicationFlow');
 
         // Extract publication IDs from the owner caps
         const publicationIds: string[] = [];
-        for (const obj of ownedObjects.data) {
-          if (obj.data?.content && 'fields' in obj.data.content) {
-            const fields = obj.data.content.fields as Record<string, unknown>;
-            if (fields.publication_id) {
-              publicationIds.push(fields.publication_id as string);
-            }
+        for (const obj of ownedObjects.objects) {
+          const fields = obj.json as Record<string, unknown> | undefined;
+          if (fields && fields.publication_id) {
+            publicationIds.push(fields.publication_id as string);
           }
         }
 
@@ -336,7 +334,7 @@ export const usePublicationFlow = () => {
         return [];
       }
     },
-    [currentAccount, suiClient]
+    [currentAccount, client]
   );
 
   /**

@@ -15,14 +15,11 @@ import {
   Loader2,
   ShieldCheck,
   TriangleAlert,
-  Wallet,
 } from "lucide-react";
 import { HiDocumentText, HiOutlineBanknotes } from "react-icons/hi2";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useSignPersonalMessage,
-  ConnectModal,
-} from "@mysten/dapp-kit";
+import { useDAppKit } from "@mysten/dapp-kit-react";
+import { ConnectButton } from '@/components/wallet/connect';
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Identicon } from "@/components/ui/Identicon";
@@ -302,7 +299,7 @@ function AuthPageContent() {
   const { disconnect, isConnected, address } = useWalletConnection();
   const { ready: walletDetectionReady, hasWallet, isMobile } = useSuiWalletDetection();
   const { toast } = useToast();
-  const { mutate: signPersonalMessage } = useSignPersonalMessage();
+  const dAppKit = useDAppKit();
 
   const [authData, setAuthData] = useState<{ nonce: string; message: string; timestamp: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -403,34 +400,29 @@ function AuthPageContent() {
     }
   }, [isConnected, address, authData]);
 
-  const handleSign = useCallback(() => {
+  const handleSign = useCallback(async () => {
     if (!authData || !address) return;
 
     setIsLoading(true);
     setStep('authenticate');
 
-    signPersonalMessage(
-      {
+    try {
+      const result = await dAppKit.signPersonalMessage({
         message: new TextEncoder().encode(authData.message),
-      },
-      {
-        onSuccess: async (result) => {
-          await authenticateWithSignature(result.signature);
-        },
-        onError: (error) => {
-          log.error('Signing failed', { error }, 'AuthPage');
+      });
+      await authenticateWithSignature(result.signature);
+    } catch (error) {
+      log.error('Signing failed', { error }, 'AuthPage');
 
-          setIsLoading(false);
-          setStep('sign');
-          toast({
-            title: "Signing Failed",
-            description: "Please try signing the message again.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  }, [authData, address, signPersonalMessage, toast]);
+      setIsLoading(false);
+      setStep('sign');
+      toast({
+        title: "Signing Failed",
+        description: "Please try signing the message again.",
+        variant: "destructive",
+      });
+    }
+  }, [authData, address, dAppKit, toast]);
 
   const authenticateWithSignature = useCallback(async (signature: string) => {
     if (!authData || !address) return;
@@ -572,14 +564,7 @@ function AuthPageContent() {
                     transition={{ duration: 0.15 }}
                     className="space-y-4"
                   >
-                    <ConnectModal
-                      trigger={
-                        <Button className="w-full h-11 gap-2 text-sm font-semibold">
-                          <Wallet className="size-4" />
-                          Connect wallet
-                        </Button>
-                      }
-                    />
+                    <ConnectButton />
 
                     <div className="relative py-1">
                       <div className="absolute inset-0 flex items-center">

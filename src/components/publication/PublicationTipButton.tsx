@@ -8,7 +8,7 @@ import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton } from '@/components/wallet/connect';
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
 import { useToast } from "@/hooks/use-toast";
 

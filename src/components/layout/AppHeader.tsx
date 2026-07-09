@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { HiMagnifyingGlass, HiPlus } from "react-icons/hi2"
 import { Button } from "@/components/ui/button"
-import { ConnectButton } from "@mysten/dapp-kit"
+import { ConnectButton } from '@/components/wallet/connect'
 import { UserProfile } from "@/components/wallet/UserProfile"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useSearchModal } from "@/hooks/useSearchModal"

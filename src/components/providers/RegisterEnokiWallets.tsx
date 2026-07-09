@@ -1,21 +1,20 @@
 "use client"
 
 import { useEffect } from 'react'
-import { useSuiClient, useSuiClientContext } from '@mysten/dapp-kit'
+import { useCurrentClient, useCurrentNetwork } from '@mysten/dapp-kit-react'
 import { registerEnokiWallets } from '@mysten/enoki'
 import type { EnokiNetwork } from '@mysten/enoki'
 
 /**
- * Registers Enoki wallets (Google OAuth) with the wallet standard.
- * This component must be rendered inside SuiClientProvider but BEFORE WalletProvider
- * so that wallets are registered before the provider initializes.
+ * Registers Enoki wallets (Google OAuth) into the Wallet Standard, which dApp
+ * Kit 2.0 auto-discovers — so this renders inside DAppKitProvider.
  *
- * When configured, Google will appear as a wallet option in the connect modal.
+ * When configured, Google appears as a wallet option in the connect modal.
  * The OAuth flow happens in a popup, then the user gets a zkLogin wallet address.
  */
 export function RegisterEnokiWallets() {
-  const client = useSuiClient()
-  const { network } = useSuiClientContext()
+  const client = useCurrentClient()
+  const network = useCurrentNetwork()
 
   useEffect(() => {
     // Only register if we have the required env vars

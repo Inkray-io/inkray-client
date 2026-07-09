@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Transaction } from '@mysten/sui/transactions';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit-react';
 import { useEnhancedTransaction } from '@/hooks/useEnhancedTransaction';
 import { suiToMist } from '@/hooks/useSubscriptionSettings';
 import { INKRAY_CONFIG } from '@/lib/sui-clients';

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentClient, useCurrentAccount } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
 import { followsAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
@@ -58,7 +58,7 @@ const initialState: Omit<AirdropState, 'step'> = {
  * - Transaction execution
  */
 export function useAirdrop({ publicationId }: UseAirdropOptions) {
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
   const currentAccount = useCurrentAccount();
   const { signAndExecuteTransaction } = useEnhancedTransaction();
 
@@ -197,23 +197,23 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
       }, 'useAirdrop');
 
       // Fetch all coin objects of the selected type
-      const coins = await suiClient.getCoins({
+      const coins = await client.core.listCoins({
         owner: currentAccount.address,
         coinType: state.selectedCoinType,
       });
 
-      if (coins.data.length === 0) {
+      if (coins.objects.length === 0) {
         throw new Error('No coins found of the selected type');
       }
 
       const tx = new Transaction();
 
       // Reference the primary coin
-      const primaryCoin = tx.object(coins.data[0].coinObjectId);
+      const primaryCoin = tx.object(coins.objects[0].objectId);
 
       // Merge all coins into one if there are multiple
-      if (coins.data.length > 1) {
-        const coinsToMerge = coins.data.slice(1).map(c => tx.object(c.coinObjectId));
+      if (coins.objects.length > 1) {
+        const coinsToMerge = coins.objects.slice(1).map(c => tx.object(c.objectId));
         tx.mergeCoins(primaryCoin, coinsToMerge);
       }
 
@@ -271,7 +271,7 @@ export function useAirdrop({ publicationId }: UseAirdropOptions) {
         error: errorMessage,
       }));
     }
-  }, [currentAccount, state.selectedCoinType, state.totalAmount, state.recipients, suiClient, signAndExecuteTransaction]);
+  }, [currentAccount, state.selectedCoinType, state.totalAmount, state.recipients, client, signAndExecuteTransaction]);
 
   // Reset state
   const reset = useCallback(() => {

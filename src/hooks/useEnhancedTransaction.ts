@@ -1,5 +1,6 @@
-import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit';
+import { useDAppKit, useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
+import { fromBase64 } from '@mysten/sui/utils';
 import { log } from '@/lib/utils/Logger';
 
 export interface EnhancedTransactionResult {
@@ -25,107 +26,94 @@ export interface EnhancedTransactionResult {
 }
 
 /**
- * Enhanced transaction hook that captures object changes and effects
- * 
- * This hook wraps the standard useSignAndExecuteTransaction with enhanced options to:
- * - Always capture object changes for result processing
- * - Include raw effects for wallet reporting
- * - Provide consistent transaction execution interface
- * - Better error handling and TypeScript support
+ * Enhanced transaction hook that captures object changes and effects.
+ *
+ * dApp Kit 2.0: we sign with the wallet (`signTransaction`) then execute via
+ * the client (`core.executeTransaction`) with explicit include flags. The
+ * built-in `signAndExecuteTransaction` action's fixed include omits
+ * `objectTypes`, which callers need to find created objects by Move type.
+ *
+ * The v2 result exposes created objects as `effects.changedObjects`
+ * (idOperation 'Created') with types in the `objectTypes` map — mapped here
+ * back into the legacy `objectChanges` shape callers expect.
  */
 export const useEnhancedTransaction = () => {
-  const suiClient = useSuiClient();
-  
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction({
-    execute: async ({ bytes, signature }) =>
-      await suiClient.executeTransactionBlock({
-        transactionBlock: bytes,
-        signature,
-        options: {
-          // Raw effects are required so the effects can be reported back to the wallet
-          showRawEffects: true,
-          // Select additional data to return for better result processing
-          showObjectChanges: true,
-          showEffects: true,
-          showEvents: true,
-          showInput: false, // Usually not needed, saves bandwidth
-          showBalanceChanges: false, // Can be enabled if needed
-        },
-      }),
-  });
+  const dAppKit = useDAppKit();
+  const client = useCurrentClient();
 
-  return { 
-    signAndExecuteTransaction: (args: {
-      transaction: Transaction;
-    }, callbacks?: {
-      onSuccess?: (result: EnhancedTransactionResult) => void;
-      onError?: (error: Error) => void;
-    }): void | Promise<EnhancedTransactionResult> => {
-      if (callbacks) {
-        // Callback pattern - return void
-        return signAndExecuteTransaction(args, {
-          onSuccess: (data) => {
-            const enhancedResult: EnhancedTransactionResult = {
-              digest: data.digest,
-              objectChanges: data.objectChanges?.map(change => ({
-                type: change.type,
-                objectType: 'objectType' in change ? change.objectType : undefined,
-                objectId: 'objectId' in change ? change.objectId : undefined,
-                sender: 'sender' in change ? change.sender : undefined,
-                owner: 'owner' in change ? change.owner : undefined,
-              })) || [],
-              effects: data.effects ? {
-                objectChanges: data.effects.created?.map((created: { objectType?: string; objectId?: string; sender?: string; owner?: unknown }) => ({
-                  type: 'created',
-                  objectType: created.objectType,
-                  objectId: created.objectId,
-                  sender: created.sender,
-                  owner: created.owner,
-                })) || []
-              } : undefined,
-              events: data.events || [],
-              rawEffects: data.rawEffects || undefined
-            };
-            callbacks.onSuccess?.(enhancedResult);
-          },
-          onError: callbacks.onError
-        });
-      } else {
-        // Promise pattern - return Promise
-        return new Promise<EnhancedTransactionResult>((resolve, reject) => {
-          signAndExecuteTransaction(args, {
-            onSuccess: (data) => {
-              log.debug('Enhanced transaction success', { data }, 'useEnhancedTransaction');
-              const enhancedResult: EnhancedTransactionResult = {
-                digest: data.digest,
-                objectChanges: data.objectChanges?.map(change => ({
-                  type: change.type,
-                  objectType: 'objectType' in change ? change.objectType : undefined,
-                  objectId: 'objectId' in change ? change.objectId : undefined,
-                  sender: 'sender' in change ? change.sender : undefined,
-                  owner: 'owner' in change ? change.owner : undefined,
-                })) || [],
-                effects: data.effects ? {
-                  objectChanges: data.effects.created?.map((created: { objectType?: string; objectId?: string; sender?: string; owner?: unknown }) => ({
-                    type: 'created',
-                    objectType: created.objectType,
-                    objectId: created.objectId,
-                    sender: created.sender,
-                    owner: created.owner,
-                  })) || []
-                } : undefined,
-                events: data.events || [],
-                rawEffects: data.rawEffects || undefined
-              };
-              resolve(enhancedResult);
-            },
-            onError: (error) => {
-              log.error('Enhanced transaction error', { error }, 'useEnhancedTransaction');
-              reject(error);
-            },
-          });
-        });
-      }
+  const run = async (
+    transaction: Transaction,
+  ): Promise<EnhancedTransactionResult> => {
+    const signed = await dAppKit.signTransaction({ transaction });
+
+    const result = await client.core.executeTransaction({
+      transaction: fromBase64(signed.bytes),
+      signatures: [signed.signature],
+      include: { effects: true, objectTypes: true },
+    });
+
+    // v2 result is a discriminated union { Transaction | FailedTransaction }.
+    const tx =
+      (result as { Transaction?: unknown }).Transaction ??
+      (result as { FailedTransaction?: unknown }).FailedTransaction ??
+      result;
+    const t = tx as {
+      digest: string;
+      effects?: {
+        status?: { success?: boolean; error?: string | null };
+        changedObjects?: Array<{ objectId: string; idOperation?: string }>;
+      };
+      objectTypes?: Record<string, string>;
+      events?: unknown[];
+      bcs?: unknown;
+    };
+
+    if (!t.effects?.status?.success) {
+      throw new Error(t.effects?.status?.error || 'Transaction failed');
     }
+
+    const objectTypes = t.objectTypes ?? {};
+    const objectChanges = (t.effects?.changedObjects ?? [])
+      .filter((c) => c.idOperation === 'Created')
+      .map((c) => ({
+        type: 'created',
+        objectType: objectTypes[c.objectId],
+        objectId: c.objectId,
+        sender: undefined,
+        owner: undefined,
+      }));
+
+    return {
+      digest: t.digest,
+      objectChanges,
+      effects: { objectChanges },
+      events: t.events ?? [],
+      rawEffects: t.bcs,
+    };
+  };
+
+  return {
+    signAndExecuteTransaction: (
+      args: { transaction: Transaction },
+      callbacks?: {
+        onSuccess?: (result: EnhancedTransactionResult) => void;
+        onError?: (error: Error) => void;
+      },
+    ): void | Promise<EnhancedTransactionResult> => {
+      if (callbacks) {
+        // Callback pattern — return void
+        run(args.transaction).then(
+          (r) => callbacks.onSuccess?.(r),
+          (e) =>
+            callbacks.onError?.(e instanceof Error ? e : new Error(String(e))),
+        );
+        return;
+      }
+      // Promise pattern
+      return run(args.transaction).then((r) => {
+        log.debug('Enhanced transaction success', { r }, 'useEnhancedTransaction');
+        return r;
+      });
+    },
   };
 };

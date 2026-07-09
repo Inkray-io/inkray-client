@@ -1,6 +1,6 @@
 "use client"
 
-import { useCurrentAccount, useConnectWallet, useDisconnectWallet } from '@mysten/dapp-kit'
+import { useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react'
 import { useSuiNS } from './useSuiNS'
 
 /**
@@ -22,33 +22,21 @@ export interface WalletConnectionState {
   /** Error message from SuiNS resolution */
   suiNSError: string | null
 
-  /** Function to connect wallet */
-  connect: ReturnType<typeof useConnectWallet>['mutate']
-  /** Function to disconnect wallet */
-  disconnect: ReturnType<typeof useDisconnectWallet>['mutate']
-
-  /** Loading state for wallet connection */
-  isConnecting: boolean
-  /** Loading state for wallet disconnection */
-  isDisconnecting: boolean
+  /** Disconnect the active wallet */
+  disconnect: () => Promise<void>
 }
 
 /**
- * Wallet connection hook that provides unified access to wallet state and SuiNS resolution
- * 
- * This hook combines wallet connection management with SuiNS name resolution,
- * providing a complete wallet integration solution for the application.
- * 
- * @returns {WalletConnectionState} Complete wallet connection state and actions
- * 
+ * Wallet connection hook that provides unified access to wallet state and SuiNS
+ * resolution. Connection itself is UI-driven (ConnectButton/ConnectModal); this
+ * hook exposes the current account, derived state, and a disconnect action.
+ *
+ * @returns {WalletConnectionState} Wallet connection state and disconnect action
+ *
  * @example
  * ```tsx
- * const { isConnected, address, suiNSName, connect, disconnect } = useWalletConnection();
- * 
- * if (!isConnected) {
- *   return <button onClick={() => connect()}>Connect Wallet</button>;
- * }
- * 
+ * const { isConnected, address, suiNSName, disconnect } = useWalletConnection();
+ * if (!isConnected) return <ConnectButton />;
  * return (
  *   <div>
  *     <p>Connected: {suiNSName || address}</p>
@@ -59,32 +47,25 @@ export interface WalletConnectionState {
  */
 export const useWalletConnection = (): WalletConnectionState => {
   const account = useCurrentAccount()
-  const { mutate: connect, isPending: isConnecting } = useConnectWallet()
-  const { mutate: disconnect, isPending: isDisconnecting } = useDisconnectWallet()
+  const dAppKit = useDAppKit()
 
   const address = account?.address
   const isConnected = !!account
 
   // Resolve SuiNS name for connected account
-  const { name: suiNSName, loading: suiNSLoading, error: suiNSError } = useSuiNS(address)
+  const {
+    name: suiNSName,
+    loading: suiNSLoading,
+    error: suiNSError,
+  } = useSuiNS(address)
 
   return {
-    // Account info
     account,
     address,
     isConnected,
-
-    // SuiNS info
     suiNSName,
     suiNSLoading,
     suiNSError,
-
-    // Connection actions
-    connect,
-    disconnect,
-
-    // Connection state
-    isConnecting,
-    isDisconnecting,
+    disconnect: () => dAppKit.disconnectWallet(),
   }
 }

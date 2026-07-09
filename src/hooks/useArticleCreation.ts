@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { api } from '@/lib/api-client';
 import { validateArticleCreation } from '@/lib/validation';
 import { createSealService, type EncryptionStatus } from '@/lib/services/SealService';
@@ -79,7 +79,7 @@ export const useArticleCreation = () => {
   });
 
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
 
   /**
    * Get user's publication info with automatic cache validation and blockchain fallback
@@ -93,7 +93,7 @@ export const useArticleCreation = () => {
     }
 
     // If no cache and no wallet connection, return null
-    if (!currentAccount || !suiClient) {
+    if (!currentAccount || !client) {
       log.info('No wallet connection, cannot fetch publications from blockchain');
       return null;
     }
@@ -104,48 +104,46 @@ export const useArticleCreation = () => {
       });
 
       // Query for PublicationOwnerCap objects owned by the current account
-      const ownedObjects = await suiClient.getOwnedObjects({
+      const ownedObjects = await client.core.listOwnedObjects({
         owner: currentAccount.address,
-        filter: {
-          StructType: `${INKRAY_CONFIG.PACKAGE_ID}::publication::PublicationOwnerCap`,
-        },
-        options: {
-          showContent: true,
+        type: `${INKRAY_CONFIG.PACKAGE_ID}::publication::PublicationOwnerCap`,
+        include: {
+          json: true,
         },
       });
 
       log.info('Blockchain query completed', {
-        foundObjects: ownedObjects.data.length
+        foundObjects: ownedObjects.objects.length
       });
 
-      if (ownedObjects.data.length === 0) {
+      if (ownedObjects.objects.length === 0) {
         log.info('No publications found on blockchain');
         return null;
       }
 
       // Get the first publication (user should typically have one)
-      const firstOwnerCap = ownedObjects.data[0];
-      if (!firstOwnerCap.data?.content || !('fields' in firstOwnerCap.data.content)) {
+      const firstOwnerCap = ownedObjects.objects[0];
+      if (!firstOwnerCap.json) {
         log.error('Invalid owner cap data structure');
         return null;
       }
 
-      const fields = firstOwnerCap.data.content.fields as Record<string, unknown>;
+      const fields = firstOwnerCap.json as Record<string, unknown>;
       const publicationId = fields.publication_id as string;
-      const ownerCapId = firstOwnerCap.data.objectId;
+      const ownerCapId = firstOwnerCap.objectId;
 
-      // Get publication details
-      const publicationObject = await suiClient.getObject({
-        id: publicationId,
-        options: { showContent: true },
+      // Get publication details (core.getObject throws when the object does not exist)
+      const publicationObject = await client.core.getObject({
+        objectId: publicationId,
+        include: { json: true },
       });
 
-      if (!publicationObject.data?.content || !('fields' in publicationObject.data.content)) {
+      if (!publicationObject.object.json) {
         log.error('Invalid publication data structure');
         return null;
       }
 
-      const publicationFields = publicationObject.data.content.fields as Record<string, unknown>;
+      const publicationFields = publicationObject.object.json as Record<string, unknown>;
       const publicationName = publicationFields.name as string;
       const vaultId = publicationFields.vault_id as string;
 
@@ -173,7 +171,7 @@ export const useArticleCreation = () => {
       log.error('Failed to fetch publication from blockchain', { error });
       return null;
     }
-  }, [ currentAccount, suiClient ]);
+  }, [ currentAccount, client ]);
 
   /**
    * Convert temporary images to MediaFile format for upload
@@ -264,11 +262,11 @@ export const useArticleCreation = () => {
           }
 
           // 3. Initialize SealService and check encryption requirements
-          if (!currentAccount || !suiClient) {
+          if (!currentAccount || !client) {
             throw new Error('Wallet connection required for encryption');
           }
 
-          const sealService = createSealService(suiClient, currentAccount);
+          const sealService = createSealService(client, currentAccount);
           const encryptionStatus = sealService.getEncryptionStatus();
 
           if (!encryptionStatus.isAvailable) {
@@ -345,7 +343,7 @@ export const useArticleCreation = () => {
           }));
         }
       },
-      [ currentAccount, suiClient, getUserPublication ]
+      [ currentAccount, client, getUserPublication ]
   );
 
   /**
@@ -393,11 +391,11 @@ export const useArticleCreation = () => {
     status: EncryptionStatus;
   }> => {
     try {
-      if (!currentAccount || !suiClient) {
+      if (!currentAccount || !client) {
         throw new Error('Wallet not connected');
       }
 
-      const sealService = createSealService(suiClient, currentAccount);
+      const sealService = createSealService(client, currentAccount);
       const status = sealService.getEncryptionStatus();
 
       return {
@@ -417,7 +415,7 @@ export const useArticleCreation = () => {
         },
       };
     }
-  }, [ currentAccount, suiClient ]);
+  }, [ currentAccount, client ]);
 
   /**
    * Reset all state

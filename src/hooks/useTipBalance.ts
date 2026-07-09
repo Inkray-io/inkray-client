@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentClient } from '@mysten/dapp-kit-react';
 import { mistToSui } from '@/hooks/useSubscriptionSettings';
 import { log } from '@/lib/utils/Logger';
 
@@ -29,7 +29,7 @@ export const useTipBalance = ({
   publicationId,
   enabled = true,
 }: UseTipBalanceParams) => {
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
 
   const [state, setState] = useState<TipBalanceState>({
     balance: 0,
@@ -61,25 +61,21 @@ export const useTipBalance = ({
       }, 'useTipBalance');
 
       // Fetch publication object from blockchain
-      const publicationObject = await suiClient.getObject({
-        id: publicationId,
-        options: {
-          showContent: true,
-        },
-      });
-
-      // Validate object exists and has content
-      if (!publicationObject.data) {
+      let publicationObject;
+      try {
+        publicationObject = await client.core.getObject({
+          objectId: publicationId,
+          include: {
+            json: true,
+          },
+        });
+      } catch {
+        // core.getObject throws when the object does not exist
         throw new Error('Publication not found on blockchain');
       }
 
-      if (publicationObject.data.content?.dataType !== 'moveObject') {
-        throw new Error('Invalid publication object type');
-      }
-
       // Extract tip_balance and statistics from content fields
-      const content = publicationObject.data.content;
-      const fields = content.fields as Record<string, unknown>;
+      const fields = publicationObject.object.json as Record<string, unknown>;
 
       if (!fields || typeof fields.tip_balance === 'undefined') {
         throw new Error('Tip balance field not found in publication object');
@@ -140,7 +136,7 @@ export const useTipBalance = ({
         error: errorMessage,
       });
     }
-  }, [publicationId, enabled, suiClient]);
+  }, [publicationId, enabled, client]);
 
   /**
    * Refresh balance data

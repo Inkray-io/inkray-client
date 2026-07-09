@@ -6,7 +6,6 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 })
-import '@mysten/dapp-kit/dist/index.css'
 
 import { WalletProviders } from '@/components/providers/WalletProviders'
 import { AuthProvider } from '@/contexts/AuthContext'

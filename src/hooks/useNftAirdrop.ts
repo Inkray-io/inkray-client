@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
 import { followsAPI, publicationsAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
