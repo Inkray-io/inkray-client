@@ -1,6 +1,6 @@
 import type { ExportedSessionKey } from '@mysten/seal';
 import { SessionKey } from '@mysten/seal';
-import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import type { SealCompatibleClient } from '@mysten/seal';
 import { CONFIG } from './config';
 import { log } from './utils/Logger';
 import { getOrCreateFreeArticleKeypair } from './free-article-keypair';
@@ -181,7 +181,7 @@ function deserializeExportedSessionKey(data: SerializableFreeSessionKeyData): Ex
  * 3. The local keypair auto-signs the session key (no wallet popup!)
  * 4. Caches the new session key
  */
-export async function getOrCreateFreeSessionKey(suiClient: SuiJsonRpcClient): Promise<SessionKey> {
+export async function getOrCreateFreeSessionKey(suiClient: SealCompatibleClient): Promise<SessionKey> {
   // Try to restore from cache first
   const cached = getCachedFreeSessionKey();
   if (cached) {

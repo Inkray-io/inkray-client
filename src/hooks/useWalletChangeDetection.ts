@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit-react';
 import { clearPublicationCache } from '@/lib/cache-manager';
 import { log } from '@/lib/utils/Logger';
 

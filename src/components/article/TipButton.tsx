@@ -9,7 +9,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Heart, Loader2 } from "lucide-react";
 import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton } from '@/components/wallet/connect';
 import { log } from "@/lib/utils/Logger";
 import { useToast } from "@/hooks/use-toast";
 
@@ -106,10 +106,7 @@ export function TipButton({ publicationId, articleTitle, onTipSuccess, isOpen, o
   if (!isConnected) {
     return (
       <div className="flex items-center gap-2">
-        <ConnectButton 
-          connectText="Connect to Tip"
-          className="text-sm"
-        />
+        <ConnectButton />
       </div>
     );
   }

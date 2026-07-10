@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useCurrentAccount, useSuiClient, useSignPersonalMessage } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react';
 import { createSealService, createFreeSealService, type DecryptionParams } from '@/lib/services/SealService';
 
 export interface UseContentDecryptionReturn {
@@ -19,27 +19,21 @@ export const useContentDecryption = (): UseContentDecryptionReturn => {
   const [decryptionError, setDecryptionError] = useState<string | null>(null);
 
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
-  const { mutate: signPersonalMessage } = useSignPersonalMessage();
+  const suiClient = useCurrentClient();
+  const dAppKit = useDAppKit();
 
   /**
-   * Create a Promise wrapper around the callback-based signPersonalMessage
+   * Promise wrapper around the async signPersonalMessage action
    */
-  const signMessage = useCallback((message: Uint8Array): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      signPersonalMessage(
-        { message },
-        {
-          onSuccess: (result) => {
-            resolve(result.signature);
-          },
-          onError: (error) => {
-            reject(new Error(`Failed to sign message: ${error.message || 'Unknown error'}`));
-          },
-        }
-      );
-    });
-  }, [signPersonalMessage]);
+  const signMessage = useCallback(async (message: Uint8Array): Promise<string> => {
+    try {
+      const result = await dAppKit.signPersonalMessage({ message });
+      return result.signature;
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to sign message: ${messageText}`);
+    }
+  }, [dAppKit]);
 
   /**
    * Decrypt content using the SealService

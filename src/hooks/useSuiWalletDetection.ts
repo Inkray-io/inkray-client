@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useWallets } from "@mysten/dapp-kit"
+import { useWallets } from '@mysten/dapp-kit-react'
 import { isEnokiWallet } from "@mysten/enoki"
 
 export interface SuiWalletDetectionState {

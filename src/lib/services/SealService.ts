@@ -1,4 +1,4 @@
-import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import type { SealCompatibleClient } from '@mysten/seal';
 import { WalletAccount } from '@mysten/wallet-standard';
 import { Transaction } from '@mysten/sui/transactions';
 import { SealClient, SessionKey, EncryptedObject } from '@mysten/seal';
@@ -62,10 +62,10 @@ export interface EncryptionStatus {
 }
 
 export class SealService {
-  private suiClient: SuiJsonRpcClient;
+  private suiClient: SealCompatibleClient;
   private currentAccount: WalletAccount;
 
-  constructor(suiClient: SuiJsonRpcClient, currentAccount: WalletAccount) {
+  constructor(suiClient: SealCompatibleClient, currentAccount: WalletAccount) {
     this.suiClient = suiClient;
     this.currentAccount = currentAccount;
   }
@@ -692,7 +692,7 @@ export class SealService {
 /**
  * Factory function to create SealService instance
  */
-export function createSealService(suiClient: SuiJsonRpcClient, currentAccount: WalletAccount): SealService {
+export function createSealService(suiClient: SealCompatibleClient, currentAccount: WalletAccount): SealService {
   return new SealService(suiClient, currentAccount);
 }
 
@@ -703,7 +703,7 @@ export function createSealService(suiClient: SuiJsonRpcClient, currentAccount: W
  * decryption doesn't require wallet interaction. The decryptFreeContent method
  * uses a locally-generated keypair instead of the wallet.
  */
-export function createFreeSealService(suiClient: SuiJsonRpcClient): SealService {
+export function createFreeSealService(suiClient: SealCompatibleClient): SealService {
   // Create a placeholder account - not used for free decryption
   const placeholderAccount: WalletAccount = {
     address: '0x0000000000000000000000000000000000000000000000000000000000000000',

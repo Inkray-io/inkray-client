@@ -10,7 +10,7 @@ import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Lock, Loader2, Clock, Check } from "lucide-react";
 import { MIST_PER_SUI } from "@/constants/tipping";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton } from '@/components/wallet/connect';
 import { log } from "@/lib/utils/Logger";
 
 interface SubscriptionInfo {
@@ -166,10 +166,7 @@ export function SubscriptionButton({
   if (!isConnected) {
     return variant === "button" ? (
       <div className="flex items-center gap-2">
-        <ConnectButton 
-          connectText="Connect to Subscribe"
-          className="text-sm"
-        />
+        <ConnectButton />
       </div>
     ) : null;
   }

@@ -1,8 +1,8 @@
 "use client"
 
-import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit'
+import { DAppKitProvider } from '@mysten/dapp-kit-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { networkConfig, network } from '@/config/sui'
+import { dAppKit } from '@/config/sui'
 import { RegisterEnokiWallets } from './RegisterEnokiWallets'
 
 const queryClient = new QueryClient({
@@ -26,14 +26,16 @@ interface WalletProvidersProps {
 }
 
 export function WalletProviders({ children }: WalletProvidersProps) {
+  // dApp Kit 2.0: a single DAppKitProvider replaces SuiClientProvider +
+  // WalletProvider. autoConnect is configured on the dAppKit instance itself.
+  // RegisterEnokiWallets registers the Enoki (Google) wallet into the Wallet
+  // Standard, which dApp Kit 2.0 auto-discovers.
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork={network}>
+      <DAppKitProvider dAppKit={dAppKit}>
         <RegisterEnokiWallets />
-        <WalletProvider autoConnect={true}>
-          {children}
-        </WalletProvider>
-      </SuiClientProvider>
+        {children}
+      </DAppKitProvider>
     </QueryClientProvider>
   )
 }

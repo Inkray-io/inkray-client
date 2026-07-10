@@ -25,7 +25,7 @@ import {
   HiCheck,
 } from "react-icons/hi2"
 import type { IconType } from "react-icons"
-import { ConnectButton } from "@mysten/dapp-kit"
+import { ConnectButton } from '@/components/wallet/connect'
 import {
   Sheet,
   SheetContent,

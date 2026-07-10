@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSuiClient } from '@mysten/dapp-kit';
-import type { CoinBalance, CoinMetadata } from '@mysten/sui/jsonRpc';
+import { useCurrentClient } from '@mysten/dapp-kit-react';
 import { log } from '@/lib/utils/Logger';
 
 export interface TokenBalance {
@@ -46,7 +45,7 @@ function extractNameFromCoinType(coinType: string): string {
  * for accurate decimals, names, symbols, and icons.
  */
 export function useWalletBalances(address: string | undefined) {
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
 
   const [state, setState] = useState<UseWalletBalancesState>({
     balances: [],
@@ -74,28 +73,32 @@ export function useWalletBalances(address: string | undefined) {
       log.debug('Fetching wallet balances', { address }, 'useWalletBalances');
 
       // Fetch all coin balances
-      const allBalances: CoinBalance[] = await suiClient.getAllBalances({
+      const { balances: allBalances } = await client.core.listBalances({
         owner: address,
       });
 
       // Filter to only coins with positive balance
       const nonZeroBalances = allBalances.filter(
-        balance => BigInt(balance.totalBalance) > BigInt(0)
+        balance => BigInt(balance.balance) > BigInt(0)
       );
 
       // Fetch metadata for each coin type in parallel
       const metadataPromises = nonZeroBalances.map(balance =>
-        suiClient.getCoinMetadata({ coinType: balance.coinType })
+        (client as unknown as import('@mysten/sui/grpc').SuiGrpcClient).stateService
+          .getCoinInfo({ coinType: balance.coinType })
+          .then(({ response }) => response.metadata ?? null)
           .catch(() => null) // Handle errors gracefully - return null if metadata unavailable
       );
-      const metadataResults: (CoinMetadata | null)[] = await Promise.all(metadataPromises);
+      const metadataResults: Array<
+        { decimals?: number; symbol?: string; name?: string; iconUrl?: string } | null
+      > = await Promise.all(metadataPromises);
 
       // Combine balance + metadata into TokenBalance
       const tokenBalances: TokenBalance[] = nonZeroBalances.map((balance, index) => {
         const metadata = metadataResults[index];
         return {
           coinType: balance.coinType,
-          totalBalance: BigInt(balance.totalBalance),
+          totalBalance: BigInt(balance.balance),
           // Use metadata if available, fallback to extracted values
           symbol: metadata?.symbol || extractSymbolFromCoinType(balance.coinType),
           name: metadata?.name || extractNameFromCoinType(balance.coinType),
@@ -133,7 +136,7 @@ export function useWalletBalances(address: string | undefined) {
         error: errorMessage,
       });
     }
-  }, [address, suiClient]);
+  }, [address, client]);
 
   const refresh = useCallback(() => {
     fetchBalances();

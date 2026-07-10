@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { articlesAPI, viewsAPI } from '@/lib/api';
 import { useContentDecryption } from './useContentDecryption';
 import type { DecryptionParams } from '@/lib/services/SealService';
@@ -89,7 +89,7 @@ export const useArticle = (articleSlug: string | null) => {
 
 
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const client = useCurrentClient();
   const {
     decryptContent,
     decryptFreeContent,
@@ -283,17 +283,17 @@ export const useArticle = (articleSlug: string | null) => {
 
   // Monitor wallet connection status
   useEffect(() => {
-    const walletReady = !!(currentAccount && suiClient);
+    const walletReady = !!(currentAccount && client);
     setIsWalletReady(walletReady);
 
     if (walletReady && isWaitingForWallet) {
       log.debug('Wallet connection established, ready for decryption', {
         account: currentAccount?.address,
-        hasClient: !!suiClient
+        hasClient: !!client
       }, 'useArticle');
       setIsWaitingForWallet(false);
     }
-  }, [ currentAccount, suiClient, isWaitingForWallet ]);
+  }, [ currentAccount, client, isWaitingForWallet ]);
 
   /**
    * Load article metadata directly from backend API
@@ -325,7 +325,7 @@ export const useArticle = (articleSlug: string | null) => {
    * Load article content (with decryption for encrypted content)
    */
   const loadArticleContent = useCallback(async (article: Article, forceWait: boolean = false): Promise<string | null> => {
-    if (!suiClient) {
+    if (!client) {
       throw new Error('Sui client not available');
     }
 
@@ -504,7 +504,7 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
     }
   }, [
-    suiClient,
+    client,
     currentAccount,
     isWalletReady,
     isLoadingUserPublications,
@@ -1079,7 +1079,7 @@ export const useArticle = (articleSlug: string | null) => {
    * Manual decryption that bypasses the auto-decryption flag
    */
   const manualDecryptContent = useCallback(async (article: Article): Promise<string> => {
-    if (!suiClient) {
+    if (!client) {
       throw new Error('Sui client not available');
     }
 
@@ -1176,7 +1176,7 @@ export const useArticle = (articleSlug: string | null) => {
       setLoadingStage('idle');
     }
   }, [
-    suiClient,
+    client,
     currentAccount,
     stableDecryptContent,
     firstPublication?.ownerCapId,

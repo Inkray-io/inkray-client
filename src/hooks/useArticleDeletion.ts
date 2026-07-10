@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
+import { useEnhancedTransaction } from '@/hooks/useEnhancedTransaction';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { log } from '@/lib/utils/Logger';
 
@@ -17,8 +18,8 @@ interface ArticleDeletionData {
 
 export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionProps = {}) => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
-  const suiClient = useSuiClient();
+  const { signAndExecuteTransaction: signAndExecute } = useEnhancedTransaction();
+  const client = useCurrentClient();
   const { address } = useWalletConnection();
 
   const deleteArticle = async (deletionData: ArticleDeletionData) => {
@@ -55,24 +56,17 @@ export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionPro
       }
 
       // Find the PublicationOwnerCap for this publication
-      const ownedObjects = await suiClient.getOwnedObjects({
+      const ownedObjects = await client.core.listOwnedObjects({
         owner: address,
-        filter: {
-          StructType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::publication::PublicationOwnerCap`
+        type: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::publication::PublicationOwnerCap`,
+        include: {
+          json: true,
         },
-        options: {
-          showContent: true,
-          showType: true,
-        }
       });
-      console.log(ownedObjects.data)
-      const ownerCap = ownedObjects.data.find((obj) => {
-        const content = obj.data?.content;
-        if (content && 'fields' in content) {
-          const fields = content.fields as { publication_id: string };
-          return fields.publication_id === publicationId;
-        }
-        return false;
+      console.log(ownedObjects.objects)
+      const ownerCap = ownedObjects.objects.find((obj) => {
+        const fields = obj.json as { publication_id?: string } | undefined;
+        return fields?.publication_id === publicationId;
       });
 
       if (!ownerCap) {
@@ -87,7 +81,7 @@ export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionPro
         target: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::articles::delete_article`,
         arguments: [
           txb.object(process.env.NEXT_PUBLIC_GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
-          txb.object(ownerCap.data!.objectId), // PublicationOwnerCap
+          txb.object(ownerCap.objectId), // PublicationOwnerCap
           txb.object(publicationId), // Publication object
           txb.object(vaultId), // PublicationVault object
           txb.object(articleId), // Article object to delete
@@ -96,7 +90,7 @@ export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionPro
       });
 
       log.debug('Executing article deletion transaction', {
-        ownerCapId: ownerCap.data!.objectId,
+        ownerCapId: ownerCap.objectId,
         publicationId,
         vaultId,
         articleId

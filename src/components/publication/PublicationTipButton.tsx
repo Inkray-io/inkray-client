@@ -17,9 +17,9 @@ interface PublicationTipButtonProps {
   onTipSuccess?: () => void;
 }
 
-export function PublicationTipButton({ 
-  publicationId, 
-  publicationName, 
+export function PublicationTipButton({
+  publicationId,
+  publicationName,
   onTipSuccess
 }: PublicationTipButtonProps) {
   const { isConnected, account } = useWalletConnection();
@@ -45,13 +45,13 @@ export function PublicationTipButton({
 
       // Build tip transaction
       const tx = new Transaction();
-      
+
       // Reference publication object
       const publication = tx.object(publicationId);
-      
+
       // Create payment coin
       const [coin] = tx.splitCoins(tx.gas, [amount]);
-      
+
       // Call tip_publication function with embedded treasury
       // Tips are stored directly in the publication object (embedded treasury)
       tx.moveCall({
@@ -77,7 +77,7 @@ export function PublicationTipButton({
       // Close dialog and call success callback
       setIsOpen(false);
       onTipSuccess?.();
-      
+
     } catch (error) {
       // Handle tip transaction error
       setTipError(error instanceof Error ? error.message : "Failed to tip. Please try again.");
@@ -92,7 +92,7 @@ export function PublicationTipButton({
       setTipError("Please enter a valid amount");
       return;
     }
-    
+
     // Convert SUI to MIST (multiply by 10^9)
     const amountInMist = Math.floor(amount * MIST_PER_SUI);
     handleTip(amountInMist);
@@ -107,14 +107,14 @@ export function PublicationTipButton({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button 
+        <button
           className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg transition-all duration-200 hover:bg-red-100"
         >
           <Heart className="w-3 h-3" />
           Tip
         </button>
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg">Tip This Publication</DialogTitle>

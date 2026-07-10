@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton } from '@/components/wallet/connect';
 import { Transaction } from "@mysten/sui/transactions";
 import { INKRAY_CONFIG } from "@/lib/sui-clients";
 import { Loader2 } from "lucide-react";
