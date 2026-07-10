@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useXpHistory } from '@/hooks/useXpHistory';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { HowXpWorksButton } from '@/components/quests/HowXpWorks';
 import type { XpEventEntry } from '@/lib/api';
 import {
   Zap,
@@ -297,12 +298,29 @@ export function XpHistorySection() {
         <p className="text-xs text-muted-foreground mt-1">
           Complete quests and every point you earn will show up here
         </p>
+        <div className="mt-4 flex justify-center">
+          <HowXpWorksButton />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* Set expectations up front: this is an earned-only ledger, so an
+          action that isn't here simply didn't add XP. Links to the full
+          principle-based explainer. */}
+      <div className="flex items-start justify-between gap-3 rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-2.5">
+        <p className="text-xs text-gray-600 leading-relaxed">
+          Only XP you&apos;ve <span className="font-medium text-gray-900">earned</span> shows here.
+          Some actions don&apos;t add XP — like repeating something you&apos;ve already done,
+          very short or duplicate comments, or engaging with removed posts.
+        </p>
+        <div className="shrink-0 pt-0.5">
+          <HowXpWorksButton />
+        </div>
+      </div>
+
       {groups.map((group) => {
         const dayTotal = group.events.reduce((sum, e) => sum + e.xpAmount, 0);
         return (

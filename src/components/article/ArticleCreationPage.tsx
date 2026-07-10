@@ -208,8 +208,8 @@ export default function ArticleCreationPage() {
       // Navigate to the published article (wait 5s for blockchain event processing)
       setTimeout(() => {
         toast({
-          title: "Article Published!",
-          description: `Your article "${title}" has been published successfully.`,
+          title: "Article Published! 🎉",
+          description: `"${title}" is live. Publishing XP is added after a quick automated review — usually within a few minutes.`,
         })
         router.push(`/article?id=${result.slug}`)
       }, 5000)

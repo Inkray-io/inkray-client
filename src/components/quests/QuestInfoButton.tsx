@@ -53,7 +53,7 @@ const RECURRING_DETAILS: Record<
   { how: string; rules?: string[] }
 > = {
   publish_article: {
-    how: 'Publish any article on Inkray. XP is credited the moment your article lands on-chain and appears in the feed.',
+    how: 'Publish any article on Inkray. Publishing XP is added after a quick automated review — usually within a few minutes of it going live.',
     rules: [
       'Articles with a 7+ minute read time (~1,500+ words) earn the "long article" reward instead — the two don\'t stack.',
     ],

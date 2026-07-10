@@ -44,6 +44,7 @@ import {
   questInfoBuilders,
 } from '@/components/quests/QuestInfoButton';
 import { XpHistorySection } from '@/components/quests/XpHistorySection';
+import { HowXpWorksButton } from '@/components/quests/HowXpWorks';
 
 const RECURRING_CATEGORY_LABELS: Record<RecurringQuestItem['category'], string> = {
   create: 'Create',
@@ -685,8 +686,11 @@ export default function QuestsPage() {
             <div className="size-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Target className="size-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Quests</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Quests</h1>
+                <HowXpWorksButton variant="icon" />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Complete tasks to earn XP and climb the ranks
               </p>
