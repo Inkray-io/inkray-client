@@ -583,6 +583,8 @@ export interface RssFeed {
   id: string;
   publicationId: string;
   url: string;
+  sourceUrl?: string | null;
+  source?: string | null;
   name: string | null;
   status: string;
   autoPublish: boolean;
@@ -612,6 +614,12 @@ export interface RssFeedValidationResult {
   title?: string;
   description?: string;
   itemCount?: number;
+  /** The feed URL we resolved to (may differ from what the user pasted). */
+  resolvedFeedUrl?: string;
+  /** How the feed was found: direct | medium-profile | medium-publication | autodiscovered | common-path */
+  source?: string;
+  /** Suggested display name pulled from the feed title. */
+  suggestedName?: string;
   error?: string;
 }
 

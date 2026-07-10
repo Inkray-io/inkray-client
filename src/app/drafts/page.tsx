@@ -12,10 +12,12 @@ import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget";
 import { QuestsWidget } from "@/components/widgets/QuestsWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Loader2, RefreshCw, Pencil, Trash2, FileText, Clock, ImageIcon, Plus, CalendarClock, AlertTriangle } from "lucide-react";
+import { SiMedium } from "react-icons/si";
 import React, { useState, Suspense } from "react";
 import type { DraftArticle } from '@/types/article';
 import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
 import { CONFIG } from "@/lib/config";
+import { useImportWritingLink } from "@/hooks/useImportWritingLink";
 import Link from 'next/link';
 
 // Helper to format relative time
@@ -242,6 +244,7 @@ function DraftCard({ draft, onDelete, isDeleting }: DraftCardProps) {
 function DraftsPageContent() {
   const { drafts, isLoading, hasMore, loadMore, refresh, error } = useDrafts();
   const { deleteDraft, deletingDraft } = useDraftMode();
+  const importHref = useImportWritingLink();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [draftToDelete, setDraftToDelete] = useState<string | null>(null);
 
@@ -346,12 +349,20 @@ function DraftsPageContent() {
                     Your unpublished work will appear here. Start writing to create your first draft.
                   </p>
                 </div>
-                <Link href="/create">
-                  <Button className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Start Writing
-                  </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <Link href="/create">
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Start Writing
+                    </Button>
+                  </Link>
+                  <Link href={importHref}>
+                    <Button variant="outline" className="gap-2">
+                      <SiMedium className="w-4 h-4" />
+                      Import from Medium
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           )}

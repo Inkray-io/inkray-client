@@ -15,6 +15,7 @@ export const ROUTES = {
   ADVERTISING: '/advertising',
   DRAFTS: '/drafts',
   PUBLICATIONS: '/publications',
+  CREATE_PUBLICATION: '/create-publication',
   
   // Feed types
   FEED_POPULAR: '/feed',

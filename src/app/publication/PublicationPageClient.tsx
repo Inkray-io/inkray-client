@@ -1,7 +1,9 @@
 'use client';
 
 import React, { Suspense, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { SiMedium } from 'react-icons/si';
 import { usePublication } from '@/hooks/usePublication';
 import { usePublicationFeed } from '@/hooks/usePublicationFeed';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
@@ -23,6 +25,7 @@ import { createUserAvatarConfig } from '@/lib/utils/avatar';
 import { useArticleDeletion } from '@/hooks/useArticleDeletion';
 import { addressesEqual } from '@/utils/address';
 import { CONFIG } from '@/lib/config';
+import { ROUTES } from '@/constants/routes';
 
 /**
  * Publication page content component
@@ -200,15 +203,45 @@ const PublicationPageContent: React.FC = () => {
           {/* Empty State */}
           {isEmpty && !articlesLoading && !articlesError && (
             <div className="bg-white rounded-2xl border border-gray-100 text-center py-20 px-6">
-              <div className="space-y-3">
-                <p className="text-gray-900 text-lg font-medium">
-                  No articles published yet
-                </p>
-                <p className="text-gray-500 text-sm">
-                  This publication hasn&apos;t shared any articles. Check back
-                  later!
-                </p>
-              </div>
+              {isOwner ? (
+                <div className="space-y-4 max-w-sm mx-auto">
+                  <p className="text-gray-900 text-lg font-medium">
+                    Publish your first article
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Write something new, or bring your existing posts over from
+                    Medium or another blog.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                    <Link href={ROUTES.CREATE}>
+                      <Button>Write an article</Button>
+                    </Link>
+                    {publicationId && (
+                      <Link
+                        href={ROUTES.PUBLICATION_SETTINGS(
+                          publicationId,
+                          'rss-feeds',
+                        )}
+                      >
+                        <Button variant="outline" className="gap-2">
+                          <SiMedium className="w-4 h-4" />
+                          Import from Medium
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-gray-900 text-lg font-medium">
+                    No articles published yet
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    This publication hasn&apos;t shared any articles. Check back
+                    later!
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

@@ -12,8 +12,10 @@ import {
   HiHeart,
   HiPencilSquare,
 } from "react-icons/hi2"
+import { SiMedium } from "react-icons/si"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
+import { useImportWritingLink } from "@/hooks/useImportWritingLink"
 import { followsAPI, likesAPI, bookmarksAPI } from "@/lib/api"
 import { ROUTES } from "@/constants/routes"
 import { cn } from "@/lib/utils"
@@ -52,6 +54,7 @@ export function GettingStartedChecklist() {
   const { account, isAuthenticated } = useAuth()
   const [dismissed, setDismissed] = useState(true) // assume dismissed until hydrated
   const { profile } = useProfile(isAuthenticated ? account?.publicKey : undefined)
+  const importHref = useImportWritingLink()
 
   useEffect(() => {
     try {
@@ -201,6 +204,20 @@ export function GettingStartedChecklist() {
           ),
         )}
       </div>
+
+      {/* Discovery hook: bring existing writing in from Medium / elsewhere */}
+      <Link
+        href={importHref}
+        className="group mt-2 flex items-center gap-2.5 border-t border-gray-50 px-2 pt-2.5 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <span className="flex size-5 shrink-0 items-center justify-center">
+          <SiMedium className="size-4" />
+        </span>
+        <span className="flex-1 text-xs">
+          Already write on Medium? Import your posts
+        </span>
+        <HiChevronRight className="size-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </Link>
     </div>
   )
 }

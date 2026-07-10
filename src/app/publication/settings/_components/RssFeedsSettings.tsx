@@ -16,20 +16,42 @@ import {
   HiPause,
   HiPlay,
   HiCog6Tooth,
+  HiSparkles,
+  HiGlobeAlt,
 } from "react-icons/hi2";
+import { SiMedium } from "react-icons/si";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsInfoBox } from "./SettingsInfoBox";
+import { SegmentedControl } from "./SegmentedControl";
 import { FieldMappingDialog } from "./FieldMappingDialog";
 import { useRssFeeds } from "@/hooks/useRssFeeds";
 import { RssFeed, RssFeedPreviewResult, FieldMappings } from "@/lib/api";
+
+type ImportMode = "medium" | "custom";
+
+const MEDIUM_SOURCES = new Set(["medium-profile", "medium-publication"]);
+
+function isMediumSource(source?: string | null): boolean {
+  return !!source && MEDIUM_SOURCES.has(source);
+}
+
+/** Extended validation result carrying the backend's resolution metadata. */
+interface ResolvedValidation {
+  valid: boolean;
+  title?: string;
+  error?: string;
+  resolvedFeedUrl?: string;
+  source?: string;
+  suggestedName?: string;
+}
 
 interface RssFeedsSettingsProps {
   publicationId: string;
 }
 
-const MAX_FEEDS = 5;
+const MAX_FEEDS = 1;
 
 function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return "Never";
@@ -109,9 +131,11 @@ function FeedCard({
     }
   };
 
+  const isMedium = isMediumSource(feed.source);
+
   const hostname = (() => {
     try {
-      return new URL(feed.url).hostname.replace("www.", "");
+      return new URL(feed.sourceUrl || feed.url).hostname.replace("www.", "");
     } catch {
       return feed.url;
     }
@@ -128,14 +152,29 @@ function FeedCard({
       {/* Feed Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
-            <HiRss className="size-5 text-orange-600" />
-          </div>
+          {isMedium ? (
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
+              <SiMedium className="size-5 text-white" />
+            </div>
+          ) : (
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+              <HiRss className="size-5 text-orange-600" />
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <h4 className="font-medium text-gray-900 truncate">
-              {feed.name || hostname}
-            </h4>
-            <p className="text-xs text-gray-500 truncate">{feed.url}</p>
+            <div className="flex items-center gap-1.5">
+              <h4 className="font-medium text-gray-900 truncate">
+                {feed.name || hostname}
+              </h4>
+              {isMedium && (
+                <span className="flex-shrink-0 text-[10px] font-medium text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
+                  Medium
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 truncate">
+              {feed.sourceUrl || feed.url}
+            </p>
           </div>
         </div>
         <FeedStatusBadge status={feed.status} lastSyncError={feed.lastSyncError} />
@@ -257,19 +296,16 @@ function FeedCard({
 }
 
 export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
+  const [mode, setMode] = useState<ImportMode>("medium");
   const [newFeedUrl, setNewFeedUrl] = useState("");
   const [newFeedName, setNewFeedName] = useState("");
   const [newFeedAutoPublish, setNewFeedAutoPublish] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    valid: boolean;
-    title?: string;
-    error?: string;
-  } | null>(null);
+  const [validationResult, setValidationResult] = useState<ResolvedValidation | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [deletingFeedId, setDeletingFeedId] = useState<string | null>(null);
 
-  // Field mapping state
+  // Field mapping state (custom mode only)
   const [showFieldMapping, setShowFieldMapping] = useState(false);
   const [previewResult, setPreviewResult] = useState<RssFeedPreviewResult | null>(null);
   const [customMappings, setCustomMappings] = useState<FieldMappings | null>(null);
@@ -290,6 +326,23 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     isSyncing,
   } = useRssFeeds({ publicationId });
 
+  // Clear the in-progress form when switching between the two entry modes.
+  const resetForm = () => {
+    setNewFeedUrl("");
+    setNewFeedName("");
+    setNewFeedAutoPublish(false);
+    setValidationResult(null);
+    setCustomMappings(null);
+    setPreviewResult(null);
+    setAddError(null);
+  };
+
+  const handleModeChange = (next: string) => {
+    if (next === mode) return;
+    setMode(next as ImportMode);
+    resetForm();
+  };
+
   const handleValidateUrl = async () => {
     if (!newFeedUrl.trim()) return;
 
@@ -302,9 +355,10 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     setValidationResult(result);
     setIsValidating(false);
 
-    // Auto-fill name if validation successful and no custom name
-    if (result?.valid && result.title && !newFeedName) {
-      setNewFeedName(result.title);
+    // Auto-fill the display name from the resolved feed title.
+    const suggested = result?.suggestedName || result?.title;
+    if (result?.valid && suggested && !newFeedName) {
+      setNewFeedName(suggested);
     }
   };
 
@@ -332,8 +386,9 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
     }
   };
 
-  // Internal function to actually add the feed
-  const doAddFeed = async (mappings: FieldMappings) => {
+  // Internal function to actually add the feed. In Medium mode we pass no
+  // field mappings — the backend defaults to Medium's full `content:encoded`.
+  const doAddFeed = async (mappings?: FieldMappings) => {
     setAddError(null);
 
     try {
@@ -341,16 +396,10 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
         url: newFeedUrl,
         name: newFeedName || undefined,
         autoPublish: newFeedAutoPublish,
-        fieldMappings: mappings,
+        ...(mappings ? { fieldMappings: mappings } : {}),
       });
 
-      // Reset form on success
-      setNewFeedUrl("");
-      setNewFeedName("");
-      setNewFeedAutoPublish(false);
-      setValidationResult(null);
-      setCustomMappings(null);
-      setPreviewResult(null);
+      resetForm();
     } catch (err: any) {
       setAddError(err.message || "Failed to add feed");
     }
@@ -359,17 +408,23 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
   const handleAddFeed = async () => {
     if (!newFeedUrl.trim()) return;
 
-    // If user has already configured field mappings, proceed directly
+    // Medium mode: no field-mapping step — import directly (the backend
+    // resolves the profile/publication URL to a feed and confirms it parses).
+    if (mode === "medium") {
+      await doAddFeed();
+      return;
+    }
+
+    // Custom mode: if fields are already configured, proceed directly.
     if (customMappings) {
       await doAddFeed(customMappings);
       return;
     }
 
-    // User hasn't configured fields yet - show the dialog first
+    // Otherwise show the field-mapping dialog first.
     setAddError(null);
     setPendingAddFeed(true);
 
-    // If we don't have a preview yet, load it first
     if (!previewResult) {
       setIsLoadingPreview(true);
       const preview = await previewFeed(newFeedUrl);
@@ -412,23 +467,30 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
 
   return (
     <SettingsSection
-      title="RSS Feed Import"
-      description="Import articles from external RSS feeds into your publication as drafts."
+      title="Import Articles"
+      description="Bring in your writing from Medium or any RSS feed. New posts sync in automatically as drafts."
     >
       {/* Add Feed Card */}
       <SettingsCard>
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900">Add New Feed</h3>
-            <Badge variant="outline" className="text-xs">
-              {feeds.length}/{MAX_FEEDS} feeds
+          <div className="flex items-center justify-between gap-3">
+            <SegmentedControl
+              options={[
+                { id: "medium", label: "Medium", icon: SiMedium },
+                { id: "custom", label: "Other blogs", icon: HiGlobeAlt },
+              ]}
+              value={mode}
+              onChange={handleModeChange}
+            />
+            <Badge variant="outline" className="text-xs flex-shrink-0">
+              {feeds.length}/{MAX_FEEDS}
             </Badge>
           </div>
 
           {!canAddMore ? (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
               <p className="text-sm text-amber-800">
-                You&apos;ve reached the maximum of {MAX_FEEDS} RSS feeds. Remove an existing feed to add a new one.
+                You&apos;ve reached the maximum of {MAX_FEEDS} feeds. Remove one to add another.
               </p>
             </div>
           ) : (
@@ -436,7 +498,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
               {/* URL Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  RSS Feed URL
+                  {mode === "medium" ? "Your Medium profile" : "RSS feed URL"}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -447,7 +509,16 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                       setValidationResult(null);
                       setAddError(null);
                     }}
-                    placeholder="https://example.com/feed.xml"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newFeedUrl.trim() && !isValidating) {
+                        handleValidateUrl();
+                      }
+                    }}
+                    placeholder={
+                      mode === "medium"
+                        ? "https://medium.com/@yourname"
+                        : "https://example.com/feed.xml"
+                    }
                     className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   />
                   <Button
@@ -458,56 +529,91 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                   >
                     {isValidating ? (
                       <HiArrowPath className="size-4 animate-spin" />
+                    ) : mode === "medium" ? (
+                      "Find"
                     ) : (
                       "Validate"
                     )}
                   </Button>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {mode === "medium"
+                    ? "Paste the link to your Medium profile — we'll find your stories automatically."
+                    : "Any RSS or Atom feed. Paste a blog homepage and we'll try to find its feed too."}
+                </p>
               </div>
 
               {/* Validation Result */}
-              {validationResult && (
-                <div
-                  className={cn(
-                    "p-3 rounded-xl border flex items-start gap-3",
-                    validationResult.valid
-                      ? "bg-emerald-50 border-emerald-200"
-                      : "bg-red-50 border-red-200"
-                  )}
-                >
-                  {validationResult.valid ? (
-                    <>
-                      <HiCheckCircle className="size-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-emerald-800">
-                          Valid RSS Feed
-                        </p>
-                        {validationResult.title && (
-                          <p className="text-xs text-emerald-600 mt-0.5">
-                            {validationResult.title}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-red-800">
-                          Invalid Feed
-                        </p>
-                        <p className="text-xs text-red-600 mt-0.5">
-                          {validationResult.error || "Could not parse RSS feed"}
-                        </p>
-                      </div>
-                    </>
-                  )}
+              {validationResult && !validationResult.valid && (
+                <div className="p-3 rounded-xl border bg-red-50 border-red-200 flex items-start gap-3">
+                  <HiExclamationCircle className="size-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">
+                      {mode === "medium" ? "We couldn't find your stories" : "Invalid feed"}
+                    </p>
+                    <p className="text-xs text-red-600 mt-0.5">
+                      {validationResult.error || "Could not parse feed"}
+                    </p>
+                  </div>
                 </div>
               )}
 
-              {/* Configure Fields Button - shown after successful validation */}
-              {validationResult?.valid && (
-                <div className="flex items-center gap-3">
+              {validationResult?.valid && mode === "medium" && (
+                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/60">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center">
+                      <SiMedium className="size-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {validationResult.suggestedName || "Stories found"}
+                      </p>
+                      {validationResult.resolvedFeedUrl && (
+                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                          {validationResult.resolvedFeedUrl}
+                        </p>
+                      )}
+                    </div>
+                    <HiCheckCircle className="size-5 text-emerald-600 flex-shrink-0" />
+                  </div>
+                  <ul className="mt-3 space-y-1.5">
+                    <li className="flex items-start gap-2 text-xs text-gray-600">
+                      <HiCheckCircle className="size-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      Your 10 most recent stories import now, and new stories sync automatically.
+                    </li>
+                    <li className="flex items-start gap-2 text-xs text-gray-600">
+                      <HiExclamationCircle className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      Member-only stories can only be imported as previews.
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {validationResult?.valid && mode === "custom" && (
+                <div className="p-3 rounded-xl border bg-emerald-50 border-emerald-200 flex items-start gap-3">
+                  <HiCheckCircle className="size-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-emerald-800">Valid feed</p>
+                    {validationResult.suggestedName && (
+                      <p className="text-xs text-emerald-700 mt-0.5 truncate">
+                        {validationResult.suggestedName}
+                      </p>
+                    )}
+                    {/* When we resolved a homepage to its feed, show what we found. */}
+                    {validationResult.source &&
+                      validationResult.source !== "direct" &&
+                      validationResult.resolvedFeedUrl && (
+                        <p className="text-xs text-gray-500 mt-1 truncate">
+                          Found the feed at {validationResult.resolvedFeedUrl}
+                        </p>
+                      )}
+                  </div>
+                </div>
+              )}
+
+              {/* Configure Fields Button - custom mode only, after validation */}
+              {validationResult?.valid && mode === "custom" && (
+                <div className="flex items-center gap-3 flex-wrap">
                   <Button
                     variant="outline"
                     size="sm"
@@ -528,7 +634,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                     )}
                   </Button>
                   <span className="text-xs text-gray-500">
-                    Customize which RSS fields map to title & content
+                    Customize which fields map to title &amp; content
                   </span>
                   {customMappings && (
                     <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
@@ -547,7 +653,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                   type="text"
                   value={newFeedName}
                   onChange={(e) => setNewFeedName(e.target.value)}
-                  placeholder="My Tech News Feed"
+                  placeholder={mode === "medium" ? "My Medium stories" : "My Tech News Feed"}
                   maxLength={100}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 />
@@ -558,7 +664,7 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                 <div>
                   <p className="text-sm font-medium text-gray-900">Auto-publish articles</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    When enabled, imported articles will be published directly instead of saved as drafts
+                    When enabled, imported articles are published directly instead of saved as drafts
                   </p>
                 </div>
                 <button
@@ -601,12 +707,17 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
                 {isAddingFeed ? (
                   <>
                     <HiArrowPath className="size-4 mr-2 animate-spin" />
-                    Adding Feed...
+                    {mode === "medium" ? "Importing..." : "Adding Feed..."}
                   </>
                 ) : isLoadingPreview ? (
                   <>
                     <HiArrowPath className="size-4 mr-2 animate-spin" />
                     Loading Preview...
+                  </>
+                ) : mode === "medium" ? (
+                  <>
+                    <HiSparkles className="size-4 mr-2" />
+                    Import my stories
                   </>
                 ) : (
                   <>
@@ -671,18 +782,33 @@ export function RssFeedsSettings({ publicationId }: RssFeedsSettingsProps) {
       </SettingsCard>
 
       {/* Info Note */}
-      <SettingsInfoBox
-        icon={HiRss}
-        title="How RSS Import Works"
-        variant="info"
-      >
-        <ul className="space-y-1 text-xs">
-          <li>Feeds are synced automatically every hour</li>
-          <li>New articles are saved as drafts for your review</li>
-          <li>Enable auto-publish to skip the draft step</li>
-          <li>Duplicate articles are automatically detected and skipped</li>
-        </ul>
-      </SettingsInfoBox>
+      {mode === "medium" ? (
+        <SettingsInfoBox
+          icon={SiMedium}
+          title="How Medium import works"
+          variant="info"
+        >
+          <ul className="space-y-1 text-xs">
+            <li>We import your 10 most recent stories and keep new ones in sync</li>
+            <li>Stories arrive as drafts for your review — enable auto-publish to skip that</li>
+            <li>Member-only stories come in as previews only</li>
+            <li>Already-imported stories are detected and never duplicated</li>
+          </ul>
+        </SettingsInfoBox>
+      ) : (
+        <SettingsInfoBox
+          icon={HiRss}
+          title="How RSS import works"
+          variant="info"
+        >
+          <ul className="space-y-1 text-xs">
+            <li>Feeds are synced automatically every hour</li>
+            <li>New articles are saved as drafts for your review</li>
+            <li>Enable auto-publish to skip the draft step</li>
+            <li>Duplicate articles are automatically detected and skipped</li>
+          </ul>
+        </SettingsInfoBox>
+      )}
 
       {/* Field Mapping Dialog */}
       <FieldMappingDialog
