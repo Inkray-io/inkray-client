@@ -8,6 +8,8 @@
  * Credentials are kept in memory for the session only (never persisted).
  */
 import { useEffect, useState } from 'react';
+import { HiClipboardDocument, HiCheck } from 'react-icons/hi2';
+import { copyToClipboard } from '@/utils/address';
 import {
   fetchDetailedStatus,
   type DetailedStatus,
@@ -31,6 +33,41 @@ interface WalletDetail {
   error?: string;
 }
 
+/**
+ * Truncated address that copies the FULL address to the clipboard on click
+ * (address or icon). Internal ops page — no SuiNS resolution, just the raw
+ * wallet address for funding/inspection.
+ */
+function CopyAddress({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await copyToClipboard(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable — no-op */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      title={copied ? 'Copied' : `Copy ${address}`}
+      className="group inline-flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
+    >
+      <span>
+        {address.slice(0, 8)}…{address.slice(-6)}
+      </span>
+      {copied ? (
+        <HiCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+      ) : (
+        <HiClipboardDocument className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100" />
+      )}
+    </button>
+  );
+}
+
 function WalletTable({ c }: { c: DetailedComponent }) {
   const wallets = (c.detail?.wallets as WalletDetail[]) || [];
   if (!wallets.length) return null;
@@ -50,7 +87,7 @@ function WalletTable({ c }: { c: DetailedComponent }) {
           <tr key={w.label} className="border-t border-border">
             <td className="py-1 pr-4">{w.label}</td>
             <td className="py-1 pr-4">
-              {w.address.slice(0, 8)}…{w.address.slice(-6)}
+              <CopyAddress address={w.address} />
             </td>
             <td className="py-1 pr-4">{w.sui < 0 ? '—' : w.sui}</td>
             <td className="py-1 pr-4">{w.wal < 0 ? '—' : w.wal}</td>
