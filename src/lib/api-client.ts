@@ -290,6 +290,14 @@ export const api = {
       storageEndEpoch: number;
     }>('/articles/create', data),
 
+    // Soft-delete: hides the article server-side. No blockchain transaction —
+    // deleting the on-chain objects would refund the platform-paid storage
+    // rebate to the user (an exploit), so we only mark it hidden/deleted.
+    delete: (articleId: string) =>
+      apiClient.delete<{ articleId: string; deletedAt: string }>(
+        `/articles/${articleId}`,
+      ),
+
     getBySlug: (slug: string) => apiClient.get<{
       articleId: string;
       slug: string;

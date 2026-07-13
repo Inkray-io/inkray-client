@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { useCurrentClient } from '@mysten/dapp-kit-react';
-import { Transaction } from '@mysten/sui/transactions';
-import { useEnhancedTransaction } from '@/hooks/useEnhancedTransaction';
+import { api } from '@/lib/api-client';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { log } from '@/lib/utils/Logger';
 
@@ -12,125 +10,46 @@ interface UseArticleDeletionProps {
 
 interface ArticleDeletionData {
   articleId: string;
-  publicationId: string;
-  vaultId: string;
+  // Kept for call-site compatibility; no longer needed now that deletion is a
+  // server-side hide rather than an on-chain transaction.
+  publicationId?: string;
+  vaultId?: string;
 }
 
+/**
+ * Deletes ("hides") an article via the backend.
+ *
+ * Previously this signed an on-chain `delete_article` transaction with the
+ * user's wallet. That destroyed the on-chain Article/Blob objects and refunded
+ * the Sui storage rebate — which the PLATFORM paid at publish time — to the
+ * user, an exploitable fund drain. Deletion is now a server-side soft-delete:
+ * the article is hidden from every surface, no transaction is made, and there
+ * is nothing to extract.
+ */
 export const useArticleDeletion = ({ onSuccess, onError }: UseArticleDeletionProps = {}) => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const { signAndExecuteTransaction: signAndExecute } = useEnhancedTransaction();
-  const client = useCurrentClient();
   const { address } = useWalletConnection();
 
   const deleteArticle = async (deletionData: ArticleDeletionData) => {
-    const { articleId, publicationId, vaultId } = deletionData;
-
-    if (!process.env.NEXT_PUBLIC_PACKAGE_ID) {
-      const error = 'Package ID not configured';
-      log.error('Article deletion failed: Package ID not configured', {}, 'useArticleDeletion');
-      onError?.(error, articleId);
-      return;
-    }
-
-    if (!process.env.NEXT_PUBLIC_WALRUS_SYSTEM_OBJECT_ID) {
-      const error = 'Walrus System Object ID not configured';
-      log.error('Article deletion failed: Walrus System Object ID not configured', {}, 'useArticleDeletion');
-      onError?.(error, articleId);
-      return;
-    }
-
-    if (!process.env.NEXT_PUBLIC_GLOBAL_CONFIG_ID) {
-      const error = 'Global Config ID not configured';
-      log.error('Article deletion failed: Global Config ID not configured', {}, 'useArticleDeletion');
-      onError?.(error, articleId);
-      return;
-    }
+    const { articleId } = deletionData;
 
     try {
       setIsDeleting(articleId);
-      log.debug('Starting article deletion', { articleId, publicationId, vaultId }, 'useArticleDeletion');
+      log.debug('Starting article deletion (soft-delete)', { articleId }, 'useArticleDeletion');
 
-      // Check if wallet is connected
       if (!address) {
         throw new Error('Wallet not connected');
       }
 
-      // Find the PublicationOwnerCap for this publication
-      const ownedObjects = await client.core.listOwnedObjects({
-        owner: address,
-        type: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::publication::PublicationOwnerCap`,
-        include: {
-          json: true,
-        },
-      });
-      console.log(ownedObjects.objects)
-      const ownerCap = ownedObjects.objects.find((obj) => {
-        const fields = obj.json as { publication_id?: string } | undefined;
-        return fields?.publication_id === publicationId;
-      });
+      await api.articles.delete(articleId);
 
-      if (!ownerCap) {
-        throw new Error('You do not own this publication');
-      }
-
-      // Create transaction for article deletion
-      const txb = new Transaction();
-
-      // Call delete_article function
-      txb.moveCall({
-        target: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::articles::delete_article`,
-        arguments: [
-          txb.object(process.env.NEXT_PUBLIC_GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
-          txb.object(ownerCap.objectId), // PublicationOwnerCap
-          txb.object(publicationId), // Publication object
-          txb.object(vaultId), // PublicationVault object
-          txb.object(articleId), // Article object to delete
-          txb.object(process.env.NEXT_PUBLIC_WALRUS_SYSTEM_OBJECT_ID), // Walrus System object
-        ],
-      });
-
-      log.debug('Executing article deletion transaction', {
-        ownerCapId: ownerCap.objectId,
-        publicationId,
-        vaultId,
-        articleId
-      }, 'useArticleDeletion');
-
-      // Sign and execute the transaction
-      signAndExecute(
-        {
-          transaction: txb,
-        },
-        {
-          onSuccess: (result) => {
-            log.debug('Article deletion successful', {
-              digest: result.digest,
-              articleId
-            }, 'useArticleDeletion');
-
-            setIsDeleting(null);
-            onSuccess?.(articleId);
-          },
-          onError: (error) => {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error during deletion';
-            log.error('Article deletion transaction failed', {
-              error: errorMessage,
-              articleId
-            }, 'useArticleDeletion');
-
-            setIsDeleting(null);
-            onError?.(errorMessage, articleId);
-          },
-        }
-      );
-
+      log.debug('Article deletion successful', { articleId }, 'useArticleDeletion');
+      setIsDeleting(null);
+      onSuccess?.(articleId);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Article deletion failed', {
-        error: errorMessage,
-        articleId
-      }, 'useArticleDeletion');
-
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error during deletion';
+      log.error('Article deletion failed', { error: errorMessage, articleId }, 'useArticleDeletion');
       setIsDeleting(null);
       onError?.(errorMessage, articleId);
     }
