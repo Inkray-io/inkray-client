@@ -290,7 +290,7 @@ export default function McpForAgentsPage() {
             Your wallet is the key.
           </h2>
           <p className="mt-3 max-w-2xl leading-relaxed text-gray-500">
-            No secrets to hand an agent, and nothing it can do that you didn't approve.
+            No secrets to hand an agent, and nothing it can do that you didn&apos;t approve.
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {TRUST.map((t, i) => (
@@ -318,7 +318,7 @@ export default function McpForAgentsPage() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl leading-relaxed text-[#7A8BA6]">
             Connect your assistant in about a minute — no keys, no config. Sign once with your
-            wallet and it's ready.
+            wallet and it&apos;s ready.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
             <button

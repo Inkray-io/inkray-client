@@ -155,7 +155,7 @@ export default function McpPage() {
             </Step>
             <Step n={2}>
               A browser page opens — <strong>connect your Sui wallet</strong> and review
-              the permissions you're granting.
+              the permissions you&apos;re granting.
             </Step>
             <Step n={3}>
               Approve by signing a message (no gas). The assistant can now use Inkray

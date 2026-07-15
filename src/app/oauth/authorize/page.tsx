@@ -231,7 +231,7 @@ function ConsentInner() {
               </Button>
             </div>
             <p className="mt-3 text-center text-[11px] text-neutral-400">
-              You'll be asked to sign a message — this proves wallet ownership and
+              You&apos;ll be asked to sign a message — this proves wallet ownership and
               costs no gas.
             </p>
           </>
