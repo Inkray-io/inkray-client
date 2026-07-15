@@ -5,6 +5,7 @@ import { GettingStartedChecklist } from "@/components/onboarding"
 import { useAuth } from "@/contexts/AuthContext"
 import { FeedPost } from "@/components/feed/FeedPost"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
+import { McpAnnounceBanner } from "@/components/feed/McpAnnounceBanner"
 import { TopWriters } from "@/components/widgets/TopWriters"
 import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget"
 import { QuestsWidget } from "@/components/widgets/QuestsWidget"
@@ -154,6 +155,9 @@ function FeedPageContent() {
         </RightSidebar>
       }
     >
+      {/* Subtle MCP announcement (dismissible) */}
+      <McpAnnounceBanner />
+
       {/* Offline Info Section */}
       {hasCachedArticles && (
         <div className="bg-blue-50 rounded-2xl p-6 flex items-center justify-start gap-3 mb-6">

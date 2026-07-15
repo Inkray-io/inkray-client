@@ -1063,3 +1063,23 @@ export const searchAPI = {
   ) =>
     api.get<ApiResponse<SearchResponse>>('/search', { params: { q, type, limit } }),
 };
+
+// ── MCP / connected apps ────────────────────────────────────────────────────
+export interface ConnectedApp {
+  clientId: string;
+  clientName: string;
+  scopes: string[];
+  connectedAt: string;
+  lastUsedAt: string;
+}
+
+export const mcpAPI = {
+  // Apps the logged-in user has authorized via OAuth/MCP.
+  getConnectedApps: () =>
+    api.get<ApiResponse<ConnectedApp[]>>('/oauth/me/apps'),
+  // Revoke a connected app (all its tokens).
+  revokeApp: (clientId: string) =>
+    api.delete<ApiResponse<{ revoked: boolean }>>(
+      `/oauth/me/apps/${encodeURIComponent(clientId)}`,
+    ),
+};

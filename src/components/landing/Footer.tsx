@@ -65,6 +65,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-3">
               <li><a href={ROUTES.FOR_WRITERS} className="text-sm text-[#4A5A72] hover:text-white transition-colors">For Writers</a></li>
+              <li><a href={ROUTES.MCP_FOR_AGENTS} className="text-sm text-[#4A5A72] hover:text-white transition-colors">For AI Agents (MCP)</a></li>
               <li><a href={ROUTES.FOR_READERS} className="text-sm text-[#4A5A72] hover:text-white transition-colors">For Readers</a></li>
               <li><a href={ROUTES.SUBSTACK_ALTERNATIVE} className="text-sm text-[#4A5A72] hover:text-white transition-colors">Substack Alternative</a></li>
               <li><a href={ROUTES.CONTENT_OWNERSHIP} className="text-sm text-[#4A5A72] hover:text-white transition-colors">Content Ownership</a></li>

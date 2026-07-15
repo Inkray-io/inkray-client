@@ -11,6 +11,7 @@ import { Features } from "@/components/landing/Features"
 import { HowItWorks } from "@/components/landing/HowItWorks"
 import { Audiences } from "@/components/landing/Audiences"
 import { Technology } from "@/components/landing/Technology"
+import { McpTeaser } from "@/components/landing/McpTeaser"
 import { CtaSection } from "@/components/landing/CtaSection"
 import { Footer } from "@/components/landing/Footer"
 
@@ -34,6 +35,7 @@ export default function InkrayLanding() {
       <HowItWorks />
       <Audiences />
       <Technology />
+      <McpTeaser />
       <CtaSection />
       <Footer />
     </div>
