@@ -270,6 +270,7 @@ export const api = {
       publicationId: string;
       authorAddress: string;
       gated?: boolean;
+      communityId?: string;
       isEncrypted?: boolean;
       contentId?: string;
       encryptionMetadata?: {

@@ -227,6 +227,7 @@ export const useArticleCreation = () => {
           content: string,
           draftId: string,
           gated: boolean = false,
+          communityId?: string | null,
       ): Promise<ArticleUploadResult> => {
         if (!currentAccount) {
           throw new Error('Wallet not connected');
@@ -302,6 +303,8 @@ export const useArticleCreation = () => {
             publicationId: publication.publicationId,
             authorAddress: currentAccount.address,
             gated,
+            // Optional community to also publish this post into.
+            ...(communityId ? { communityId } : {}),
             // Encryption metadata for backend
             isEncrypted: true, // Flag to indicate content is encrypted
             encryptionMetadata: {

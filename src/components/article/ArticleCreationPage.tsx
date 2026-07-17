@@ -28,6 +28,8 @@ import { getPlainTextFromMarkdown } from "@/lib/utils/markdown";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScheduleModal } from "@/components/article/ScheduleModal";
+import { CommunityPublishSelector } from "@/components/article/CommunityPublishSelector";
+import { useUserPublications } from "@/hooks/useUserPublications";
 
 // Calculate reading time from word count (average 200 words per minute)
 function calculateReadingTime(plainText: string): number {
@@ -121,6 +123,8 @@ export default function ArticleCreationPage() {
   const [ title, setTitle ] = useState('')
   const [ content, setContent ] = useState('')
   const [ gated ] = useState(false)
+  const [ selectedCommunityId, setSelectedCommunityId ] = useState<string | null>(null)
+  const { firstPublication } = useUserPublications()
   const [ contentInitialized, setContentInitialized ] = useState(false)
   const [ isWaitingForRedirect, setIsWaitingForRedirect ] = useState(false)
   const [ clearDialogOpen, setClearDialogOpen ] = useState(false)
@@ -197,6 +201,7 @@ export default function ArticleCreationPage() {
           content.trim(),
           draft.id,
           gated,
+          selectedCommunityId,
       );
 
 
@@ -352,6 +357,13 @@ export default function ArticleCreationPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {isOwner && !draft?.scheduledPublishAt && (
+                  <CommunityPublishSelector
+                      publicationId={firstPublication?.publicationId}
+                      value={selectedCommunityId}
+                      onChange={setSelectedCommunityId}
+                  />
+              )}
               {isOwner && (
                   draft?.scheduledPublishAt ? (
                       <div className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 pl-2.5 pr-1 py-1">

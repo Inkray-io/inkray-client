@@ -365,6 +365,50 @@ export const publicationsAPI = {
     ),
 };
 
+export const communitiesAPI = {
+  // Public reads
+  list: (params?: { page?: number; limit?: number }) =>
+    api.get('/communities', { params }),
+  get: (idOrSlug: string) => api.get(`/communities/${idOrSlug}`),
+  getMembers: (idOrSlug: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/communities/${idOrSlug}/members`, { params }),
+  getFeed: (idOrSlug: string, params?: { cursor?: string; limit?: number }) =>
+    api.get(`/communities/${idOrSlug}/feed`, {
+      params: { includeFollowStatus: true, ...params },
+    }),
+
+  // Publication-side actions
+  apply: (idOrSlug: string, publicationId: string, message?: string) =>
+    api.post(`/communities/${idOrSlug}/apply`, { publicationId, message }),
+  myInvites: () => api.get('/communities/me/invites'),
+  getPublishable: (publicationId: string) =>
+    api.get('/communities/me/publishable', { params: { publicationId } }),
+  acceptInvite: (inviteId: string) =>
+    api.post(`/communities/invites/${inviteId}/accept`),
+  declineInvite: (inviteId: string) =>
+    api.post(`/communities/invites/${inviteId}/decline`),
+  leave: (idOrSlug: string, publicationId: string) =>
+    api.delete(`/communities/${idOrSlug}/members/me`, { data: { publicationId } }),
+
+  // Owner-side actions
+  update: (idOrSlug: string, data: { name?: string; description?: string; avatar?: string }) =>
+    api.patch(`/communities/${idOrSlug}`, data),
+  getApplications: (idOrSlug: string, status?: string) =>
+    api.get(`/communities/${idOrSlug}/applications`, { params: status ? { status } : {} }),
+  getInvites: (idOrSlug: string, status?: string) =>
+    api.get(`/communities/${idOrSlug}/invites`, { params: status ? { status } : {} }),
+  acceptApplication: (idOrSlug: string, appId: string) =>
+    api.post(`/communities/${idOrSlug}/applications/${appId}/accept`),
+  rejectApplication: (idOrSlug: string, appId: string) =>
+    api.post(`/communities/${idOrSlug}/applications/${appId}/reject`),
+  invite: (idOrSlug: string, publicationId: string) =>
+    api.post(`/communities/${idOrSlug}/invites`, { publicationId }),
+  revokeInvite: (idOrSlug: string, inviteId: string) =>
+    api.delete(`/communities/${idOrSlug}/invites/${inviteId}`),
+  removeMember: (idOrSlug: string, publicationId: string) =>
+    api.delete(`/communities/${idOrSlug}/members/${publicationId}`),
+};
+
 export const nftAPI = {
   getRecentMints: (articleId: string, limit?: number) =>
     api.get(`/nft/recent/${articleId}`, { 

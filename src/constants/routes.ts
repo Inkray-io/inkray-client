@@ -38,10 +38,15 @@ export const ROUTES = {
   MCP: '/mcp',
   PROFILE_WITH_ID: (address: string) => `/profile?id=${address}`,
 
+  // Communities (beta)
+  COMMUNITIES: '/communities',
+
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
   PUBLICATION_WITH_ID: (id: string) => `/publication?id=${id}`,
   PUBLICATION_SETTINGS: (id: string, tab?: string) => `/publication/settings?id=${id}${tab ? `&tab=${tab}` : ''}`,
+  COMMUNITY_WITH_ID: (id: string) => `/community?id=${id}`,
+  COMMUNITY_SETTINGS: (id: string, tab?: string) => `/community/settings?id=${id}${tab ? `&tab=${tab}` : ''}`,
   
   // SEO landing pages
   MCP_FOR_AGENTS: '/mcp-for-agents',

@@ -1,9 +1,11 @@
 "use client"
 
+import { Fragment } from "react"
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/constants/routes"
 import { useSidebarMode } from "@/hooks/useSidebarMode"
 import { useCategories } from "@/hooks/useCategories"
+import { useCommunities } from "@/hooks/useCommunities"
 import { getCategoryIcon } from "@/constants/categoryIcons"
 import { SidebarToggle } from "./SidebarToggle"
 import { ExpandableTooltip } from "./ExpandableTooltip"
@@ -21,6 +23,7 @@ import {
   HiSquares2X2,
   HiTrophy,
   HiRocketLaunch,
+  HiUserGroup,
 } from "react-icons/hi2"
 
 interface AppSidebarProps {
@@ -33,10 +36,15 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { categories, isLoading: categoriesLoading } = useCategories()
+  const { communities } = useCommunities()
 
   // Determine current feed type and category from URL
   const currentFeedType = searchParams.get('type') || 'popular'
   const currentCategory = searchParams.get('category')
+  // Top 3 communities (the list endpoint is already sorted by member count) for
+  // quick access as inline sub-items under the Communities nav entry.
+  const topCommunities = communities.slice(0, 3)
+  const currentCommunityId = searchParams.get('id')
   
   const navigationItems = [
     {
@@ -89,6 +97,13 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       active: currentPage === "quests",
       href: ROUTES.QUESTS
     },
+    {
+      id: "communities",
+      label: "Communities",
+      icon: HiUserGroup,
+      active: currentPage === "communities",
+      href: ROUTES.COMMUNITIES
+    },
   ]
 
   const inkrayLinks = [
@@ -128,31 +143,69 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
         {/* Navigation */}
         <div className="space-y-0.5">
           {navigationItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
-              <ExpandableTooltip
-                label={item.label}
-                isCompact={isCompact}
-                isActive={item.active}
-                hasNotification={item.hasNotification}
-              >
-                <button
-                  onClick={() => router.push(item.href)}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors text-sm",
-                    item.active
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-gray-50 text-foreground",
-                    isCompact && "justify-center px-2"
-                  )}
+            <Fragment key={item.id}>
+              <div className="flex items-center justify-between">
+                <ExpandableTooltip
+                  label={item.label}
+                  isCompact={isCompact}
+                  isActive={item.active}
+                  hasNotification={item.hasNotification}
                 >
-                  <item.icon className="size-4 shrink-0" />
-                  {!isCompact && <span className="font-medium">{item.label}</span>}
-                </button>
-              </ExpandableTooltip>
-              {item.hasNotification && !isCompact && (
-                <div className="size-1.5 bg-primary rounded mr-2"></div>
+                  <button
+                    onClick={() => router.push(item.href)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg w-full text-left transition-colors text-sm",
+                      item.active
+                        ? "bg-primary/10 text-primary"
+                        : "hover:bg-gray-50 text-foreground",
+                      isCompact && "justify-center px-2"
+                    )}
+                  >
+                    <item.icon className="size-4 shrink-0" />
+                    {!isCompact && <span className="font-medium">{item.label}</span>}
+                  </button>
+                </ExpandableTooltip>
+                {item.hasNotification && !isCompact && (
+                  <div className="size-1.5 bg-primary rounded mr-2"></div>
+                )}
+              </div>
+
+              {/* Top-3 communities as inline sub-items for quick access */}
+              {!isCompact && item.id === "communities" && topCommunities.length > 0 && (
+                <div className="ml-3 mt-0.5 space-y-0.5 border-l border-gray-100 pl-2.5">
+                  {topCommunities.map((c) => {
+                    const active =
+                      currentPage === "communities" && currentCommunityId === c.slug
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => router.push(ROUTES.COMMUNITY_WITH_ID(c.slug))}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left text-[13px] transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-foreground"
+                        )}
+                      >
+                        {c.avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={c.avatar}
+                            alt=""
+                            className="size-4 shrink-0 rounded object-cover"
+                          />
+                        ) : (
+                          <span className="flex size-4 shrink-0 items-center justify-center rounded bg-primary/10">
+                            <HiUserGroup className="size-2.5 text-primary" />
+                          </span>
+                        )}
+                        <span className="truncate">{c.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               )}
-            </div>
+            </Fragment>
           ))}
         </div>
 

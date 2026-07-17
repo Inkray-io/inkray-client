@@ -36,6 +36,11 @@ export const TYPE_STYLE: Record<string, { icon: typeof HiBell; chip: string }> =
   INVITE_REDEEMED: { icon: HiTicket, chip: 'bg-indigo-50 text-indigo-500' },
   INVITE_CODES_GRANTED: { icon: HiTicket, chip: 'bg-indigo-50 text-indigo-500' },
   TIER_PROMOTED: { icon: HiTrophy, chip: 'bg-amber-50 text-amber-600' },
+  COMMUNITY_APPLICATION: { icon: HiUserGroup, chip: 'bg-sky-50 text-sky-600' },
+  COMMUNITY_APPLICATION_ACCEPTED: { icon: HiUserGroup, chip: 'bg-green-50 text-green-600' },
+  COMMUNITY_APPLICATION_REJECTED: { icon: HiUserGroup, chip: 'bg-gray-100 text-gray-500' },
+  COMMUNITY_INVITE: { icon: HiUserGroup, chip: 'bg-sky-50 text-sky-600' },
+  COMMUNITY_INVITE_ACCEPTED: { icon: HiUserGroup, chip: 'bg-green-50 text-green-600' },
 };
 
 export const DEFAULT_STYLE = { icon: HiBell, chip: 'bg-gray-100 text-gray-500' };
@@ -51,6 +56,7 @@ export const CATEGORY: Record<string, { icon: typeof HiBell; label: string }> = 
   publishing: { icon: HiDocumentText, label: 'Publishing' },
   rewards: { icon: HiTrophy, label: 'Rewards' },
   invites: { icon: HiTicket, label: 'Invites' },
+  community: { icon: HiUserGroup, label: 'Communities' },
 };
 
 export const CATEGORY_OF: Record<string, keyof typeof CATEGORY> = {
@@ -66,6 +72,11 @@ export const CATEGORY_OF: Record<string, keyof typeof CATEGORY> = {
   INVITE_REDEEMED: 'invites',
   INVITE_CODES_GRANTED: 'invites',
   TIER_PROMOTED: 'rewards',
+  COMMUNITY_APPLICATION: 'community',
+  COMMUNITY_APPLICATION_ACCEPTED: 'community',
+  COMMUNITY_APPLICATION_REJECTED: 'community',
+  COMMUNITY_INVITE: 'community',
+  COMMUNITY_INVITE_ACCEPTED: 'community',
 };
 
 /**
@@ -110,6 +121,18 @@ export function notificationHref(n: Notification): string | null {
     // Rewards → see where you stand
     case 'TIER_PROMOTED':
       return ROUTES.LEADERBOARD;
+    // Communities → owner reviews applications; everyone else opens the community
+    case 'COMMUNITY_APPLICATION':
+      return p.community?.slug || p.community?.id
+        ? ROUTES.COMMUNITY_SETTINGS(p.community.slug || p.community.id, 'applications')
+        : null;
+    case 'COMMUNITY_APPLICATION_ACCEPTED':
+    case 'COMMUNITY_APPLICATION_REJECTED':
+    case 'COMMUNITY_INVITE':
+    case 'COMMUNITY_INVITE_ACCEPTED':
+      return p.community?.slug || p.community?.id
+        ? ROUTES.COMMUNITY_WITH_ID(p.community.slug || p.community.id)
+        : null;
     default:
       return null;
   }

@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { feedAPI, bookmarksAPI } from '@/lib/api';
 import { log } from '@/lib/utils/Logger';
 import { FeedArticle, FeedArticlesState } from '@/types/article';
-import { createUserAvatarConfig } from '@/lib/utils/avatar';
-import { CONFIG } from '@/lib/config';
+import { formatArticleForDisplay as formatArticleDisplay } from '@/lib/utils/formatArticle';
 
 /**
  * Hook to fetch articles from the backend indexer for the feed
@@ -208,51 +207,11 @@ export const useFeedArticles = (
   /**
    * Format article for display
    */
-  const formatArticleForDisplay = useCallback((article: FeedArticle) => {
-    // Create proper avatar config for user (without passing short address as name)
-    const avatarConfig = createUserAvatarConfig({
-      publicKey: article.author,
-      // Don't pass the short address as name - let the function detect it's an address
-    }, 'md');
-    const hasCover = Boolean(article.hasCover);
-
-    // Determine cover image URL (served via the backend media proxy)
-    let coverImage: string | undefined;
-    if (hasCover && article.coverImageId) {
-      coverImage = `${CONFIG.API_URL}/articles/images/article/${article.articleId}/media/${article.coverImageId}`;
-    }
-
-    return {
-      id: article.articleId,
-      author: {
-        name: article.authorShortAddress,
-        avatar: avatarConfig.src,
-        address: article.author,
-        date: article.timeAgo,
-        readTime: article.readTimeMinutes ? `${article.readTimeMinutes} min` : "2 min",
-        category: article.categoryName || undefined,
-      },
-      title: article.title,
-      slug: article.slug,
-      image: coverImage,
-      description: article.summary || `Published on Sui blockchain • ${article.gated ? '🔒 Gated content' : '📖 Free article'}`,
-      engagement: {
-        likes: article.totalLikes,
-        comments: article.totalComments || 0,
-        views: (article.viewCount ?? 0) + (article.chatViewCount ?? 0), // Total views
-        pageViews: article.viewCount ?? 0, // Views from article page
-        chatViews: article.chatViewCount ?? 0, // Views from AI chat mentions
-        isLiked: article.isLiked,
-        isBookmarked: article.isBookmarked,
-        bookmarkCount: article.totalBookmarks,
-      },
-      transactionHash: article.transactionHash,
-      quiltBlobId: article.quiltBlobId,
-      quiltObjectId: article.quiltObjectId,
-      gated: article.gated,
-      hasCover,
-    };
-  }, []);
+  // Shared with every other feed (incl. community) so posts render identically.
+  const formatArticleForDisplay = useCallback(
+    (article: FeedArticle) => formatArticleDisplay(article),
+    [],
+  );
 
   // Load articles on mount or when feed type/timeframe changes
   useEffect(() => {

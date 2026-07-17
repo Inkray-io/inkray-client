@@ -3,7 +3,7 @@
 import { AppLayout, RightSidebar } from "@/components/layout"
 import { GettingStartedChecklist } from "@/components/onboarding"
 import { useAuth } from "@/contexts/AuthContext"
-import { FeedPost } from "@/components/feed/FeedPost"
+import { FeedArticleCard } from "@/components/feed/FeedArticleCard"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { McpAnnounceBanner } from "@/components/feed/McpAnnounceBanner"
 import { TopWriters } from "@/components/widgets/TopWriters"
@@ -48,7 +48,6 @@ function FeedPageContent() {
     loadMore,
     refresh,
     clearError,
-    formatArticleForDisplay
   } = useFeedArticles(feedType, timeframe, selectedCategory?.id)
 
   // Article deletion hook
@@ -86,14 +85,6 @@ function FeedPageContent() {
       setCachedArticles(null);
     }
   }, [error, isLoading]);
-
-  const handleArticleClick = (article: Article) => {
-    if (article.cached) {
-      window.location.assign(`/offline/article?id=${encodeURIComponent(article.slug)}`);
-    } else {
-      router.push(`/article?id=${encodeURIComponent(article.slug)}`);
-    }
-  }
 
 
   const handleRetry = () => {
@@ -207,43 +198,14 @@ function FeedPageContent() {
         )}
 
         {/* Articles */}
-        {articlesToDisplay.map((article) => {
-          const displayArticle = formatArticleForDisplay(article);
-          const publicationObj = {
-            id: article.publicationId,
-            name: (article as {
-              publicationName?: string
-            }).publicationName || article.followInfo?.publicationName || `Publication ${article.publicationId?.slice(0, 8) ?? ''}...`,
-            avatar: article.followInfo?.publicationAvatar || null,
-            owner: (article as { publicationOwner?: string }).publicationOwner,
-            createdAt: article.followInfo?.publicationCreatedAt,
-          };
-
-          return (
-            <FeedPost
-              key={article.articleId}
-              author={displayArticle.author}
-              title={displayArticle.title}
-              description={displayArticle.description}
-              image={displayArticle.image}
-              engagement={displayArticle.engagement}
-              hasReadMore={true}
-              slug={article.slug}
-              onClick={() => handleArticleClick(article)}
-              publication={publicationObj}
-              articleId={article.articleId}
-              publicationId={article.publicationId}
-              totalTips={article.totalTips}
-              isFollowing={article.followInfo?.isFollowing}
-              followerCount={article.followInfo?.followerCount}
-              showFollowButton={true}
-              vaultId={article.vaultId}
-              onDelete={handleDeleteArticle}
-              isDeleting={isDeletingArticle(article.articleId)}
-              isOffline={article.cached || false}
-            />
-          );
-        })}
+        {articlesToDisplay.map((article) => (
+          <FeedArticleCard
+            key={article.articleId}
+            article={article}
+            onDelete={handleDeleteArticle}
+            isDeleting={isDeletingArticle(article.articleId)}
+          />
+        ))}
 
         {/* Empty State */}
         {!isLoading && !error && articlesToDisplay.length === 0 && (
