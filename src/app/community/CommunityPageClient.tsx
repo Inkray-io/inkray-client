@@ -15,6 +15,7 @@ import { OwnerIdentity } from '@/components/community/OwnerIdentity';
 import { PublicationLink } from '@/components/community/PublicationLink';
 import { createPublicationAvatarConfig } from '@/lib/utils/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   useCommunity,
   useCommunityFeed,
@@ -32,6 +33,7 @@ export function CommunityPageClient() {
   const router = useRouter();
   const idOrSlug = searchParams.get('id');
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<Tab>('feed');
   const [busy, setBusy] = useState(false);
 
@@ -170,6 +172,24 @@ export function CommunityPageClient() {
                 onDeclineInvite={(inviteId) =>
                   act(() => communitiesAPI.declineInvite(inviteId), 'Invite declined')
                 }
+                onNeedPublication={() => {
+                  // Gate order mirrors /create: log in first, then create a
+                  // publication (feeds are public, so a logged-out viewer can
+                  // reach this button too).
+                  if (!isAuthenticated) {
+                    toast({
+                      title: 'Sign in to join',
+                      description: 'Connect your wallet, then create a publication to join.',
+                    });
+                    router.push(ROUTES.AUTH);
+                    return;
+                  }
+                  toast({
+                    title: 'Publication required',
+                    description: 'Create a publication first — communities are joined as a publication.',
+                  });
+                  router.push(ROUTES.CREATE_PUBLICATION);
+                }}
               />
             )}
           </div>
@@ -270,6 +290,7 @@ function JoinAction({
   onApply,
   onAcceptInvite,
   onDeclineInvite,
+  onNeedPublication,
 }: {
   busy: boolean;
   invitePub?: CommunityViewerPub;
@@ -279,6 +300,7 @@ function JoinAction({
   onApply: (pubId: string) => void;
   onAcceptInvite: (inviteId: string) => void;
   onDeclineInvite: (inviteId: string) => void;
+  onNeedPublication: () => void;
 }) {
   const [picking, setPicking] = useState(false);
 
@@ -324,9 +346,12 @@ function JoinAction({
     );
   }
 
+  // No publication yet — communities are joined as a publication, so send the
+  // user to create one (mirrors the "write an article without a publication"
+  // flow) instead of leaving a dead, disabled button.
   if (eligiblePubs.length === 0) {
     return (
-      <Button size="sm" variant="outline" disabled title="You need a publication to join">
+      <Button size="sm" onClick={onNeedPublication} title="You need a publication to join">
         Apply to join
       </Button>
     );
