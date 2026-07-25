@@ -24,6 +24,7 @@ import {
   HiTrophy,
   HiRocketLaunch,
   HiUserGroup,
+  HiSparkles,
 } from "react-icons/hi2"
 
 interface AppSidebarProps {
@@ -103,6 +104,13 @@ export function AppSidebar({ currentPage = "feed", className }: AppSidebarProps)
       icon: HiUserGroup,
       active: currentPage === "communities",
       href: ROUTES.COMMUNITIES
+    },
+    {
+      id: "creators",
+      label: "Creators",
+      icon: HiSparkles,
+      active: currentPage === "creators",
+      href: ROUTES.CREATORS
     },
   ]
 

@@ -61,13 +61,21 @@ export function mastheadGradient(seed: string): string {
   return `linear-gradient(135deg, hsl(${h}, 62%, 55%), hsl(${h2}, 64%, 40%))`;
 }
 
-export interface IdenticonProps {
-  /** Address or publication id — the deterministic seed. */
-  seed: string;
-  className?: string;
+export interface IdenticonData {
+  bg: string;
+  fg: string;
+  size: number;
+  cell: number;
+  /** Top-left corner of each filled cell, in viewBox units. */
+  rects: { x: number; y: number }[];
 }
 
-export function Identicon({ seed, className }: IdenticonProps) {
+/**
+ * The single source of truth for the identicon art: hue + the mirrored filled
+ * cells for a seed. Both the React component and {@link identiconDataUri} build
+ * from this so they render pixel-for-pixel identically.
+ */
+export function computeIdenticon(seed: string): IdenticonData {
   const rand = mulberry32(hashSeed((seed || '').toLowerCase()));
 
   // Deterministic hue with fixed saturation/lightness for a cohesive, soft look.
@@ -76,28 +84,52 @@ export function Identicon({ seed, className }: IdenticonProps) {
   const bg = `hsl(${hue}, 52%, 94%)`;
 
   const half = Math.ceil(GRID / 2); // left columns generated, then mirrored
-  const cells: React.ReactNode[] = [];
+  const rects: { x: number; y: number }[] = [];
   for (let r = 0; r < GRID; r++) {
     const y = PAD + r * CELL;
     for (let c = 0; c < half; c++) {
       if (rand() > 0.5) {
         const x1 = PAD + c * CELL;
         const x2 = PAD + (GRID - 1 - c) * CELL;
-        cells.push(
-          <rect key={`${r}-${c}`} x={x1} y={y} width={CELL} height={CELL} fill={fg} />,
-        );
-        if (x2 !== x1) {
-          cells.push(
-            <rect key={`${r}-${c}-m`} x={x2} y={y} width={CELL} height={CELL} fill={fg} />,
-          );
-        }
+        rects.push({ x: x1, y });
+        if (x2 !== x1) rects.push({ x: x2, y });
       }
     }
   }
+  return { bg, fg, size: SIZE, cell: CELL, rects };
+}
+
+/**
+ * The identicon as a self-contained `data:image/svg+xml` URI — for surfaces that
+ * need an image `src`/`href` (e.g. SVG `<image>` in the creator bubble map)
+ * rather than a React subtree. Same art as the {@link Identicon} component.
+ */
+export function identiconDataUri(seed: string): string {
+  const { bg, fg, size, cell, rects } = computeIdenticon(seed);
+  const cells = rects
+    .map((p) => `<rect x='${p.x}' y='${p.y}' width='${cell}' height='${cell}' fill='${fg}'/>`)
+    .join('');
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}' shape-rendering='crispEdges'>` +
+    `<rect width='${size}' height='${size}' fill='${bg}'/>${cells}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export interface IdenticonProps {
+  /** Address or publication id — the deterministic seed. */
+  seed: string;
+  className?: string;
+}
+
+export function Identicon({ seed, className }: IdenticonProps) {
+  const { bg, fg, size, cell, rects } = computeIdenticon(seed);
+  const cells = rects.map((p, i) => (
+    <rect key={i} x={p.x} y={p.y} width={cell} height={cell} fill={fg} />
+  ));
 
   return (
     <svg
-      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      viewBox={`0 0 ${size} ${size}`}
       // `size-full` opts out of shadcn Button's `[&_svg:not([class*='size-'])]:size-4`;
       // inline size is a belt-and-suspenders override for any other `[&_svg]` rule.
       className={cn('block size-full', className)}
@@ -105,7 +137,7 @@ export function Identicon({ seed, className }: IdenticonProps) {
       shapeRendering="crispEdges"
       aria-hidden="true"
     >
-      <rect width={SIZE} height={SIZE} fill={bg} />
+      <rect width={size} height={size} fill={bg} />
       {cells}
     </svg>
   );

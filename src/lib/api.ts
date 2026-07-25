@@ -344,6 +344,11 @@ export const publicationsAPI = {
       params: limit ? { limit } : {},
     }),
 
+  getBubbleMap: (limit?: number) =>
+    api.get('/publications/bubble-map', {
+      params: limit ? { limit } : {},
+    }),
+
   updatePublication: (publicationId: string, data: UpdatePublicationData) =>
     api.patch(`/publications/${publicationId}`, data),
 

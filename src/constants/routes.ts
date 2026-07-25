@@ -40,6 +40,7 @@ export const ROUTES = {
 
   // Communities (beta)
   COMMUNITIES: '/communities',
+  CREATORS: '/creators',
 
   // Dynamic routes
   ARTICLE_WITH_ID: (id: string) => `/article?id=${id}`,
