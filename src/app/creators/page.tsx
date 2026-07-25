@@ -9,8 +9,8 @@ export default function CreatorsPage() {
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-gray-900">Creators</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Every publication as a bubble — the bigger the creator, the bigger the bubble. Size blends content
-          volume, quality, engagement and audience. Tap a bubble to visit the publication.
+          Discover the publications shaping Inkray. The more a creator publishes and the more readers they
+          reach, the bigger their bubble. Tap any bubble to explore their work.
         </p>
       </div>
       <CreatorBubbleMap />

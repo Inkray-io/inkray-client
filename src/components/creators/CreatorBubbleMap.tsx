@@ -141,11 +141,9 @@ export function CreatorBubbleMap({ limit = 80 }: { limit?: number }) {
               <span className="truncate">{b.name}</span>
               {b.isVerified && <HiCheckBadge className="size-3.5 shrink-0 text-blue-300" />}
             </div>
-            <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-gray-300">
-              <span>{b.articles} articles</span>
+            <div className="mt-1 flex flex-col gap-y-0.5 text-[11px] text-gray-300">
               <span>{b.followers} followers</span>
-              <span>{b.engagement} engagement</span>
-              <span>quality {(b.avgQuality * 100).toFixed(0)}%</span>
+              <span>{b.articles} articles</span>
             </div>
           </div>
         );
