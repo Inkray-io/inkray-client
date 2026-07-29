@@ -201,7 +201,9 @@ export class ApiError extends Error {
       case ApiErrorCode.RECORD_NOT_FOUND:
         return 'The requested item could not be found';
       case ApiErrorCode.RATE_LIMIT_EXCEEDED:
-        return 'Too many requests. Please wait a moment and try again';
+        // Prefer the server's specific message (e.g. the publish cooldown with
+        // the exact time remaining); fall back to a generic line.
+        return this.message || 'Too many requests. Please wait a moment and try again';
       case ApiErrorCode.SERVICE_UNAVAILABLE:
         return 'Service is temporarily unavailable. Please try again later';
       default:
