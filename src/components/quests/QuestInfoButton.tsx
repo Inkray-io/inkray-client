@@ -59,7 +59,10 @@ const RECURRING_DETAILS: Record<
     ],
   },
   publish_long_article: {
-    how: 'Publish an in-depth article with a reading time of 7 minutes or more (roughly 1,500+ words). Longer, higher-effort writing earns double the standard publishing XP.',
+    how: 'Publish an in-depth article with a reading time of 7 minutes or more (roughly 1,500+ words). Longer, higher-effort writing earns a bigger publishing bonus.',
+    rules: [
+      'Include at least one image to earn the full bonus. Long articles with no image earn half the XP shown.',
+    ],
   },
   write_comment: {
     how: 'Join the conversation under any article. Thoughtful comments earn XP for you and for the article\'s author.',
