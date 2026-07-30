@@ -12,6 +12,8 @@ export const ROUTES = {
   CREATE: '/create',
   ABOUT: '/about',
   RULES: '/rules',
+  PRIVACY: '/privacy',
+  TERMS: '/terms',
   ADVERTISING: '/advertising',
   DRAFTS: '/drafts',
   PUBLICATIONS: '/publications',

@@ -102,9 +102,26 @@ export function Footer() {
           <span className="text-xs text-[#4A5A72]">
             &copy; {new Date().getFullYear()} Inkray. All rights reserved.
           </span>
-          <span className="text-xs text-[#4A5A72]">
-            Made with care by the Inkray team
-          </span>
+          <div className="flex items-center gap-5">
+            <a
+              href={ROUTES.PRIVACY}
+              className="text-xs text-[#4A5A72] hover:text-white transition-colors"
+            >
+              Privacy
+            </a>
+            <a
+              href={ROUTES.TERMS}
+              className="text-xs text-[#4A5A72] hover:text-white transition-colors"
+            >
+              Terms
+            </a>
+            <a
+              href={ROUTES.RULES}
+              className="text-xs text-[#4A5A72] hover:text-white transition-colors"
+            >
+              Rules
+            </a>
+          </div>
         </div>
       </div>
     </footer>
