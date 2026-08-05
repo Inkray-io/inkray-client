@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { FeedArticleCard } from "@/components/feed/FeedArticleCard"
 import { FeedPostSkeleton } from "@/components/feed/FeedPostSkeleton"
 import { McpAnnounceBanner } from "@/components/feed/McpAnnounceBanner"
+import { TestFlightBanner } from "@/components/feed/TestFlightBanner"
+import { useMobileAccess } from "@/hooks/useMobileAccess"
 import { TopWriters } from "@/components/widgets/TopWriters"
 import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget"
 import { QuestsWidget } from "@/components/widgets/QuestsWidget"
@@ -23,6 +25,7 @@ import { log } from "@/lib/utils/Logger";
 
 function FeedPageContent() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const iosBeta = useMobileAccess()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { categories } = useCategories()
@@ -146,8 +149,13 @@ function FeedPageContent() {
         </RightSidebar>
       }
     >
-      {/* Subtle MCP announcement (dismissible) */}
-      <McpAnnounceBanner />
+      {/* Eligible creators get the private iOS beta invite here; everyone else
+          keeps the MCP announcement. */}
+      {iosBeta.eligible && iosBeta.url ? (
+        <TestFlightBanner url={iosBeta.url} />
+      ) : (
+        <McpAnnounceBanner />
+      )}
 
       {/* Offline Info Section */}
       {hasCachedArticles && (

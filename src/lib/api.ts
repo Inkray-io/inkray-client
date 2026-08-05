@@ -149,6 +149,13 @@ export const usersAPI = {
   getSkillCategories: () => api.get('/users/skills/categories'),
 };
 
+export const mobileAccessAPI = {
+  // Whether the connected user qualifies for the private iOS (TestFlight) beta.
+  // The backend reads the request User-Agent for the iOS check, so this must be
+  // called from the user's own device. Returns the invite URL only if eligible.
+  getEligibility: () => api.get('/mobile-access/eligibility'),
+};
+
 export const feedAPI = {
   getArticles: (params: {
     type?: 'fresh' | 'popular' | 'my';
