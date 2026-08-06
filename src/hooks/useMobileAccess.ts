@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { mobileAccessAPI } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface MobileAccess {
   eligible: boolean;
@@ -11,13 +10,11 @@ interface MobileAccess {
 }
 
 /**
- * Checks whether the connected user qualifies for the private iOS beta. Only
- * calls the API when authenticated (the endpoint requires a connected account),
- * and the backend decides iOS from this request's User-Agent — so a non-iOS
- * visitor simply comes back not-eligible.
+ * Whether to show the mobile (TestFlight) beta banner. The only condition is that
+ * the visitor is on an iOS device — no auth required — and the backend decides it
+ * from this request's User-Agent, so a non-iOS visitor comes back not-eligible.
  */
 export function useMobileAccess(): MobileAccess {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [state, setState] = useState<MobileAccess>({
     eligible: false,
     url: null,
@@ -25,11 +22,6 @@ export function useMobileAccess(): MobileAccess {
   });
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
-      setState({ eligible: false, url: null, loading: false });
-      return;
-    }
     let cancelled = false;
     (async () => {
       try {
@@ -49,7 +41,7 @@ export function useMobileAccess(): MobileAccess {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, authLoading]);
+  }, []);
 
   return state;
 }
