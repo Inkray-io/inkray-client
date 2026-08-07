@@ -2,16 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useWalletConnection } from "@/hooks/useWalletConnection";
-import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
-import { Transaction } from "@mysten/sui/transactions";
-import { INKRAY_CONFIG } from "@/lib/sui-clients";
-import { Heart, Loader2 } from "lucide-react";
-import { TIP_AMOUNTS, MIST_PER_SUI } from "@/constants/tipping";
-import { ConnectButton } from '@/components/wallet/connect';
-import { log } from "@/lib/utils/Logger";
-import { useToast } from "@/hooks/use-toast";
+import { Heart } from "lucide-react";
+import { TipDialog } from "@/components/tipping/TipDialog";
 
 interface TipButtonProps {
   publicationId: string;
@@ -21,279 +13,43 @@ interface TipButtonProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function TipButton({ publicationId, articleTitle, onTipSuccess, isOpen, onOpenChange }: TipButtonProps) {
-  const { isConnected, account } = useWalletConnection();
-  const { signAndExecuteTransaction } = useEnhancedTransaction();
-  const { toast } = useToast();
+export function TipButton({
+  publicationId,
+  articleTitle,
+  onTipSuccess,
+  isOpen,
+  onOpenChange,
+}: TipButtonProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
-  const [isTipping, setIsTipping] = useState(false);
 
-  // Use controlled state if provided, otherwise use internal state
-  const dialogOpen = isOpen !== undefined ? isOpen : internalIsOpen;
-  const setDialogOpen = onOpenChange || setInternalIsOpen;
-  const [tipError, setTipError] = useState<string | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [customAmount, setCustomAmount] = useState("");
-
-  const handleTip = async (amount: number) => {
-    if (!isConnected || !account) {
-      // User needs to connect wallet first
-      return;
-    }
-
-    try {
-      setIsTipping(true);
-      setTipError(null);
-
-      // Starting article tip transaction
-
-      // Build tip transaction
-      const tx = new Transaction();
-      
-      // Reference publication object
-      const publication = tx.object(publicationId);
-      
-      // Create payment coin
-      const [coin] = tx.splitCoins(tx.gas, [amount]);
-      
-      // Call tip_publication function with embedded treasury
-      // Tips are stored directly in the publication object (embedded treasury)
-      tx.moveCall({
-        target: `${INKRAY_CONFIG.PACKAGE_ID}::platform_economics::tip_publication`,
-        arguments: [
-          tx.object(INKRAY_CONFIG.GLOBAL_CONFIG_ID), // GlobalConfig (version-gating)
-          publication,  // &mut Publication - publication with embedded treasury
-          coin,         // Coin<SUI> - payment amount
-        ],
-      });
-
-      // Execute transaction
-      const result = await signAndExecuteTransaction({
-        transaction: tx,
-      });
-
-      log.debug("Tip successful", { result }, "TipButton");
-
-      toast({
-        title: "Tip sent!",
-        description: "Your tip was successfully sent to the creator.",
-      });
-
-      // Close dialog and call success callback
-      setDialogOpen(false);
-      onTipSuccess?.();
-      
-    } catch (error) {
-      // Handle tip transaction error
-      setTipError(error instanceof Error ? error.message : "Failed to tip. Please try again.");
-    } finally {
-      setIsTipping(false);
-    }
-  };
-
-  const handleCustomTip = () => {
-    const amount = parseFloat(customAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setTipError("Please enter a valid amount");
-      return;
-    }
-    
-    // Convert SUI to MIST using constant
-    const amountInMist = Math.floor(amount * MIST_PER_SUI);
-    handleTip(amountInMist);
-  };
-
-  if (!isConnected) {
-    return (
-      <div className="flex items-center gap-2">
-        <ConnectButton />
-      </div>
-    );
-  }
-
-  // If isOpen is controlled externally, don't show the trigger button
-  if (isOpen !== undefined) {
-    return (
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Tip This Article</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Send a tip to support &ldquo;{articleTitle}&rdquo;
-            </p>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Preset amounts */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Choose an amount:</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {TIP_AMOUNTS.map((tip) => (
-                  <Button
-                    key={tip.value}
-                    variant={selectedAmount === tip.value ? "default" : "outline"}
-                    onClick={() => {
-                      setSelectedAmount(tip.value);
-                      setCustomAmount("");
-                      handleTip(tip.value);
-                    }}
-                    disabled={isTipping}
-                    className="justify-center"
-                  >
-                    {isTipping && selectedAmount === tip.value ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      tip.label
-                    )}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom amount */}
-            <div>
-              <h4 className="text-sm font-medium mb-2">Or enter custom amount:</h4>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    placeholder="0.0"
-                    step="0.1"
-                    min="0"
-                    value={customAmount}
-                    onChange={(e) => setCustomAmount(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring no-spinner"
-                    disabled={isTipping}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    SUI
-                  </span>
-                </div>
-                <Button
-                  onClick={handleCustomTip}
-                  disabled={isTipping || !customAmount || parseFloat(customAmount) <= 0}
-                  className="px-4"
-                >
-                  {isTipping && !selectedAmount ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    "Tip"
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Error display */}
-            {tipError && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                {tipError}
-              </div>
-            )}
-
-            {/* Info */}
-            <div className="text-xs text-muted-foreground space-y-1 border-t pt-3">
-              <p>• Tips go directly to the article creator</p>
-              <p>• Transaction will be processed on the Sui blockchain</p>
-              <p>• Your tip helps support content creators</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // Controlled when a parent passes `isOpen`, otherwise self-managed.
+  const controlled = isOpen !== undefined;
+  const dialogOpen = controlled ? isOpen : internalIsOpen;
+  const setDialogOpen = onOpenChange ?? setInternalIsOpen;
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 text-red-600 border-red-200 hover:bg-red-50">
+    <>
+      {/* No trigger in controlled mode — the parent owns opening. */}
+      {!controlled && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+          onClick={() => setDialogOpen(true)}
+        >
           <Heart className="w-4 h-4" />
           Tip Article
         </Button>
-      </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-lg">Tip This Article</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Send a tip to support &ldquo;{articleTitle}&rdquo;
-          </p>
-        </DialogHeader>
+      )}
 
-        <div className="space-y-4">
-          {/* Preset amounts */}
-          <div>
-            <h4 className="text-sm font-medium mb-3">Choose an amount:</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {TIP_AMOUNTS.map((tip) => (
-                <Button
-                  key={tip.value}
-                  variant={selectedAmount === tip.value ? "default" : "outline"}
-                  onClick={() => {
-                    setSelectedAmount(tip.value);
-                    setCustomAmount("");
-                    handleTip(tip.value);
-                  }}
-                  disabled={isTipping}
-                  className="justify-center"
-                >
-                  {isTipping && selectedAmount === tip.value ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    tip.label
-                  )}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom amount */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Or enter custom amount:</h4>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  step="0.1"
-                  min="0"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                  disabled={isTipping}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  SUI
-                </span>
-              </div>
-              <Button
-                onClick={handleCustomTip}
-                disabled={isTipping || !customAmount || parseFloat(customAmount) <= 0}
-                className="px-4"
-              >
-                {isTipping && !selectedAmount ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Tip"
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Error display */}
-          {tipError && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-              {tipError}
-            </div>
-          )}
-
-          {/* Info */}
-          <div className="text-xs text-muted-foreground space-y-1 border-t pt-3">
-            <p>• Tips go directly to the publication owner</p>
-            <p>• Transaction will be processed on the Sui blockchain</p>
-            <p>• Your tip helps support content creators</p>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <TipDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        publicationId={publicationId}
+        supportLabel={`“${articleTitle}”`}
+        recipientLabel="the writer"
+        onTipSuccess={onTipSuccess}
+      />
+    </>
   );
 }

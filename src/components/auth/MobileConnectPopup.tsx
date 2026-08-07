@@ -23,6 +23,7 @@ type ConnectionState =
   | "waiting"
   | "connecting"
   | "connected"
+  | "openFailed"
   | "expired"
   | "error"
 
@@ -95,17 +96,17 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
         const response = await mobileAuthAPI.getSessionStatus(sessionId)
         const status = response.data.data
 
-        if (status?.status === "authenticated") {
+        if (status?.status === "claimed") {
+          // The phone actually logged in — this is the real "connected".
           setState("connected")
           clearInterval(pollInterval)
         } else if (status?.status === "scanned" && !completingRef.current) {
           // Phone scanned — authorize the connection with the logged-in account.
+          // We stay in "connecting" until the phone confirms it claimed it.
           completingRef.current = true
           setState("connecting")
           try {
             await mobileAuthAPI.completeSession(sessionId)
-            setState("connected")
-            clearInterval(pollInterval)
           } catch (err) {
             console.error("Failed to authorize connection:", err)
             completingRef.current = false
@@ -140,7 +141,10 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
 
   // Same-device path: the web tab gets suspended once the app takes focus, so we
   // authorize the session HERE (while we still have focus + the account) and
-  // then open the app, which just redeems the already-authorized session.
+  // then open the app, which redeems it and confirms back via 'claimed'. If the
+  // app never takes focus (e.g. an in-app browser like a wallet that blocks
+  // custom-scheme links, or the app isn't installed), we surface a fallback
+  // instead of falsely claiming success.
   const handleOpenInApp = async () => {
     if (!sessionId) return
     setState("connecting")
@@ -149,8 +153,28 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
     } catch (err) {
       console.error("Failed to authorize connection:", err)
     }
-    setState("connected")
-    window.location.href = qrValue
+
+    // Detect whether the OS actually switched to the app.
+    let switched = false
+    const onHide = () => {
+      if (document.hidden) switched = true
+    }
+    document.addEventListener("visibilitychange", onHide)
+
+    try {
+      window.location.href = qrValue
+    } catch {
+      // some in-app browsers throw on unknown schemes
+    }
+
+    window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", onHide)
+      // If we're still visible, the app didn't open — show guidance. If it
+      // opened, we stay "connecting" and the poll flips to connected on 'claimed'.
+      if (!switched && !document.hidden) {
+        setState("openFailed")
+      }
+    }, 1800)
   }
 
   const formatTime = (seconds: number) => {
@@ -228,6 +252,33 @@ export function MobileConnectPopup({ open, onOpenChange }: MobileConnectPopupPro
             <div className="flex flex-col items-center gap-4 py-4">
               <HiArrowPath className="size-8 text-primary animate-spin" />
               <p className="text-sm text-gray-600">Connecting your phone…</p>
+            </div>
+          )}
+
+          {state === "openFailed" && (
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                <HiXCircle className="size-10 text-yellow-600" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-yellow-600">Couldn&apos;t open the app</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  If you&apos;re inside another app&apos;s browser (like a wallet),
+                  open <span className="font-medium">inkray.xyz</span> in Safari or
+                  Chrome and try again. Make sure the Inkray app is installed.
+                </p>
+              </div>
+              <a
+                href={TESTFLIGHT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 underline underline-offset-2"
+              >
+                Get the app on TestFlight
+              </a>
+              <Button onClick={generateSession} className="w-full">
+                Try Again
+              </Button>
             </div>
           )}
 

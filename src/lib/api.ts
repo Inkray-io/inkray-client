@@ -87,7 +87,7 @@ export interface MobileAuthSession {
 }
 
 export interface MobileSessionStatus {
-  status: 'pending' | 'scanned' | 'authenticated' | 'expired';
+  status: 'pending' | 'scanned' | 'authenticated' | 'claimed' | 'expired';
   accessToken?: string;
   account?: {
     id: string;
