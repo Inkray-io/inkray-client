@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@/components/wallet/connect";
 import { SuiIcon } from "@/components/ui/SuiIcon";
+import { TokenSelect } from "@/components/tipping/TokenSelect";
 import { ArrowDown, Heart, Loader2 } from "lucide-react";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useEnhancedTransaction } from "@/hooks/useEnhancedTransaction";
@@ -118,11 +119,17 @@ export function TipDialog({
     return swapSupported ? withSui : withSui.filter((b) => isSuiCoinType(b.coinType));
   }, [balances, swapSupported]);
 
-  const payToken = useMemo<TokenBalance>(
-    () =>
-      payOptions.find((b) => b.coinType === payCoinType) ?? SYNTHETIC_SUI,
-    [payOptions, payCoinType],
-  );
+  // Resolve leniently: the wallet may report SUI as its normalized long form,
+  // so an exact string match on the short default would miss and desync the UI.
+  const payToken = useMemo<TokenBalance>(() => {
+    const exact = payOptions.find((b) => b.coinType === payCoinType);
+    if (exact) return exact;
+    if (isSuiCoinType(payCoinType)) {
+      const sui = payOptions.find((b) => isSuiCoinType(b.coinType));
+      if (sui) return sui;
+    }
+    return payOptions[0] ?? SYNTHETIC_SUI;
+  }, [payOptions, payCoinType]);
 
   const isSui = isSuiCoinType(payToken.coinType);
 
@@ -341,33 +348,18 @@ export function TipDialog({
 
           {/* Pay with — only when there's a real choice (mainnet + other tokens held) */}
           {payOptions.length > 1 && (
-          <div className="space-y-2">
-            <label htmlFor="tip-token" className="text-sm font-medium">
-              Pay with
-            </label>
-            <div className="relative">
-              <select
-                id="tip-token"
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Pay with</span>
+              <TokenSelect
+                tokens={payOptions}
                 value={payToken.coinType}
-                onChange={(e) => {
-                  setPayCoinType(e.target.value);
+                onChange={(coinType) => {
+                  setPayCoinType(coinType);
                   setAmountStr("");
                 }}
                 disabled={isTipping}
-                className="h-11 w-full appearance-none rounded-lg border border-input bg-transparent px-3 pr-9 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
-              >
-                {payOptions.map((t) => (
-                  <option key={t.coinType} value={t.coinType}>
-                    {t.symbol}
-                    {t.totalBalance > BigInt(0)
-                      ? ` — ${formatTokenBalance(t.totalBalance, t.decimals)} available`
-                      : ""}
-                  </option>
-                ))}
-              </select>
-              <ArrowDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              />
             </div>
-          </div>
           )}
 
           {/* Conversion — the "what actually happens" card */}
