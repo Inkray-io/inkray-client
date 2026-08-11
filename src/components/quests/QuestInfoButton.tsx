@@ -102,12 +102,6 @@ const RECURRING_DETAILS: Record<
     how: 'Earn XP whenever readers comment on your articles (comments of 50+ characters).',
     rules: ['At most 3 comments per reader per article per day count.'],
   },
-  article_10_likes: {
-    how: 'A one-time bonus for every article of yours that reaches 10 likes. Each article can trigger this once.',
-  },
-  article_50_likes: {
-    how: 'A one-time bonus for every article of yours that reaches 50 likes. Each article can trigger this once.',
-  },
   invite_accepted: {
     how: 'Share your invite codes (Invites page). When someone creates an account using your code, you earn XP.',
   },
