@@ -25,6 +25,7 @@ import {
   History,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { MilestoneRemovalInfo } from './MilestoneRemovalInfo';
 
 interface ActionDisplay {
   label: (e: XpEventEntry) => string;
@@ -33,6 +34,11 @@ interface ActionDisplay {
 }
 
 const ACTION_DISPLAY: Record<string, ActionDisplay> = {
+  xp_correction: {
+    label: () => 'Milestone bonus removed',
+    icon: Zap,
+    tint: 'bg-rose-50 text-rose-600',
+  },
   article_published: {
     label: () => 'Published an article',
     icon: PenSquare,
@@ -226,15 +232,21 @@ function HistoryRow({ event }: { event: XpEventEntry }) {
         <Icon className="size-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-foreground truncate">
-          {display.label(event)}
+        <p className="flex items-center gap-1.5 text-sm text-foreground">
+          <span className="truncate">{display.label(event)}</span>
+          {event.action === 'xp_correction' && <MilestoneRemovalInfo />}
         </p>
       </div>
       <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
         {timeOf(event.createdAt)}
       </span>
-      <span className="text-sm font-semibold text-amber-600 tabular-nums shrink-0 w-12 text-right">
-        +{event.xpAmount}
+      <span
+        className={`text-sm font-semibold tabular-nums shrink-0 w-16 text-right ${
+          event.xpAmount < 0 ? 'text-rose-600' : 'text-amber-600'
+        }`}
+      >
+        {event.xpAmount < 0 ? '−' : '+'}
+        {Math.abs(event.xpAmount).toLocaleString()}
       </span>
     </div>
   );
